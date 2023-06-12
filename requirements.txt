@@ -1,0 +1,14 @@
+# ADD ANY IMPORTED REPOs HERE:
+# INSTALLATION: cmd: pip install -r requirements.txt
+
+# Common
+numpy
+
+# objectDetection
+ultralytics
+opencv-python
+torch
+    # Debug
+    # tkinter
+    keyboard
+    

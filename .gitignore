@@ -1,0 +1,9 @@
+*.pyc
+*.out
+*.log
+/build
+/install
+/logs
+/.vscode
+.ipynb_checkpoints
+.idea/
