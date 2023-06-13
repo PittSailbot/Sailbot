@@ -1,9 +1,8 @@
-from rclpy.node import Node
 import math
 import time
 
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
-import sailbot.constants as c
+from src.sailbot.sailbot.utils.eventUtils import Event, Waypoint, EventFinished
+import src.sailbot.sailbot.constants as c
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -12,7 +11,6 @@ folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
 gps = importlib.import_module(folder + "GPS").gps
-
 
 """
 # Challenge	Goal:
@@ -43,21 +41,18 @@ gps = importlib.import_module(folder + "GPS").gps
                 - and floating from front to end for total of 5 minute duration travel
 """
 
-REQUIRED_ARGS = 4
-                
-class Station_Keeping(Event):
+
+class StationKeeping(Event):
     """
     Attributes:
-        - event_info (array) - 4 GPS coordinates forming a 40m^2 rectangle that the boat must remain in
-            event_info = [(b1_lat, b1_long),(b2_lat, b2_long),(b3_lat, b3_long),(b4_lat, b4_long)]
+        - event_info (list): 4 GPS coordinates forming a 40m^2 rectangle that the boat must remain in
+            - expects [Waypoint(b1_lat, b1_long), Waypoint(b2_lat, b2_long), ...]
+                - top left, top right, bottom left, bottom right
     """
+    REQUIRED_ARGS = 4
+
     def __init__(self, event_info):
-        if (len(event_info) != REQUIRED_ARGS):
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        self._node = Node('sationKeepingEvent')
-        self.logging = self._node.get_logger()
         super().__init__(event_info)
-        self.logging.info("Station_Keeping moment")
 
         '''#see SK_perc_guide() notes on calculating go-to points
         #running:
@@ -400,6 +395,21 @@ class Station_Keeping(Event):
 
         ret1= self.SK_I(arr[0],arr[1],m,b)
         return ret1, m*ret1 + b
+
+    def SK_f(self, x, a1, b1, a2, b2):
+        return self.SK_m(a1, b1, a2, b2) * x + self.SK_v(a1, b1, a2, b2)  # f(x)=mx+b
+
+    def SK_m(self, a1, b1, a2, b2):
+        return (b2 - b1) / (a2 - a1)  # m: slope between two lines
+
+    def SK_v(self, a1, b1, a2, b2):
+        return b1 - (self.SK_m(a1, b1, a2, b2) * a1)  # b: +y between two lines
+
+    def SK_I(self, M1, V1, M2, V2):
+        return (V2 - V1) / (M1 - M2)  # find x-cord intersect between two lines
+
+    def SK_d(self, a1, b1, a2, b2):
+        return math.sqrt((a2 - a1) ** 2 + (b2 - b1) ** 2)  # find distance between two points
     
 if __name__ == "__main__":
     pass

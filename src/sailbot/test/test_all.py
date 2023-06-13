@@ -1,13 +1,6 @@
 """
 Tests all necessary sensors and functionality of the boat
 """
-# TODO: Package repo and split into individual files
-import sys
-import os
-import rclpy
-
-sys.path.append(os.getcwd())  # Bootleg fix for imports until repo is packaged
-
 import pytest
 import warnings
 import cv2
@@ -15,11 +8,12 @@ import numpy as np
 from time import time
 import keyboard
 
-import sailbot.constants as c
-import sailbot.peripherals.camera as camera
-import sailbot.objectDetection as objectDetection
-from sailbot.events.eventUtils import Waypoint, distance_between
-import sailbot.boatMain
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.peripherals import camera
+from src.sailbot.sailbot.CV import objectDetection
+from src.sailbot.sailbot.utils.eventUtils import Waypoint, distance_between
+import src.sailbot.sailbot.boatMain as boatMain
+
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -27,16 +21,10 @@ DOCKER = True if DOCKER == 'True' else False
 
 if not DOCKER:
     import rclpy
-    import sailbot.peripherals.GPS
-    import sailbot.peripherals.compass
-    import sailbot.peripherals.windvane
-    import sailbot.peripherals.transceiver
-    
-
-# ----------------------------------  BASIC  ----------------------------------
-def test_mainInit():
-    rclpy.init()
-    boat = sailbot.boatMain.boat(calibrateOdrive=False)
+    import src.sailbot.sailbot.peripherals.GPS as GPS
+    import src.sailbot.sailbot.peripherals.compass as compass
+    import src.sailbot.sailbot.peripherals.windvane as windvane
+    import src.sailbot.sailbot.peripherals.transceiver as transceiver
 
 
 # ---------------------------------- SENSORS ----------------------------------
@@ -48,30 +36,7 @@ def test_gps():
     for i in range(0, 3):
         results = (gps.latitude, gps.longitude)
         print(f"GPS: ({results[0]}, {results[1]})")
-        assert results is not None
-
-@pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
-def test_gps_spoof():
-    gps = GPS.gps()
-
-    for i in range(0, 3):
-        results = (gps.latitude, gps.longitude)
-        print(f"GPS: ({results[0]}, {results[1]})")
-        gps.latitude = 3.14
-        gps.longitude = 4.13
-        print(f"GPS: ({results[0]}, {results[1]})")
-        assert results is not None
-
-
-@pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
-def test_gps_deprecated():
-    gps = GPS.gps()
-
-    for i in range(0, 3):
-        gps.updategps()
-        results = (gps.latitude, gps.longitude)
-        print(f"GPS: ({results[0]}, {results[1]})")
-        assert results is not None
+        assert results[0] is not None
 
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
@@ -83,17 +48,10 @@ def test_compass():
         print(f"Compass: {results})")
         assert results is not None
 
+    comp.destroy_node()
+    rclpy.shutdown()
 
-@pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
-def test_compass_deprecated():
-    comp = compass.compass()
 
-    for i in range(0, 3):
-        results = comp.angle
-        print(f"Compass: {results})")
-        comp.printAccel()
-        comp.printMag()
-        assert comp.angle is not None
 
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
@@ -126,7 +84,7 @@ def test_servos():
     servos.yaw = 2000
     assert 179 < servos.yaw < 181, f"Camera servo yaw unprotected from impossible range, expected 180, got: {servos.yaw}"
 
-@pytest.mark.skip("not working")
+
 def test_cam_detect():
     """Validity and performance test for buoy detection"""
     cam = camera.Camera()
@@ -146,8 +104,7 @@ def test_cam_detect():
             warnings.warn(f"Low average FPS ({avg_fps}) for detections")
 
 
-@pytest.mark.skip("Error on pi, not (from invalid img path?)")
-def test_img_detect(img="sailbot/CV/test_buoy.jpg"):
+def test_img_detect(img=fr"{c.root_dir}\data\CV\test_buoy.jpg"):
     """Detects buoys from specified image path(s)
     Args:
         img (str): file path of selected image
@@ -170,7 +127,7 @@ def test_gps_estimation():
     sim_frame = camera.Frame(gps=Waypoint(0, 0),
                              heading=90,
                              pitch=45,
-                             detections=object_detection.analyze("sailbot/CV/test_buoy.jpg"))
+                             detections=object_detection.analyze("CV/test_buoy.jpg"))
 
     camera.estimate_all_buoy_gps(sim_frame)
     for detection in sim_frame.detections:

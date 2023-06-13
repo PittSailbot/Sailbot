@@ -5,8 +5,8 @@ Drivers and interface for camera servos
 from rclpy.node import Node
 import adafruit_servokit
 
-import sailbot.constants as c
-from utils import singleton
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.utils.utils import singleton
 
 
 @singleton

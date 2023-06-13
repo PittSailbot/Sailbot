@@ -5,10 +5,6 @@ import math
 import cv2
 import time
 from rclpy.node import Node
-import numpy as np
-import os
-
-import sailbot.constants as c
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -18,13 +14,13 @@ folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 gps = importlib.import_module(folder + "GPS").gps
 CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
 compass = importlib.import_module(folder + "compass").compass
-    
-from sailbot.objectDetection import ObjectDetection, draw_bbox
-from sailbot.events.eventUtils import Waypoint, distance_between
-from sailbot.utils import singleton
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from src.sailbot.sailbot.utils.eventUtils import Waypoint, distance_between
+from src.sailbot.sailbot.utils.utils import singleton
 
 
-class Frame():
+class Frame:
     """
     RGB image with sensor metadata frozen at the time of capture
     
@@ -68,9 +64,9 @@ class Camera:
         - survey(): Takes a panorama
     """
     def __init__(self):
+        self.path = os.getcwd()
         if (c.config["MAIN"]["device"] == "pi"):
             self.servos = CameraServos()
-            self.path = os.getcwd()
             self.gps = gps()
             self.compass = compass()
         else:
@@ -158,7 +154,7 @@ class Camera:
             - list[camera.Frame]: A list of the captured images
         """
 
-        images = []
+        images: list[Frame] = []
         servo_step = int(servo_range / num_images)
         MIN_ANGLE = int(c.config["CAMERASERVOS"]["min_angle"])
         MAX_ANGLE = int(c.config["CAMERASERVOS"]["max_angle"])
@@ -197,19 +193,9 @@ class Camera:
         """
         if type(detection) == Waypoint:
             self.logging.info(f"Focusing on GPS position: {detection}")
-
+            # TODO
             distance = distance_between(self.gps, detection.gps)
             boat_angle = compass.angle
-
-            def calculate_compass_angle(pt1, pt2):
-                delta_lon = pt2.lon - pt1.lon
-                y = math.sin(math.radians(delta_lon)) * math.cos(math.radians(pt2.lat))
-                x = math.cos(math.radians(pt1.lat)) * math.sin(math.radians(pt2.lat)) - math.sin(
-                    math.radians(pt1.lat)) * math.cos(math.radians(pt2.lat)) * math.cos(math.radians(delta_lon))
-                angle = math.atan2(y, x)
-                angle_deg = math.degrees(angle)
-                compass_angle = (angle_deg + 360) % 360
-                return compass_angle
 
             self.servos.yaw = 0
             self.servos.pitch = 70

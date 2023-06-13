@@ -8,21 +8,12 @@ import busio
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-try:
-    import constants as c
-    import stepper
-    from Odrive import Odrive
-    from windvane import windVane
-except:
-    import sailbot.constants as c
-    import sailbot.stepper as stepper
-    from sailbot.Odrive import Odrive
-    from sailbot.windvane import windVane
+import os
 
-from threading import Thread
-from RPi import GPIO
-from time import sleep
-
+from src.sailbot.sailbot import constants as c
+import src.sailbot.sailbot.peripherals.stepper as stepper
+from src.sailbot.sailbot.peripherals.Odrive import Odrive
+from src.sailbot.sailbot.peripherals.windvane import windVane
 
 # define type of motor that is being used
 USE_ODRIVE_SAIL = True

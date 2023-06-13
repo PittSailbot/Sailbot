@@ -7,24 +7,25 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import math
 import time
+from rclpy.node import Node
 
 import os
 DOCKER = os.environ.get('IS_DOCKER', False)
 DOCKER = True if DOCKER == 'True' else False
 
-import sailbot.constants as c
+import src.sailbot.sailbot.constants as c
 
 if not DOCKER:
-    from sailbot.peripherals.GPS import gps
+    from src.sailbot.sailbot.peripherals.GPS import gps
 else:
-    from sailbot.virtualPeripherals.GPS import gps
+    from src.sailbot.sailbot.virtualPeripherals.GPS import gps
 
 
-@dataclass()
+@dataclass(slots=True)
 class Waypoint:
     """
     A GPS marker for buoys, travel destinations, etc.
-    - Initialize using Waypoint(latitude, longitude)
+        - Initialize using Waypoint(latitude, longitude)
     """
     
     lat: float
@@ -55,10 +56,16 @@ class Event:
     Functions:
         - next_gps() - event logic which determines where to sail to next
     """
-    
-    def __init__(self, event_info, debugInp=False):        
-        self.event_info = event_info
-        self.DEBUG=debugInp
+    REQUIRED_ARGS = 0
+
+    def __init__(self, event_info):        
+        self._event_info = event_info
+        self._node = Node(self.__class__.__name__)
+        self.logging = self._node.get_logger()
+        self.logging.info(f"Initializing {self.__class__.__name__}")
+
+        if len(event_info) != self.REQUIRED_ARGS:
+            raise TypeError(f"Expected {self.REQUIRED_ARGS} arguments, got {len(event_info)}")
         
     @abstractmethod
     def next_gps(self):
@@ -71,13 +78,9 @@ class Event:
             - OR EventFinished exception to signal that the event has been completed
         """
 
-        raise 
-    
-    def gps_spoof(self):
-        inp = input("GPS: ")
-        gps.latitude = inp.split(" ")[0]
-        gps.longitude = inp.split(" ")[1]
-            
+        raise NotImplementedError
+
+
 class EventFinished(Exception):
     """Signals that the event is finished and that it is safe to return to manual control"""
     pass
@@ -106,12 +109,6 @@ def PID():  #hana
         oldError = error
 """
 
-def SK_f(self,x,a1,b1,a2,b2): return self.SK_m(a1,b1,a2,b2)*x + self.SK_v(a1,b1,a2,b2)  #f(x)=mx+b
-def SK_m(self,a1,b1,a2,b2): return (b2-b1)/(a2-a1)                                      #m: slope between two lines
-def SK_v(self,a1,b1,a2,b2): return b1-(self.SK_m(a1,b1,a2,b2)*a1)                       #b: +y between two lines
-def SK_I(self,M1,V1,M2,V2): return (V2-V1)/(M1-M2)                                      #find x-cord intersect between two lines
-def SK_d(self,a1,b1,a2,b2): return math.sqrt((a2-a1)**2 + (b2-b1)**2)                   #find distance between two points
-
 
 def distance_between(waypoint1, waypoint2):
     """Calculates the distance between two GPS points using the Haversine formula
@@ -139,4 +136,6 @@ def distance_between(waypoint1, waypoint2):
 
 def has_reached_waypoint(waypoint, distance=float(c.config["CONSTANTS"]["reached_waypoint_distance"])):
     """Returns true/false if the boat is close enough to the waypoint"""
-    return distance_between(gps.GPS, waypoint) < distance
+    a = gps()
+    boat_gps = Waypoint(a.latitude, a.longitude)
+    return distance_between(boat_gps, waypoint) < distance

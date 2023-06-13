@@ -1,7 +1,5 @@
-from rclpy.node import Node
-
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
-import sailbot.constants as c
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
+import src.sailbot.sailbot.constants as c
 
 """
 # Challenge Goal:
@@ -24,23 +22,18 @@ import sailbot.constants as c
         - TODO write psuedocode about how this event logic works
 """
 
-REQUIRED_ARGS = 4
 
 class Endurance(Event):
     """
     Attributes:
-        - event_info (array) - 4 GPS coordinates forming a rectangle that the boat must sail around
-            event_info = [(b1_lat, b1_long),(b2_lat, b2_long),(b3_lat, b3_long), (b4_lat, b4_long)]
+        - _event_info (list): 4 GPS coordinates forming a rectangle that the boat must sail around
+            - expects [Waypoint(b1_lat, b1_long), Waypoint(b2_lat, b2_long), ...]
+                - top left, top right, bottom left, bottom right
     """
-    
+    REQUIRED_ARGS = 4
+
     def __init__(self, event_info):
-        self._node = Node('enduranceEvent')
-        self.logging = self._node.get_logger()
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        
         super().__init__(event_info)
-        self.logging.info("Endurance moment")
 
         # BOAT STATE
         self.waypoint_queue = event_info

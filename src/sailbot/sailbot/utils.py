@@ -1,10 +1,11 @@
 import os
 from rclpy.node import Node
 
+
 def singleton(cls):
-    """A decorator which prevents duplicate classes from being created.
-    Useful for physical objects where only one exists.
-        - Import, then invoke use @singleton before class definition"""
+    """A decorator which prevents multiple instances of the same class from being created.
+    Useful for physical or __init__ heavy objects where we only want one instance to exist.
+        - Import, then use @singleton before class definition"""
     instances = {}
 
     def get_instance(*args, **kwargs):
@@ -14,6 +15,7 @@ def singleton(cls):
 
     return get_instance
 
+
 def map(self, x, min1, max1, min2, max2, enforce_limits = False):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
         # ex: map(0.3, 0, 1, 0, 100) returns 30
@@ -21,6 +23,7 @@ def map(self, x, min1, max1, min2, max2, enforce_limits = False):
         if enforce_limits:
             x = min(max(x, min1), max1)
         return min2 + (max2-min2)*((x-min1)/(max1-min1))
+
 
 class dummyObject():
     """

@@ -6,10 +6,10 @@ from ultralytics import YOLO  # Documentation: https://docs.ultralytics.com/cfg/
 import cv2
 import numpy as np
 import torch
+import logging
 from dataclasses import dataclass
-from rclpy.node import Node
 
-import sailbot.constants as c
+from sailbot import constants as c
 
 
 @dataclass(order=True)
@@ -38,9 +38,6 @@ class Detection:
         self.gps = None
         sort_index: int = self.conf
 
-        self._node = Node("detection")
-        self.logging = self._node.get_logger()
-
     def __str__(self):
         return f"Detection ({self.conf}%) at ({self.x}, {self.y}) with width {self.w}px and height {self.h}px"
         
@@ -53,11 +50,11 @@ class ObjectDetection:
         - analyze() - checks image for buoys
     """
     def __init__(self):
-        self.model = YOLO(c.config["OBJECTDETECTION"]["weights"])  # Initialize model for analysis
+        self.model = YOLO(c.root_dir + c.config["OBJECTDETECTION"]["weights"])  # Initialize model for analysis
             # TODO: test performance after export to .onnx
             #model.export(format="onnx") or cmd -> yolo task=detect mode=export model=<PATH> format = onnx
     
-    def analyze(self, image):
+    def analyze(self, image) -> list[Detection]:
         """Detects buoys within a given image. Can be supplied from cv2 or using the Camera.capture()/Camera.survey() methods.
         Args:
             - image (np.ndarray, .jpg, .png): The RGB image to search for buoys
@@ -70,9 +67,9 @@ class ObjectDetection:
         result = result[0] # metadata -> list[tensor]
         
         # Add each buoy found by the model into a list
-        detections = []
+        detections: list[Detection] = []
         for detection in result:
-            self.logging.info(F"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
+            logging.info("Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
             detections.append(Detection(detection)) # Convert tensors into readable Detection class and append to list
         detections.sort(reverse=True)
         return detections

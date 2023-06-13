@@ -2,15 +2,12 @@
 reads value from I2C rotery encoder sensor
 """
 from time import sleep
-from threading import Thread, Lock
-from queue import Queue
+from threading import Lock
 import board
 from RPi import GPIO
 from adafruit_seesaw import seesaw, rotaryio, digitalio
-try:
-    import sailbot.constants as c
-except:
-    import constants as c
+
+import src.sailbot.sailbot.constants as c
 
 class windVane():
 
@@ -46,7 +43,7 @@ class windVane():
 
         pump_thread3 = Thread(target=self.update)
         pump_thread3.start()
-        
+
 
     def map(self, x, min1, max1, min2, max2):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
@@ -103,7 +100,7 @@ class windVane():
     
     def update(self):
         while True:
-        
+
             clkState = GPIO.input(self.clk)
             dtState = GPIO.input(self.dt)
             hefState = GPIO.input(self.hef)

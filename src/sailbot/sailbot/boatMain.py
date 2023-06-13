@@ -1,14 +1,8 @@
 import sys
-
-
-
-import traceback
-import math
-
-import sailbot.constants as c
-import sailbot.boatMath as boatMath
-import sailbot.utils as utils
-#import sailbot.events as events #import event,Collision_Avoidance,Percision_Navigation,Endurance,Station_Keeping,Search
+from time import sleep
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -20,18 +14,10 @@ windVane = importlib.import_module(folder + "windvane").windVane
 gps = importlib.import_module(folder + "GPS").gps
 compass = importlib.import_module(folder + "compass").compass
 drivers = importlib.import_module(folder + "drivers").driver
-arduino = importlib.import_module(folder + "transceiver").arduino
+transceiver = importlib.import_module(folder + "transceiver").transceiver
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.utils import boatMath
 
-
-
-
-from datetime import date, datetime
-from threading import Thread
-from time import sleep
-import numpy
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
 
 class boat(Node):
     
@@ -115,7 +101,6 @@ class boat(Node):
         angle = string.replace("(", "").replace(")", "")
         self.compass.angle = float(angle)
 
-        
 
     def adjustSail(self, angle=None):
         """
@@ -212,7 +197,7 @@ class boat(Node):
 
                 elif self.MODE_SETTING == c.config['MODES']['MOD_STATION_KEEPING']:
                     self.logging.info("Received message to Automate: STATION_KEEPING")
-                    self.eevee = events.Station_Keeping(self.event_arr)
+                    self.eevee = events.StationKeeping(self.event_arr)
 
                 elif self.MODE_SETTING == c.config['MODES']['MOD_SEARCH']:
                     self.logging.info("Received message to Automate: SEARCH")
@@ -416,29 +401,7 @@ class boat(Node):
 
         except Exception as e:
             self.logging.warning(f"failed to read command {msgs}")
-            
-    def goBetweenBuoy(self, LeftBuoyPixel, RightBuoyPixel):
-        # Both in camera, assuming arguments = none if not in camera
-        if LeftBuoyPixel and RightBuoyPixel:
-            # Find distance of buoys to center line
-            # TODO Add the total camera pixel size to constants (x,y)
-            # Thought it only x distance needs to be checked
-            distLeft = abs(LeftBuoyPixel[1] - c.cameraPixelSizeX / 2.0)
-            distRight = abs(RightBuoyPixel[1] - c.cameraPixelSizeX / 2.0)
 
-            # Check if one is significantly closer to center
-            # TODO determine pixel wise what is significantly closer
-            if distRight - distLeft > 20:  # Left buoy is closer
-                # Turn right
-                newCompassAngle = (self.compass.angle + 10) % 360
-                self.turnToAngle(newCompassAngle)
-            elif distLeft - distRight > 20:  # Right buoy closer
-                # Turn left
-                newCompassAngle = (self.compass.angle - 10) % 360
-                self.turnToAngle(newCompassAngle)
-        else:
-            # Go to gps
-            self.goToGps(self.currentTarget[0], self.currentTarget[1])
 
     def goToGPS(self, lat, long):
         """  
@@ -484,8 +447,7 @@ class boat(Node):
         if wait_until_finished is False the boat will adjust the rudder to an appropriate angle and then return
         """
         leftPositive = -1  # change to negative one if boat is rotating the wrong way
-        
-        self.logging.info("starting turnToAngle")
+
         compassAngle = self.compass.angle
         while abs(compassAngle - angle) > int(c.config['CONSTANTS']['angle_margin_of_error']): # while not facing the right angle
             compassAngle = self.compass.angle
@@ -503,10 +465,6 @@ class boat(Node):
 
             if not wait_until_finished:
                 break
-            
-
-
-        self.logging.info("finished turnToAngle")
 
 
 def main(args=None):

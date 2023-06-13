@@ -3,77 +3,42 @@ interfaces with USB GPS sensor
 """
 #https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
 import time
-
-import board
-import busio
-import adafruit_gps
-# import adafruit_lsm303_accel
-import adafruit_lsm303dlh_mag
-
-from time import sleep
-from threading import Thread
-import math
-
-try:
-    from boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
-except:
-    from sailbot.boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
-
+import logging
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+import gpsd
 
-from utils import singleton
-
-
+from src.sailbot.sailbot.utils.boatMath import convertDegMinToDecDeg
+from src.sailbot.sailbot.utils.utils import singleton
 
 
 @singleton
 class gps(Node):
     """
     Attributes:
-        latitude (float)
-        longitude (float)
+        latitude (float): the current latitude of the boat
+        longitude (float): the current longitude of the boat
     """
 
     def __init__(self):
-
-        # a slightly higher timeout (GPS modules typically update once a second).
-        # These are the defaults you should use for the GPS FeatherWing.
-        # For other boards set RX = GPS module TX, and TX = GPS module RX pins.
-        #self.uart = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
-        #
-
-        # for a computer, use the pyserial library for uart access
-        import serial
-        self.latitude =  None
+        self.latitude = None
         self.longitude = None
-        self.track_angle_deg = 0
-        #self.uart = serial.Serial("/dev/ttyACM1", baudrate=9600, timeout=10)
-        self.uart = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=10)
-        self.gps = adafruit_gps.GPS(self.uart, debug=False)
+        self._node = Node('GPS')
+        self.logging = self._node.get_logger()
 
+        # Can also use adafruit_gps module (but didn't work at competition?)
+        # Prev GPS version w/ adafruit: https://github.com/SailBotPitt/SailBot/blob/a56a18b06cbca78aace1990a4a3ce4dfd8c7a847/GPS.py
+        # GPSD doesn't have gps track angle degree
+        gpsd.connect()
+        packet = gpsd.get_current()
+        if packet.mode >= 2:
+            self.latitude = packet.position()[0]
+            self.longitude = packet.position()[1]
+            logging.debug(f"GPS: {self.latitude} {self.longitude}")
+        else:
+            logging.warning(f"No GPS fix")
 
-        # Turn on the basic GGA and RMC info (what you typically want)
-        self.gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-        # Turn on just minimum info (RMC only, location):
-        #gps.send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-        # Turn off everything:
-        #gps.send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-        # Turn on everything (not all of it is parsed!)
-        #gps.send_command(b'PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0')
-
-        # Set update rate to once a second (1hz) which is what you typically want.
-        self.gps.send_command(b'PMTK220,1000')
-        # Or decrease to once every two seconds by doubling the millisecond value.
-        # Be sure to also increase your UART timeout above!
-        #gps.send_command(b'PMTK220,2000')
-        # You can also speed up the rate, but don't go too fast or else you can lose
-        # data during parsing.  This would be twice a second (2hz, 500ms delay):
-        #gps.send_command(b'PMTK220,500')
-
-        #pump_thread = Thread(target=self.run)# creates a Thread running an infinite loop pumping server
-        #pump_thread.start()
         super().__init__('GPS')
         self.pub = self.create_publisher(String, 'GPS', 10)
         timer_period = 0.5  # seconds
@@ -81,7 +46,10 @@ class gps(Node):
 
     def timer_callback(self):
         msg = String()
-        msg.data = F"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        packet = gpsd.get_current().position()
+        self.latitude = packet[0]
+        self.longitude = packet[1]
+        msg.data = F"{self.latitude},{self.longitude}"
         self.pub.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
 
@@ -96,11 +64,13 @@ class gps(Node):
             return self.gps.__getattribute__(name)
 
     def run(self):
+        # TODO: Delete
         while True:
             return # This should use ROS now instead of a loop
             #self.updategps()
 
     def readgps(self):
+        # TODO: delete
         timestamp = time.monotonic()
         while True:
             data = self.gps.read(64)
@@ -114,6 +84,7 @@ class gps(Node):
                     timestamp = time.monotonic()
 
     def updategps(self, print_info = False):
+        # TODO: Delete
         # must be called before reading latitude and longitude, just pulls data from the sensor
         # optionally prints data read from sensor
         self.gps.update()
@@ -169,11 +140,12 @@ def main(args = None):
     # when the garbage collector destroys the node object)
     GPS.destroy_node()
     rclpy.shutdown()
-
     
 
 if __name__ == "__main__":
+    rclpy.init()
     GPS = gps()
+    rclpy.spin(GPS)
     while True:
-        GPS.updategps()
+        GPS.updategps(print_info=True)
         sleep(1)

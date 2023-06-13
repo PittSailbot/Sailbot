@@ -1,23 +1,16 @@
-from rclpy.node import Node
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
 
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
-
-REQUIRED_ARGS = 0
 
 class ManualControl(Event):
     """
     Attributes:
-        - event_info (array) - customizable arguments (unusued)
-            event_info = []
+        - _event_info (list): customizable arguments (unusued)
+            - expects [] or no argument
     """
+    REQUIRED_ARGS = 0
+
     def __init__(self, event_info=[]):
-        self._node = Node('manualControlEvent')
-        self.logging = self._node.get_logger()
-        if (len(event_info) != REQUIRED_ARGS):
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        
         super().__init__(event_info)
-        self.logging.info("Manual control moment")
     
     def next_gps(self):
         """

@@ -1,17 +1,12 @@
 """
 calibrates and default values for Odrive and handles interfacing between Odrive and python code
 """
-
-import odrive
-import odrive.utils as ut
-try:
-    import constants as c
-except:
-    import sailbot.constants as c
 from time import sleep
 import sys
 import traceback
 from rclpy.node import Node
+import odrive
+import odrive.utils as ut
 
 
 class Odrive():
@@ -447,14 +442,8 @@ if __name__ == '__main__':
                     drv.reboot()
                     drv = Odrive(calibrate=False)
 
-                
-
                 elif string[0] == "e" or string[0] == 'E':
                     ut.dump_errors(drv.od)
-
-
-                
-
 
                 else:
                     val = float(string)

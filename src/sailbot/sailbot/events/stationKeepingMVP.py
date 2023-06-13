@@ -2,7 +2,9 @@ from rclpy.node import Node
 import math
 import time
 
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
+from src.sailbot.sailbot.peripherals.windvane import windVane
+from src.sailbot.sailbot.peripherals.GPS import gps
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -32,24 +34,18 @@ gps = importlib.import_module(folder + "GPS").gps
             - Turn in the direction of the wind and bail
 """
 
-REQUIRED_ARGS = 4
 
-
-class Station_Keeping(Event):
+class StationKeeping(Event):
     """
     Attributes:
-        - event_info (array) - 4 GPS coordinates forming a 40m^2 rectangle that the boat must remain in
-            event_info = [Waypoint(top_l_lat, top_l_long), Waypoint(top_r_lat, top_r_long),
-                        Waypoint(bot_l_lat, bot_l_long), Waypoint(bot_r_lat, bot_r_long)]
+        - event_info (list): 4 GPS coordinates forming a 40m^2 rectangle that the boat must remain in
+            - expects [Waypoint(b1_lat, b1_long), Waypoint(b2_lat, b2_long), ...]
+                - top left, top right, bottom left, bottom right
     """
+    REQUIRED_ARGS = 4
 
     def __init__(self, event_info):
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        self._node = Node('stationKeeping2Event')
-        self.logging = self._node.get_logger()
         super().__init__(event_info)
-        self.logging.info("Station_Keeping moment")
 
         # EVENT INFO
         self.bounds = Bounds(event_info)

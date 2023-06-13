@@ -1,10 +1,9 @@
-from rclpy.node import Node
 import math
 import time
 import matplotlib.pyplot as plt
 
-import sailbot.constants as c
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
 
 import os, importlib
 DOCKER = os.environ.get('IS_DOCKER', False)
@@ -14,7 +13,6 @@ folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 camera = importlib.import_module(folder + "camera").Camera
 gps = importlib.import_module(folder + "GPS").gps
 arduino = importlib.import_module(folder + "transceiver").arduino
-
 
 """
 # Challenge	Goal:
@@ -55,7 +53,7 @@ arduino = importlib.import_module(folder + "transceiver").arduino
                     - Blacklist location (NOT IMPLEMENTED)
 """
 
-REQUIRED_ARGS = 2
+
 
 
 class Search(Event):
@@ -69,18 +67,15 @@ class Search(Event):
         - state (str): the search event state
             - Either 'SEARCHING', 'TRACKING', or 'RAMMING' the buoy
     """
-
+    REQUIRED_ARGS = 2
     def __init__(self, event_info):
         """
         Args:
-            event_info (list[Waypoint(center_lat, center_long), radius]): center and radius of search circle
+            - _event_info (list): center and radius of search circle
+                - expects [Waypoint(center_lat, center_long), radius]
         """
-        self._node = Node('searchEvent')
-        self.logging = self._node.get_logger()
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
         super().__init__(event_info)
-        self.logging.info("Search moment")
+
 
         # EVENT INFO
         self.search_center = event_info[0]
@@ -114,7 +109,7 @@ class Search(Event):
         # SENSORS
         self.camera = Camera()
         self.gps = gps()
-        self.transceiver = arduino(c.config['MAIN']['ardu_port'])
+        self.transceiver = arduino(c.config['MAIN']['ardu_port']) # TODO: fix transceiver ref
 
     def next_gps(self):
         """
@@ -244,37 +239,34 @@ class Search(Event):
         Returns:
             - list[Waypoint(lat, long), ...] gps coordinates of the search pattern
         """
-        # TODO: Make variable number of points based on distance
+        # TODO: Fix whatever went wrong at competition
+        # TODO: Adapt search pattern based on detection distance/windspeed/num-points
         # Metrics used to fine-tune optimal coverage
-        # TODO: Use windvane to determine rotation
-
-        if num_points is None:
-            max_detection_distance = c.config["SEARCH"]["max_detection_distance"]
-            num_points = (2 * self.search_radius) / max_detection_distance
-
-        if num_points < 2:
-            raise RuntimeError(f"Invalid number of points {num_points} for create_search_pattern()")
+        # Camera cone of vision from 
+        BOAT_FOV = 242
+        # Furthest distance object detection can reliably spot a buoy (m)
+        MAX_DETECTION_DISTANCE = 20  # untested
 
         pattern = []
-
+        for i in range(0, 30):
+            if self.gps.latitude is not None:
+                break
+            print("waiting for gps")
         d_lat = self.gps.latitude - self.search_center.lat
         d_lon = self.gps.longitude - self.search_center.lon
+        radius = math.sqrt(d_lat ** 2 + d_lon ** 2)
         ang = math.atan(d_lon / d_lat)
         ang *= 180 / math.pi
 
         if (d_lat < 0): ang += 180
 
         tar_angs = [ang, ang + 72, ang - 72, ang - (72 * 3), ang - (72 * 2)]
-        for i in range(0, 5):
-            pattern.append(
-                Waypoint(lat=self.search_center.lat + self.search_radius * math.cos(tar_angs[i] * (math.pi / 180)),
-                         lon=self.search_center.lon + self.search_radius * math.sin(tar_angs[i] * (math.pi / 180)))
-            )
-
-        total_distance = 0
-        for i in range(len(pattern) - 1):
-            total_distance += distance_between(pattern[i], pattern[i+1])
-        self.logging.info(f"Created {num_points}-point search path. Total distance to cover is {total_distance}m")
+        for i in range(1, 5):
+            wp = Waypoint(self.search_center.lat, self.search_center.lon)
+            dx = self.search_center.lon + self.search_radius * math.cos(tar_angs[i] * (math.pi / 180))
+            dy = self.search_center.lat + self.search_radius * math.sin(tar_angs[i] * (math.pi / 180))
+            wp.add_meters(dx, dy)
+            pattern.append(wp)
 
         return pattern
 
@@ -373,9 +365,3 @@ class HeatmapChunk:
         self.average_gps = Waypoint(self._sum_lat / self.detection_count, self._sum_lon / self.detection_count)
 
         self.sum_confidence += detection.conf
-
-
-if __name__ == "__main__":
-    print("Testing Search Event!")
-    event = Search(event_info=[Waypoint(0, 0), 100])
-

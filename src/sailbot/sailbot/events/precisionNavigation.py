@@ -1,19 +1,17 @@
 import time
-from rclpy.node import Node
 import math
 
-import sailbot.constants as c
-from sailbot.events.eventUtils import EventFinished, Waypoint
+import src.sailbot.sailbot.constants as c
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
 
 import os
 DOCKER = os.environ.get('IS_DOCKER', False)
 DOCKER = True if DOCKER == 'True' else False
 
 if not DOCKER:
-    from sailbot.peripherals.GPS import gps
+    from src.sailbot.sailbot.peripherals.GPS import gps
 else:
-    from sailbot.virtualPeripherals.GPS import gps
-
+    from src.sailbot.sailbot.virtualPeripherals.GPS import gps
 
 """
 # Challenge	Goal:
@@ -38,28 +36,23 @@ else:
         - TODO write psuedocode about how this event logic works
 """
 
-REQUIRED_ARGS = 4
 
-class Precision_Navigation:
+class PrecisionNavigation(Event):
     """
     Attributes:
-        - event_info (array) - location of buoys to sail around
-            event_info = [(Waypoint(start_left_lat, start_right_long), ...]
+        - _event_info (list): location of buoys to sail around
+            - expects [(Waypoint(start_left_lat, start_right_long), ...]
     """
-    
+    REQUIRED_ARGS = 4
+
     def __init__(self, event_info):
-        self._node = Node('precisionNavEvent')
-        self.logging = self._node.get_logger()
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        self.logging.info("Precision Navigation moment")
+        super().__init__(event_info)
 
         # EVENT INFO
-        self.event_info = event_info
-        self.start_left = event_info[0]
-        self.start_right = event_info[1]
-        self.buoy1 = event_info[2]
-        self.buoy2 = event_info[3]
+        self.start_left = self._event_info[0]
+        self.start_right = self._event_info[1]
+        self.buoy1 = self._event_info[2]
+        self.buoy2 = self._event_info[3]
         self.start_time = time.time()
 
         self.PN_arr = []
