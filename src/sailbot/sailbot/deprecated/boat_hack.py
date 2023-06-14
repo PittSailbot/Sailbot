@@ -1,4 +1,4 @@
-#outdated 
+# outdated
 
 import board
 import busio
@@ -9,6 +9,7 @@ import serial
 import drivers
 from threading import Thread
 from windvane import windVane
+
 """
 def map(x, min1, max1, min2, max2):
     x = min(max(x, min1), max1)
@@ -71,24 +72,26 @@ class obj_rudder:
         except TypeError:
             print("invalid input, degrees param must be a number")
     """
+
+
 class arduino:
     def __init__(self):
-        
-        #self.ser1 = serial.Serial('COM'+portnum, 9600)
+        # self.ser1 = serial.Serial('COM'+portnum, 9600)
         try:
-            self.ser1 = serial.Serial(str(c.config['MAIN']['ardu_port']), c.config['MAIN']['baudrate'])
+            self.ser1 = serial.Serial(str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"])
         except:
-            self.ser1 = serial.Serial(str(c.config['MAIN']['ardu_port']), c.config['MAIN']['baudrate'])
+            self.ser1 = serial.Serial(str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"])
         print(repr(self.ser1))
-        
+
     def send(self, data):
         self.ser1.write(str(data).encode())
-        
+
     def read(self):
         message = self.ser1.readline()
-        #message = self.ser1.read(c.RECEIVE_BUFFER_SIZE)
+        # message = self.ser1.read(c.RECEIVE_BUFFER_SIZE)
         return message[0:-2]
-    
+
+
 class proto:
     def position_status(self, sailPosition, rudderPosition):
         message = messages_pb2.BoatToBase()
@@ -97,63 +100,62 @@ class proto:
         status.rudderPosition = rudderPosition
         message.sails = status
         return message
-    
+
+
 def proto_both(message):
     command = message.skipper
     mSail.set(command.sailPosition)
     mRudder.set(command.rudderPosition)
-    
+
+
 def proto_sail(message):
     command = message.sail
     mSail.set(command.position)
-    
+
+
 def proto_rudder(message):
     command = message.rudder
     mRudder.set(command.position)
-    
+
+
 def proto_mode(message):
     command = message.mode
 
+
 def handle_input():
-    
     sail = 15
     rudder = 0
     driver.sail.set(sail)
-    print('y')
+    print("y")
     driver.rudder.set(rudder)
     while True:
         message = REC.read()
-        #commands = {
-         #       "sail" : mSail.set,
-          #      "rudder" : mRudder.set
-           # }
-        commands = {
-            'skipper' : proto_both,
-            'sail' : proto_sail,
-            'rudder' : proto_rudder,
-            'mode' : proto_mode
-        }
-        
+        # commands = {
+        #       "sail" : mSail.set,
+        #      "rudder" : mRudder.set
+        # }
+        commands = {"skipper": proto_both, "sail": proto_sail, "rudder": proto_rudder, "mode": proto_mode}
+
         if message:
-            #ary = message.split(' ')
-            
-            #cmd = commands[ary.pop(0)]
-            #cmd(*ary)
+            # ary = message.split(' ')
+
+            # cmd = commands[ary.pop(0)]
+            # cmd(*ary)
             print(message)
             ary = message.decode().split(" ")
-            if ary[0] == 'control':
+            if ary[0] == "control":
                 driver.sail.autoAdjust = not drivers.drive.sail.autoAdjust
-                
+
             if ary[0] == "sail":
                 driver.sail.autoAdjust = False
                 sail += int(ary[1])
-                
+
                 if sail < 10:
                     sail = 10
-                    
+
                 elif sail > 90:
                     sail = 90
-                
+
                 print("sail", sail)
             elif ary[0] == "rudder":
                 rudder += int(ary[1])
@@ -165,26 +167,24 @@ def handle_input():
 
         driver.sail.set(sail)
         driver.rudder.set(rudder)
-            #proto_message = messages_pb2.BaseToBoat()
-            #proto_message.ParseFromString(message)
-            #command = proto_message.WhichOneOf('command')
-            #commands[command](message)
+        # proto_message = messages_pb2.BaseToBoat()
+        # proto_message.ParseFromString(message)
+        # command = proto_message.WhichOneOf('command')
+        # commands[command](message)
+
 
 if __name__ == "__main__":
-    
     i2c = busio.I2C(board.SCL, board.SDA)
     pca = pcaLib.PCA9685(i2c)
     pca.frequency = 50
-    
-    #arduino class needs com port
+
+    # arduino class needs com port
     REC = arduino()
-    driver = drivers.driver(sailAuto = True)
-    
+    driver = drivers.driver(sailAuto=True)
+
     pump_thread = Thread(target=handle_input)
     pump_thread.start()
-    
-    
-    
+
     while True:
         pass
         """string = input("  > Enter Input:")
@@ -204,6 +204,3 @@ if __name__ == "__main__":
               mRudder.set(int(arr[1]))
         
         #handle_input(REC.read())"""
-
-
-                  

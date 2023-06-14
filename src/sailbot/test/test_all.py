@@ -16,8 +16,9 @@ import src.sailbot.sailbot.boatMain as boatMain
 
 
 import os, importlib
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 
 if not DOCKER:
     import rclpy
@@ -28,6 +29,7 @@ if not DOCKER:
 
 
 # ---------------------------------- SENSORS ----------------------------------
+
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_gps():
@@ -52,8 +54,6 @@ def test_compass():
     rclpy.shutdown()
 
 
-
-
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_windvane():
     wv = windvane.windVane()
@@ -66,7 +66,7 @@ def test_windvane():
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_transceiver():
-    ardu = transceiver.arduino(c.config['MAIN']['ardu_port'])
+    ardu = transceiver.arduino(c.config["MAIN"]["ardu_port"])
 
     for i in range(0, 3):
         results = ardu.readData()
@@ -82,7 +82,9 @@ def test_servos():
     assert 69 < servos.pitch < 71, f"Camera servo pitch outside of acceptable error, expected 70, got: {servos.pitch}"
 
     servos.yaw = 2000
-    assert 179 < servos.yaw < 181, f"Camera servo yaw unprotected from impossible range, expected 180, got: {servos.yaw}"
+    assert (
+        179 < servos.yaw < 181
+    ), f"Camera servo yaw unprotected from impossible range, expected 180, got: {servos.yaw}"
 
 
 def test_cam_detect():
@@ -104,7 +106,7 @@ def test_cam_detect():
             warnings.warn(f"Low average FPS ({avg_fps}) for detections")
 
 
-def test_img_detect(img=fr"{c.root_dir}\data\CV\test_buoy.jpg"):
+def test_img_detect(img=rf"{c.root_dir}\data\CV\test_buoy.jpg"):
     """Detects buoys from specified image path(s)
     Args:
         img (str): file path of selected image
@@ -112,11 +114,9 @@ def test_img_detect(img=fr"{c.root_dir}\data\CV\test_buoy.jpg"):
     # Basic model function can be tested by running `yolo predict model=CV/buoy_weights.pt source=0`
     object_detection = objectDetection.ObjectDetection()
 
-    object_detection.model.predict(source=img,
-                                   show=True,
-                                   conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]),
-                                   save=False,
-                                   line_thickness=1)
+    object_detection.model.predict(
+        source=img, show=True, conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]), save=False, line_thickness=1
+    )
 
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
@@ -124,10 +124,9 @@ def test_gps_estimation():
     """Prints out simulated gps locations for test_buoy.jpg"""
     object_detection = objectDetection.ObjectDetection()
 
-    sim_frame = camera.Frame(gps=Waypoint(0, 0),
-                             heading=90,
-                             pitch=45,
-                             detections=object_detection.analyze("CV/test_buoy.jpg"))
+    sim_frame = camera.Frame(
+        gps=Waypoint(0, 0), heading=90, pitch=45, detections=object_detection.analyze("CV/test_buoy.jpg")
+    )
 
     camera.estimate_all_buoy_gps(sim_frame)
     for detection in sim_frame.detections:
@@ -146,11 +145,13 @@ def test_survey():
 
 # ---------------------------------- CONTROLS ----------------------------------
 
+
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_rudder():
     boat = boatMain.boat()
     boat.turnToAngle(30, wait_until_finished=True)
     assert boat.currentRudder == 30
+
 
 @pytest.mark.skip(reason="Not implemented")
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
@@ -159,6 +160,7 @@ def test_sail():
 
 
 # -------------------------------- MANUAL TESTS --------------------------------
+
 
 def manual_test_camera():
     """Manually test camera capture, servo movement and object detection
@@ -174,10 +176,12 @@ def manual_test_camera():
             try:
                 frame = cam.capture(context=True, detect=True, annotate=True)
             except Exception as e:
-                warnings.warn(f"""
+                warnings.warn(
+                    f"""
                 Failed to capture frame with context
                 Exception Raised: {e}
-                Attempting capture without context""")
+                Attempting capture without context"""
+                )
                 frame = cam.capture(context=False, detect=True, annotate=True)
 
             print(f"Captured: {repr(frame)}")
@@ -209,7 +213,7 @@ def manual_test_camera():
 
 def manual_test_cam_detect():
     """Infinitely runs camera detections and shows each detection
-        - Good for measuring detection accuracy but not performance"""
+    - Good for measuring detection accuracy but not performance"""
     cam = camera.Camera()
     while True:
         start = time()
@@ -217,8 +221,8 @@ def manual_test_cam_detect():
 
         end = time()
         fps = 1 / np.round(end - start, 2)
-        cv2.putText(frame.img, f'FPS: {fps}', (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 2)
-        cv2.imshow('manual_test_cam_detect()', frame.img)
+        cv2.putText(frame.img, f"FPS: {fps}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 2)
+        cv2.imshow("manual_test_cam_detect()", frame.img)
         cv2.waitKey(1)
 
 

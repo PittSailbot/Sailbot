@@ -20,7 +20,7 @@ for i in range(1000):
     pinVal = pin_values[pin]
     GPIO.output(self.step_pin, not pinVal)
     pin_values[pin] = not pinVal
-    sleep(.1)
+    sleep(0.1)
 
 print("reading")
 for i in range(5):
@@ -32,10 +32,9 @@ for i in range(5):
 print("writing")
 for i in range(5):
     GPIO.output(writePin, False)
-    sleep(.25)
+    sleep(0.25)
     GPIO.output(writePin, True)
-    sleep(.25)
-
+    sleep(0.25)
 
 
 print("reading")

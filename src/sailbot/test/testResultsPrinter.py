@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
+
 def parseXML(xmlfile):
-  
     # create element tree object
     tree = ET.parse(xmlfile)
     root = tree.getroot()
@@ -12,10 +12,13 @@ def parseXML(xmlfile):
         tests = suite.findall("testcase")
         for test in tests:
             for child in test:
-                if child.tag == 'failure' or child.tag == 'error':
-                    print(F"{child.tag} : {child.text}")
+                if child.tag == "failure" or child.tag == "error":
+                    print(f"{child.tag} : {child.text}")
 
         suiteVals = dict(suite.items())
-        print(F"{suiteVals['name']}: (errors: {suiteVals['errors']}, failures: {suiteVals['failures']}, skipped {suiteVals['skipped']}, tests: {suiteVals['tests']})")
+        print(
+            f"{suiteVals['name']}: (errors: {suiteVals['errors']}, failures: {suiteVals['failures']}, skipped {suiteVals['skipped']}, tests: {suiteVals['tests']})"
+        )
+
 
 parseXML("build/sailbot/pytest.xml")

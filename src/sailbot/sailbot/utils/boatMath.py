@@ -52,26 +52,28 @@ def angle_between(waypoint1, waypoint2):
     delta2 = math.radians(waypoint2.lon - waypoint1.lon)
 
     y = math.sin(delta2) * math.cos(theta2)
-    x = math.cos(theta1) * math.sin(theta2) - math.sin(theta1)*math.cos(theta2)*math.cos(delta2)
-    brng = math.atan(y/x)
-    brng *= 180/math.pi
+    x = math.cos(theta1) * math.sin(theta2) - math.sin(theta1) * math.cos(theta2) * math.cos(delta2)
+    brng = math.atan(y / x)
+    brng *= 180 / math.pi
 
     brng = (brng + 360) % 360
 
     return brng
 
+
 def angleToPoint(heading, lat1, long1, lat2, long2):
-    phi = math.atan2(long1-long2, lat1-lat2)
+    phi = math.atan2(long1 - long2, lat1 - lat2)
 
     return (360 - (math.degrees(phi) + heading + 180)) % 360
 
-def convertDegMinToDecDeg (degMin):
+
+def convertDegMinToDecDeg(degMin):
     min = 0.0
     decDeg = 0.0
 
     min = math.fmod(degMin, 100.0)
 
-    degMin = int(degMin/100)
-    decDeg = degMin + (min/60)
+    degMin = int(degMin / 100)
+    decDeg = degMin + (min / 60)
 
     return decDeg

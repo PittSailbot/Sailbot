@@ -30,6 +30,7 @@ class Endurance(Event):
             - expects [Waypoint(b1_lat, b1_long), Waypoint(b2_lat, b2_long), ...]
                 - top left, top right, bottom left, bottom right
     """
+
     REQUIRED_ARGS = 4
 
     def __init__(self, event_info):
@@ -41,12 +42,11 @@ class Endurance(Event):
         for buoy in self.waypoint_queue:
             buoy.add_meters(rounding_buffer, rounding_buffer)
         self.waypoint_queue *= 10
-        
 
     def next_gps(self):
         """
         Main event script logic. Executed continuously by boatMain.
-        
+
         Returns either:
             - The next GPS point that the boat should sail to stored as a Waypoint object
             - OR None to signal the boat to drop sails and clear waypoint queue

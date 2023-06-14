@@ -10,8 +10,9 @@ import time
 from rclpy.node import Node
 
 import os
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 
 import src.sailbot.sailbot.constants as c
 
@@ -27,7 +28,7 @@ class Waypoint:
     A GPS marker for buoys, travel destinations, etc.
         - Initialize using Waypoint(latitude, longitude)
     """
-    
+
     lat: float
     lon: float
 
@@ -48,17 +49,18 @@ class Waypoint:
 class Event:
     """
     Basic blueprint for creating new events
-    
-    Attributes: 
+
+    Attributes:
         - event_info (array) - provided starter information about the event
             - event_info = []
-    
+
     Functions:
         - next_gps() - event logic which determines where to sail to next
     """
+
     REQUIRED_ARGS = 0
 
-    def __init__(self, event_info):        
+    def __init__(self, event_info):
         self._event_info = event_info
         self._node = Node(self.__class__.__name__)
         self.logging = self._node.get_logger()
@@ -66,12 +68,12 @@ class Event:
 
         if len(event_info) != self.REQUIRED_ARGS:
             raise TypeError(f"Expected {self.REQUIRED_ARGS} arguments, got {len(event_info)}")
-        
+
     @abstractmethod
     def next_gps(self):
         """
         Main event script logic. Executed continuously by boatMain.
-        
+
         Returns either:
             - The next GPS point that the boat should sail to stored as a Waypoint object
             - OR None to signal the boat to drop sails and clear waypoint queue
@@ -83,6 +85,7 @@ class Event:
 
 class EventFinished(Exception):
     """Signals that the event is finished and that it is safe to return to manual control"""
+
     pass
 
 
@@ -128,7 +131,7 @@ def distance_between(waypoint1, waypoint2):
     dlon = lon2 - lon1
     a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    
+
     distance = EARTH_RADIUS * c
 
     return distance

@@ -1,7 +1,7 @@
 """
 interfaces with USB GPS sensor
 """
-#https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
+# https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
 import time
 import logging
 import rclpy
@@ -24,7 +24,7 @@ class gps(Node):
     def __init__(self):
         self.latitude = None
         self.longitude = None
-        self._node = Node('GPS')
+        self._node = Node("GPS")
         self.logging = self._node.get_logger()
 
         # Can also use adafruit_gps module (but didn't work at competition?)
@@ -39,8 +39,8 @@ class gps(Node):
         else:
             logging.warning(f"No GPS fix")
 
-        super().__init__('GPS')
-        self.pub = self.create_publisher(String, 'GPS', 10)
+        super().__init__("GPS")
+        self.pub = self.create_publisher(String, "GPS", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -49,7 +49,7 @@ class gps(Node):
         packet = gpsd.get_current().position()
         self.latitude = packet[0]
         self.longitude = packet[1]
-        msg.data = F"{self.latitude},{self.longitude}"
+        msg.data = f"{self.latitude},{self.longitude}"
         self.pub.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
 
@@ -66,8 +66,8 @@ class gps(Node):
     def run(self):
         # TODO: Delete
         while True:
-            return # This should use ROS now instead of a loop
-            #self.updategps()
+            return  # This should use ROS now instead of a loop
+            # self.updategps()
 
     def readgps(self):
         # TODO: delete
@@ -76,41 +76,44 @@ class gps(Node):
             data = self.gps.read(64)
 
             if data is not None:
-                data_string = ''.join([chr(b) for b in data])
+                data_string = "".join([chr(b) for b in data])
                 self.logging.info(data_string, end="")
 
                 if time.monotonic() - timestamp > 5:
-                    self.gps.send_command(b'PMTK605')
+                    self.gps.send_command(b"PMTK605")
                     timestamp = time.monotonic()
 
-    def updategps(self, print_info = False):
+    def updategps(self, print_info=False):
         # TODO: Delete
         # must be called before reading latitude and longitude, just pulls data from the sensor
         # optionally prints data read from sensor
         self.gps.update()
-        if(self.gps.has_fix):
+        if self.gps.has_fix:
             self.latitude = self.gps.latitude
             self.longitude = self.gps.longitude
             self.track_angle_deg = self.gps.track_angle_deg
         if print_info:
-            #self.logging.info(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
+            # self.logging.info(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
             if not self.gps.has_fix:
                 self.logging.info("Waiting for fix")
                 return
 
-            self.logging.info('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
-                self.gps.timestamp_utc.tm_mon,   # Grab parts of the time from the
-                self.gps.timestamp_utc.tm_mday,  # struct_time object that holds
-                self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-                self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-                self.gps.timestamp_utc.tm_min,   # month!
-                self.gps.timestamp_utc.tm_sec))
+            self.logging.info(
+                "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
+                    self.gps.timestamp_utc.tm_mon,  # Grab parts of the time from the
+                    self.gps.timestamp_utc.tm_mday,  # struct_time object that holds
+                    self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
+                    self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
+                    self.gps.timestamp_utc.tm_min,  # month!
+                    self.gps.timestamp_utc.tm_sec,
+                )
+            )
 
-            self.logging.info('Latitude: {0:.8f} degrees'.format(self.gps.latitude))
-            self.logging.info('Longitude: {0:.8f} degrees'.format(self.gps.longitude))
-            self.logging.info('Lat in decDeg:', convertDegMinToDecDeg(self.gps.latitude) )
-            self.logging.info('long in decDeg:', convertDegMinToDecDeg(self.gps.longitude) )
-            self.logging.info('Fix quality: {}'.format(self.gps.fix_quality))
+            self.logging.info("Latitude: {0:.8f} degrees".format(self.gps.latitude))
+            self.logging.info("Longitude: {0:.8f} degrees".format(self.gps.longitude))
+            self.logging.info("Lat in decDeg:", convertDegMinToDecDeg(self.gps.latitude))
+            self.logging.info("long in decDeg:", convertDegMinToDecDeg(self.gps.longitude))
+            self.logging.info("Fix quality: {}".format(self.gps.fix_quality))
             self.latitude = self.gps.latitude
             self.longitude = self.gps.longitude
             # Some attributes beyond latitude, longitude and timestamp are optional
@@ -129,8 +132,9 @@ class gps(Node):
                 print('Height geo ID: {} meters'.format(self.gps.height_geoid))
             """
 
-def main(args = None):
-    os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/gps"
+
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
     rclpy.init(args=args)
     GPS = gps()
     rclpy.spin(GPS)
@@ -140,7 +144,7 @@ def main(args = None):
     # when the garbage collector destroys the node object)
     GPS.destroy_node()
     rclpy.shutdown()
-    
+
 
 if __name__ == "__main__":
     rclpy.init()

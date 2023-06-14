@@ -6,8 +6,9 @@ from src.sailbot.sailbot import constants as c
 from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
 
 import os, importlib
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 camera = importlib.import_module(folder + "camera").Camera
@@ -54,8 +55,6 @@ arduino = importlib.import_module(folder + "transceiver").arduino
 """
 
 
-
-
 class Search(Event):
     """
     Attributes:
@@ -67,7 +66,9 @@ class Search(Event):
         - state (str): the search event state
             - Either 'SEARCHING', 'TRACKING', or 'RAMMING' the buoy
     """
+
     REQUIRED_ARGS = 2
+
     def __init__(self, event_info):
         """
         Args:
@@ -75,7 +76,6 @@ class Search(Event):
                 - expects [Waypoint(center_lat, center_long), radius]
         """
         super().__init__(event_info)
-
 
         # EVENT INFO
         self.search_center = event_info[0]
@@ -109,12 +109,12 @@ class Search(Event):
         # SENSORS
         self.camera = Camera()
         self.gps = gps()
-        self.transceiver = arduino(c.config['MAIN']['ardu_port']) # TODO: fix transceiver ref
+        self.transceiver = arduino(c.config["MAIN"]["ardu_port"])  # TODO: fix transceiver ref
 
     def next_gps(self):
         """
         Main event script logic. Executed continuously by boatMain.
-        
+
         Returns either:
             - Waypoint object: The next GPS point that the boat should sail to
             - EventFinished Exception: signals that the event has been completed
@@ -141,7 +141,9 @@ class Search(Event):
                     distance_from_center = distance_between(self.search_center, detection.gps)
 
                     if distance_from_center > self.search_bounds:
-                        self.logging.info(f"SEARCHING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center")
+                        self.logging.info(
+                            f"SEARCHING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center"
+                        )
                         continue
 
                     self.logging.info(f"SEARCHING: Buoy ({detection.conf}%) found at: {detection.gps}")
@@ -159,8 +161,10 @@ class Search(Event):
                 self.best_chunk = self.heatmap.get_highest_confidence_chunk()
 
                 if self.best_chunk.sum_confidence > self.divert_confidence_threshold:
-                    self.logging.info(f"""SEARCHING: This bitch definitely a buoy! 
-                            Bookmarking position and moving towards buoy at {self.best_chunk.average_gps}.""")
+                    self.logging.info(
+                        f"""SEARCHING: This bitch definitely a buoy! 
+                            Bookmarking position and moving towards buoy at {self.best_chunk.average_gps}."""
+                    )
                     self.state = "TRACKING"
                     self.waypoint_queue.insert(0, self.gps)
                     self.waypoint_queue.insert(0, self.best_chunk.average_gps)
@@ -180,8 +184,10 @@ class Search(Event):
                 try:
                     self.camera.focus(self.waypoint_queue[0])
                 except RuntimeError as e:
-                    self.logging.warning(f"""TRACKING: Exception raised: {e}\n
-                    Camera can't focus on target! Going towards last know position!""")
+                    self.logging.warning(
+                        f"""TRACKING: Exception raised: {e}\n
+                    Camera can't focus on target! Going towards last know position!"""
+                    )
                     return self.waypoint_queue[0]
 
                 frame = self.camera.capture(context=True, detect=True)
@@ -203,7 +209,9 @@ class Search(Event):
                         distance_from_center = distance_between(self.search_center, detection.gps)
 
                         if distance_from_center > self.search_bounds:
-                            self.logging.info(f"TRACKING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center")
+                            self.logging.info(
+                                f"TRACKING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center"
+                            )
                             continue
 
                         self.logging.info(f"TRACKING: Buoy found at: {detection.gps}")
@@ -242,7 +250,7 @@ class Search(Event):
         # TODO: Fix whatever went wrong at competition
         # TODO: Adapt search pattern based on detection distance/windspeed/num-points
         # Metrics used to fine-tune optimal coverage
-        # Camera cone of vision from 
+        # Camera cone of vision from
         BOAT_FOV = 242
         # Furthest distance object detection can reliably spot a buoy (m)
         MAX_DETECTION_DISTANCE = 20  # untested
@@ -254,11 +262,12 @@ class Search(Event):
             print("waiting for gps")
         d_lat = self.gps.latitude - self.search_center.lat
         d_lon = self.gps.longitude - self.search_center.lon
-        radius = math.sqrt(d_lat ** 2 + d_lon ** 2)
+        radius = math.sqrt(d_lat**2 + d_lon**2)
         ang = math.atan(d_lon / d_lat)
         ang *= 180 / math.pi
 
-        if (d_lat < 0): ang += 180
+        if d_lat < 0:
+            ang += 180
 
         tar_angs = [ang, ang + 72, ang - 72, ang - (72 * 3), ang - (72 * 2)]
         for i in range(1, 5):
@@ -273,16 +282,16 @@ class Search(Event):
 
 class Heatmap:
     """Datastructure which splits the search radius into X-meter circular 'chunks'
-        - Each detection has its confidence pooled with all others inside the same chunk
-            - Decrease chunk radius if two separate buoys are being grouped as one
-            - Increase chunk radius if the same buoy is creating multiple chunks (caused by GPS estimation error)
-        - NOTE: Chunks can overlap which may cause problems (if so, then extend code to use tri/square/hex chunks instead of circles)
+    - Each detection has its confidence pooled with all others inside the same chunk
+        - Decrease chunk radius if two separate buoys are being grouped as one
+        - Increase chunk radius if the same buoy is creating multiple chunks (caused by GPS estimation error)
+    - NOTE: Chunks can overlap which may cause problems (if so, then extend code to use tri/square/hex chunks instead of circles)
 
-        Attributes:
-            - chunks (list[HeatmapChunk])
-            - chunk_radius (float)
-        Functions:
-            - visualize(): prints out a graphical representation of the heatmap
+    Attributes:
+        - chunks (list[HeatmapChunk])
+        - chunk_radius (float)
+    Functions:
+        - visualize(): prints out a graphical representation of the heatmap
     """
 
     def __init__(self, chunk_radius):
@@ -304,8 +313,7 @@ class Heatmap:
             if detection in chunk:
                 chunk.append(detection)
         else:
-            self.chunks.append(HeatmapChunk(radius=self.chunk_radius,
-                                            detection=detection))
+            self.chunks.append(HeatmapChunk(radius=self.chunk_radius, detection=detection))
 
     def get_highest_confidence_chunk(self):
         return max(self.chunks, key=lambda heatmap_chunk: heatmap_chunk.sum_confidence)

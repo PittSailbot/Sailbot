@@ -7,8 +7,9 @@ import time
 from rclpy.node import Node
 
 import os, importlib
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 gps = importlib.import_module(folder + "GPS").gps
@@ -23,7 +24,7 @@ from src.sailbot.sailbot.utils.utils import singleton
 class Frame:
     """
     RGB image with sensor metadata frozen at the time of capture
-    
+
     Attributes:
         - img (np.ndarray): the RGB image captured
         - time (float): time in seconds since 1970
@@ -53,30 +54,31 @@ class Frame:
 class Camera:
     """
     Drivers and interface for camera
-    
+
     Attributes:
         - servos (CameraServo): interface to control camera servos
             - servos.pitch and servos.yaw will always have the immediate camera position
-            - pitch and yaw can be modified to move the physical servos 
-    
+            - pitch and yaw can be modified to move the physical servos
+
     Functions:
         - capture(): Takes a picture
         - survey(): Takes a panorama
     """
+
     def __init__(self):
         self.path = os.getcwd()
-        if (c.config["MAIN"]["device"] == "pi"):
+        if c.config["MAIN"]["device"] == "pi":
             self.servos = CameraServos()
             self.gps = gps()
             self.compass = compass()
         else:
             self._cap = cv2.VideoCapture(int(c.config["CAMERA"]["source"]))
 
-        self._node = Node('camera')
+        self._node = Node("camera")
         self.logging = self._node.get_logger()
 
     def __del__(self):
-        if (c.config["MAIN"]["device"] != "pi"):
+        if c.config["MAIN"]["device"] != "pi":
             self._cap.release()
 
     def capture(self, context=True, detect=False, annotate=False, save=False) -> Frame:
@@ -92,12 +94,12 @@ class Camera:
 
         frame = Frame()
 
-        if (c.config["MAIN"]["device"] == "pi"):
+        if c.config["MAIN"]["device"] == "pi":
             # Inefficient as FUCK
-            cmd = fr"libcamera-still -t 1 -o '{self.path}/buffer0.jpg' --width 640 --height 640"
+            cmd = rf"libcamera-still -t 1 -o '{self.path}/buffer0.jpg' --width 640 --height 640"
             os.system(cmd)
             frame.img = cv2.imread(f"{self.path}/buffer0.jpg")
-            if (frame.img is None):
+            if frame.img is None:
                 raise RuntimeError("No camera image detected!")
         else:
             _, frame.img = self._cap.read()
@@ -118,34 +120,33 @@ class Camera:
                 draw_bbox(frame)
 
         if save:
-            img_path = fr"{os.getcwd()}{c.config['MAIN']['log_path']}"
+            img_path = rf"{os.getcwd()}{c.config['MAIN']['log_path']}"
             filename = time.strftime("%m-%d %H-%M-%S", time.localtime(frame.time))
-            full_path = fr"{img_path}\{filename}.png"
+            full_path = rf"{img_path}\{filename}.png"
 
             i = 1
             while os.path.isfile(full_path):
-                full_path = fr"{img_path}\{filename} {i}.png"
+                full_path = rf"{img_path}\{filename} {i}.png"
                 i += 1
 
             cv2.imwrite(full_path, frame.img)
 
         return frame
 
-    def survey(self, num_images=3, pitch=70, servo_range=180,
-               context=True, detect=False, annotate=False, save=False):
+    def survey(self, num_images=3, pitch=70, servo_range=180, context=True, detect=False, annotate=False, save=False):
         """Takes a horizontal panaroma over the camera's field of view
             - Maximum boat FoV is ~242.2 degrees (not tested)
         # Args:
             - num_images (int): how many images to take across FoV
                 - Picamera2 lens covers an FoV of 62.2 degrees horizontal and 48.8 vertical
-                
+
             - pitch (int): fixed camera pitch angle
                 - must be between 0 and 180 degrees: 0 points straight down, 180 points straight up
-                
+
             - servo_range (int): the allowed range of motion for camera servos, always centered
                 - must be between 0 and 180 degrees: 0 means servo is fixed to center, 180 is full servo range of motion
                 - ex. a range of 90 degrees limits servo movement to between 45-135 degrees for a total boat FoV of 152.2 degrees
-                
+
             - context (bool): whether to include time, gps and camera angle of captured images
             - detect (bool): whether to detect buoys in each image
             - annotate (bool): whether to draw bounding boxes around each detection
@@ -203,14 +204,17 @@ class Camera:
             self.logging.info(f"Focusing on camera pixel detection")
             Cx, Cy = detection.x, detection.y
             Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
-            if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"][
-                "center_acceptance"]: return
+            if (
+                Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
+                and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
+            ):
+                return
 
-            '''
+            """
             #find approriate amount turn based on pixels its behind by
             Tx,Ty = self.coordcalc(detection.w) #bad dist but useful
             if Cx < c.config["OBJECTDETECTION"]["camera_width"]/2: self.yaw(self.yaw)
-            '''
+            """
             # find approriate amount turn based by turning by regressive amounts if its too much
             turn_deg = 15
             if Cx - detection.w / 2 < 0:
@@ -223,16 +227,23 @@ class Camera:
                 # look (camera)
                 frame = self.capture(detect=True, context=False)
                 Cx, Cy = frame.detections[0].x, frame.detections[0].y
-                Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
-                if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"][
-                    "center_acceptance"]: break
+                Px, Py = (
+                    Cx / c.config["OBJECTDETECTION"]["camera_width"],
+                    Cy / c.config["OBJECTDETECTION"]["camera_height"],
+                )
+                if (
+                    Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
+                    and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
+                ):
+                    break
 
                 # TERRIBLE LOGIC
                 if Cx - detection.w / 2 < 0:
                     signT = -1
                 else:
                     signT = 1
-                if sign * signT == -1: turn_deg * 0.8
+                if sign * signT == -1:
+                    turn_deg * 0.8
 
     # ----------------------------------
     # calculate gps coords of object based on distance formula and angle
@@ -245,13 +256,15 @@ class Camera:
         dist = (c.config["OBJECTDETECTION"]["Width_Real"] * c.config["OBJECTDETECTION"]["Focal_Length"]) / obj_width
         # TODO: either add angle its away from boat or focus boat at coord
         comp = compass()  # assume 0 is north(y pos)
-        geep = gps();
+        geep = gps()
         geep.updategps()
 
         t = math.pi / 180
         # intersection of a line coming from the front of the boat to a circle of with a radius the distance it is away
-        return dist * math.cos((comp.angle + self.servos.yaw - 90) * t) + geep.latitude, dist * math.sin(
-            (comp.angle + self.servos.yaw - 90) * t) + geep.longitude
+        return (
+            dist * math.cos((comp.angle + self.servos.yaw - 90) * t) + geep.latitude,
+            dist * math.sin((comp.angle + self.servos.yaw - 90) * t) + geep.longitude,
+        )
 
     # ----------------------------------
     # search use: returns based on threshold if theres a buoy in frame
@@ -259,9 +272,11 @@ class Camera:
         # take 3 images by steps
         imgs = self.survey(3, detect=True)
         dets = []
-        for img in imgs:  dets.extend(img.detections)
+        for img in imgs:
+            dets.extend(img.detections)
         for det in dets:
-            if det.conf > c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]: return True
+            if det.conf > c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]:
+                return True
         return False
 
     # no real use (YET), but cool for presentation
@@ -273,21 +288,26 @@ class Camera:
         for img in imgs:
             dets.extend(img.detections)
         # survey by groups of (1-thres)/steps
-        curr = [];
+        curr = []
         st = (1 - c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]) / c.config["OBJECTDETECTION"]["SCAN_major_steps"]
         for j in range(c.config["OBJECTDETECTION"]["SCAN_major_steps"]):
             for i in dets:
-                if i.conf > 1 - (st * j): curr.append(i)
-            if curr: break
-        if not (curr): return False
+                if i.conf > 1 - (st * j):
+                    curr.append(i)
+            if curr:
+                break
+        if not (curr):
+            return False
         # sort by width
         gainiest = 0
         for i in curr:
-            if i.w > gainiest: gainiest = i.w; index = i
+            if i.w > gainiest:
+                gainiest = i.w
+                index = i
 
         # focus on it
-        del imgs;
-        del dets;
+        del imgs
+        del dets
         del curr
         self.focus(index)
 
@@ -298,7 +318,7 @@ class Camera:
 
 
 # TODO: Currently ignores camera height and pitch so estimated gps is based off of the triangle's leg vs hypotenuse
-    # Fix if estimated gps positions are innacurate
+# Fix if estimated gps positions are innacurate
 def estimate_all_buoy_gps(frame):
     """Approximates the locations of all detected buoys in a frame
         - Compares the ratio of buoy_size/distance to a fixed measured ratio
@@ -320,7 +340,7 @@ def estimate_all_buoy_gps(frame):
 
     for detection in frame.detections:
         hypotenuse_distance = (tested_width / detection.w) * tested_distance
-        dz = hypotenuse_distance * math.sin(frame.heading) # IDK IF WORKS
+        dz = hypotenuse_distance * math.sin(frame.heading)  # IDK IF WORKS
 
         dx = (abs(detection.x - cam_center) / detection.w) * real_width
         dx *= math.cos(frame.heading)

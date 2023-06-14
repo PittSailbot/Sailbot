@@ -4,10 +4,12 @@ hadles turning motors using Odrive/Stepper driver
 
 import board
 import busio
-#import adafruit_pca9685 as pcaLib
+
+# import adafruit_pca9685 as pcaLib
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+
 try:
     import constants as c
 except:
@@ -18,48 +20,46 @@ from RPi import GPIO
 from time import sleep
 
 
-
 class motorOffset(Node):
     def __init__(self):
-        super().__init__('motorOffset')
+        super().__init__("motorOffset")
 
-        self.pub = self.create_publisher(String, 'driver', 10)
+        self.pub = self.create_publisher(String, "driver", 10)
 
     def rudderOffset(self, value):
         dataStr = String()
-        dataStr.data = F"(driverOffset:rudder:{value})"
+        dataStr.data = f"(driverOffset:rudder:{value})"
         self.pub.publish(dataStr)
 
     def sailOffset(self, value):
         dataStr = String()
-        dataStr.data = F"(driverOffset:sail:{value})"
+        dataStr.data = f"(driverOffset:sail:{value})"
         self.pub.publish(dataStr)
 
 
-def main(args = None):
-    os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/motorOffset"
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/motorOffset"
     rclpy.init(args=args)
     offsetter = motorOffset()
     while True:
         try:
             cmd = input("> ")
-            cmd = cmd.split(' ')
+            cmd = cmd.split(" ")
             if len(cmd) == 2:
-                if cmd[0] == 's':
+                if cmd[0] == "s":
                     value = float(cmd[1])
                     offsetter.sailOffset(value)
 
-                if cmd[0] == 'r':
+                if cmd[0] == "r":
                     value = float(cmd[1])
                     offsetter.rudderOffset(value)
         except KeyboardInterrupt as e:
             break
         except Exception as e:
-            print(F"error: {e}")
+            print(f"error: {e}")
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
     print("Destroying driver node")
     drv.destroy_node()
     rclpy.shutdown()
-

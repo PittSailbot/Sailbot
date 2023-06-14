@@ -107,9 +107,9 @@ def go_to_gps(waypoint, wait_until_finished=False):
     gps = gps.gps()
     compass = compass.compass()
     windvane = windvane.windvane()
-    #rudder = Rudder()
+    # rudder = Rudder()
 
-    #acceptable_error = float(c.config['CONSTANTS']['reachedGPSThreshhold'])
+    # acceptable_error = float(c.config['CONSTANTS']['reachedGPSThreshhold'])
 
     # determine angle we need to turn
     deltaAngle = boatMath.angleToPoint(compass.angle, gps.latitude, gps.longitude, waypoint.lat, waypoint.lon)
@@ -125,9 +125,9 @@ def go_to_gps(waypoint, wait_until_finished=False):
 
     # TODO: create thread to wait until at point
 
-    #if eventUtils.distance_between(waypoint, eventUtils.Waypoint(gps.latitude, gps.longitude)) < acceptable_error:
-        # if we are very close to GPS coord
-        #if cycleTargets:
-            #targets.append((lat, long))
-        #currentTarget = None
-        #rudder.reset()
+    # if eventUtils.distance_between(waypoint, eventUtils.Waypoint(gps.latitude, gps.longitude)) < acceptable_error:
+    # if we are very close to GPS coord
+    # if cycleTargets:
+    # targets.append((lat, long))
+    # currentTarget = None
+    # rudder.reset()

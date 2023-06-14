@@ -7,8 +7,9 @@ from src.sailbot.sailbot.peripherals.windvane import windVane
 from src.sailbot.sailbot.peripherals.GPS import gps
 
 import os, importlib
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
@@ -42,6 +43,7 @@ class StationKeeping(Event):
             - expects [Waypoint(b1_lat, b1_long), Waypoint(b2_lat, b2_long), ...]
                 - top left, top right, bottom left, bottom right
     """
+
     REQUIRED_ARGS = 4
 
     def __init__(self, event_info):
@@ -95,6 +97,7 @@ class StationKeeping(Event):
 
 class Bounds:
     """Rectangular bounding box for the station keeping event"""
+
     def __init__(self, event_info):
         self.top_left = event_info[0]
         self.top_right = event_info[1]
