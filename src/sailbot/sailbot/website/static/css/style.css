@@ -1,0 +1,179 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'DotGothic16', 'Courier New', Courier, monospace;
+    color: aliceblue;
+}
+.register{
+    margin:auto;
+    text-align:center;
+}
+.text-box{
+    font-family: 'DotGothic16', 'Courier New', Courier, monospace;
+    text-align: center;
+}
+
+.flashes{
+    padding-top:25px;
+    text-align:center;
+}
+
+.rate {
+    float: left;
+    height: 46px;
+    padding: 0 10px;
+}
+.rate:not(:checked) > input {
+    display:none;
+    position:absolute;
+    top:-9999px;
+}
+.rate:not(:checked) > label {
+    float:right;
+    width:1em;
+    overflow:hidden;
+    white-space:nowrap;
+    cursor:pointer;
+    font-size:30px;
+    color:#ccc;
+}
+#desc{
+    background: rgba(255, 255, 255, 0.17);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin:2%;
+    padding:1%;
+}
+.rate:not(:checked) > label:before {
+    content: '★ ';
+}
+.rate > input:checked ~ label {
+    color: #ffc700;    
+}
+.rate:not(:checked) > label:hover,
+.rate:not(:checked) > label:hover ~ label {
+    color: #deb217;  
+}
+.rate > input:checked + label:hover,
+.rate > input:checked + label:hover ~ label,
+.rate > input:checked ~ label:hover,
+.rate > input:checked ~ label:hover ~ label,
+.rate > label:hover ~ input:checked ~ label {
+    color: #c59b08;
+}
+
+.navigation {
+   
+}
+.wrapper{
+    margin:auto;
+    text-align:center; 
+}
+.wrapper a{
+    text-decoration:none;
+    color:white;
+}
+input{
+    border-radius: 5px;
+}
+#post-rev{
+    font-family: 'DotGothic16', 'Courier New', Courier, monospace;
+}
+.addFriend {
+    padding:5px 15px; 
+    background:#1f004c;
+    font-family: 'DotGothic16', 'Courier New', Courier, monospace;
+    font-size: small;
+    color: white; 
+    border:0 none;
+    cursor:pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px; 
+}
+
+.login {
+    margin-top:auto;
+    margin-bottom:auto;
+    text-align:center;
+}
+
+
+
+.game {
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top:auto;
+    margin-bottom:auto;
+    text-align:center;
+    align-items: center;
+}
+
+.review {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; 
+}
+.table{
+    width:100%;
+}
+
+table, th, td {
+    border: 3px solid black;
+    border-collapse: collapse;
+    color:white;
+}
+
+th, td {
+    padding-top: 10px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 40px;
+}
+
+th {
+    font-family: 'Press Start 2P', cursive;
+    color: rgb(256, 0, 0);
+}
+table{
+    background: rgba(255, 255, 255, 0.17);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 0px solid rgba(255, 255, 255, 0.3);
+}
+table a{
+    color:white;
+}
+#profile{
+    color:white
+}
+
+#profile-wrapper table, h1{
+    display:inline-block;
+    vertical-align:middle;
+}
+#profile-wrapper h1{
+    margin-left:30%;
+    color: red;
+}
+#link{
+    font-family: 'Press Start 2P', cursive;
+    color:red;
+}
+#title{
+    font-family: 'Press Start 2P', cursive;
+    margin-top:2%;
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
+    width: 100%;
+}

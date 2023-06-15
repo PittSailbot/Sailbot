@@ -1,0 +1,27 @@
+<!doctype html>
+<title>{% block title %}Welcome{% endblock %}</title>
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+<div class="page">
+
+<body style="background-image: url({{ url_for('static', filename='images/background.jpg') }}); background-size: cover;">
+
+  {% with flashes = get_flashed_messages() %}
+    {% if flashes %}
+      <ul class="flashes">
+      {% for message in flashes %}
+        <li>{{ message }}
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <div class="body">
+  {% block body %}{% endblock %}
+  </div>
+
+  <br>
+  <div class="footer" style= "padding-top: 180px; text-align: right; margin-right: 10px;">
+    SailbotVis &mdash; A Flask Application
+  </div>
+</div>

@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+
+<script src="{{ url_for('static', filename='css/htmx.js') }}"></script>
+
+<div class="home">
+    <div class="Sensors">
+        <div style = "padding-top: 20px; padding-bottom: 10px"><h2>{{header}}</h2></div>
+        
+        <h1 id="GPS">GPS: <label hx-get="/gps" hx-trigger="every 0.5s"></label></h1> 
+        <br>
+        <h1 id="Compass">Compass: <label hx-get="/compass" hx-trigger="every 0.5s"></label></h1>
+        <br>
+        <h1 id="Odrive">Odrive</h1>
+        <br>
+        <h3 id="Odrive">Axis0: {{ odrive_axis0 }}</h3>
+        <br>
+        <h3 id="Odrive">Axis1: {{ odrive_axis1 }}</h3>
+
+        <input type="text" id="fname" name="fname">
+        
+    </div>
+</div>
+{% endblock %}
