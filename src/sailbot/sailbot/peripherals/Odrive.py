@@ -4,21 +4,21 @@ calibrates and default values for Odrive and handles interfacing between Odrive 
 
 import odrive
 import odrive.utils as ut
-try:
-    import constants as c
-except:
-    import sailbot.constants as c
+import sailbot.constants as c
 from time import sleep
 import sys
 import traceback
 from rclpy.node import Node
+from std_msgs.msg import String
+import threading
 
 
 class Odrive():
-    def __init__(self, calibrate = False):
-        self._node = Node("odrive")
+    def __init__(self, parent, calibrate = False):
+        self._node = parent
         self.logging = self._node.get_logger()
-        self.logging.info("Odrive Starting")
+        self.logging.debug("Odrive Starting")
+        
         self.od = odrive.find_any()
         self.setConstants()
         
@@ -53,14 +53,35 @@ class Odrive():
             # self.axis0.requested_state = 7
             # sleep(15)
 
-        
-
         #self.reboot()
 
         self.axis0.requested_state = 8
         self.axis1.requested_state = 8 
         ut.dump_errors(self.od)
         sleep(.1)
+
+        self.pub = self._node.create_publisher(String, 'odriveStatus', 10)
+        timer_period = 0.5  # seconds
+        self.timer = self._node.create_timer(timer_period, self.publishTimer_callback)
+
+    def publishTimer_callback(self):
+        msg = String()
+        stringData = ""
+        stringData += F"{self.axis0.requested_state},"
+        stringData += F"{self.axis0.encoder.pos_estimate},"
+        stringData += F"{self.axis0.controller.input_pos},"
+        stringData += F"{self.axis0.encoder.vel_estimate},"
+        stringData += F"{self.axis0.getDemandedCurrent0()} [{self.current0}]:"
+
+        stringData += F"{self.axis1.requested_state},"
+        stringData += F"{self.axis1.encoder.pos_estimate},"
+        stringData += F"{self.axis1.controller.input_pos},"
+        stringData += F"{self.axis1.encoder.vel_estimate},"
+        stringData += F"{self.axis1.getDemandedCurrent0()} [{self.current1}]"
+
+        msg.data = stringData
+        self.pub.publish(msg)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     def reboot(self):
         try:
@@ -111,10 +132,6 @@ class Odrive():
         self.axis1.controller.config.vel_integrator_gain = c.config['ODRIVE']['velIntegratorGain1']
         self.current1 = c.config['ODRIVE']['currentLimit']
         
-        
-
-
-
     @property
     def pos(self):
         return (self.pos0, self.pos1)
@@ -128,7 +145,7 @@ class Odrive():
     def posSet(self, axis, value):
         # sets 'axis' motor to value
         # 'axis' is axis0 or axis1 object
-        #self.logging.info(F"odrive posSet {value}")
+        #self.logging.debug(F"odrive posSet {value}")
         if axis == self.axis0:
             try:
                 self.axis0.controller.input_pos = value
@@ -279,7 +296,7 @@ if __name__ == '__main__':
     import threading
     #print(c.config.keys())
     #print(sys.argv)
-    self.logging.info("Run as sudo if on rasp pi, will otherwise not work")
+    self.logging.warning("Run as sudo if on rasp pi, will otherwise not work")
     if len(sys.argv) < 2 or sys.argv[1] != '0':
         try:
             #odrive.find_any().reboot()

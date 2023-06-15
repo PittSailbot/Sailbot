@@ -209,7 +209,7 @@ class Precision_Navigation:
             elif self.target_set == 6:
                 x = gps.latitude >= self.SK_f( gps.longitude,self.event_info[0],self.event_info[1],self.event_info[2],self.event_info[3] )
             else:
-                self.logging.info(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         #flip long/lat------------------------------------------------------------------
         elif not(self.ifupsidedown) and     self.ifsideways:
@@ -245,7 +245,7 @@ class Precision_Navigation:
             elif self.target_set == 6:
                 x = gps.longitude >= self.SK_f( gps.latitude,self.event_info[0],self.event_info[1],self.event_info[2],self.event_info[3] )
             else:
-                self.logging.info(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         #flip >/<------------------------------------------------------------------
         elif self.ifupsidedown      and not(self.ifsideways):
@@ -281,7 +281,7 @@ class Precision_Navigation:
             elif self.target_set == 6:
                 x = gps.latitude <= self.SK_f( gps.longitude,self.event_info[0],self.event_info[1],self.event_info[2],self.event_info[3] )
             else:
-                self.logging.info(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         #flip long/lat, flip >/<------------------------------------------------------------------
         elif self.ifupsidedown      and     self.ifsideways:
@@ -317,7 +317,7 @@ class Precision_Navigation:
             elif self.target_set == 6:
                 x = gps.longitude <= self.SK_f( gps.latitude,self.event_info[0],self.event_info[1],self.event_info[2],self.event_info[3] )
             else:
-                self.logging.info(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
         
 
         return x

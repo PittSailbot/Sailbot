@@ -66,7 +66,7 @@ class boat(Node):
             if self.arduino.readData() == "'":
                 raise Exception("Could not read arduino")
             else:
-                self.logging.info(self.arduino.readData())
+                self.logging.debug(self.arduino.readData())
         except:
             self.arduino = arduino(c.config['MAIN']['ardu_port2'])
             if self.arduino.readData() == "'":
@@ -96,6 +96,7 @@ class boat(Node):
         #self.mainLoop()
         
     def ROS_GPSCallback(self, string):
+        string = string.data
         if string == "None,None,None":
             self.gps.latitude = None
             self.gps.longitude = None
@@ -108,6 +109,7 @@ class boat(Node):
         self.gps.track_angle_deg = float(trackangle)
 
     def ROS_compassCallback(self, string):
+        string = string.data
         if string == "None,None":
             self.compass.angle = None
             return
@@ -125,7 +127,7 @@ class boat(Node):
         if self.manualControl and angle != None:
             # set sail to angle
             dataStr.data = F"(driver:sail:{angle})"
-            self.get_logger().info(dataStr.data)
+            self.get_logger().debug(dataStr.data)
             self.pub.publish(dataStr)
 
         elif self.currentTarget or self.manualControl:
@@ -133,17 +135,16 @@ class boat(Node):
             windDir = self.windvane.angle
             targetAngle = windDir + 35
             dataStr.data = F"(driver:sail:{targetAngle})"
-            self.get_logger().info(dataStr.data)
+            self.get_logger().debug(dataStr.data)
             self.pub.publish(dataStr)
             self.currentSail = targetAngle
 
         else:
             # move sail to home position
             dataStr.data = F"(driver:sail:{0})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
             self.currentSail = 0
-            self.logging.info('Adjusted sail to home position')
+            self.logging.debug('Adjusted sail to home position')
 
     def adjustRudder(self, angleTo):
         """
@@ -159,20 +160,18 @@ class boat(Node):
             if d_angle > 180: d_angle -= 180
 
             dataStr.data = F"(driver:rudder:{d_angle})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
 
             self.currentRudder = d_angle
-            self.logging.info(F'Adjusted rudder to: {d_angle}', )
+            self.logging.debug(F'Adjusted rudder to: {d_angle}', )
 
         else:
             # move rudder to home position
             dataStr.data = F"(driver:rudder:{0})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
 
             self.currentRudder = 0
-            self.logging.info('Adjusted rudder to home position')
+            self.logging.debug('Adjusted rudder to home position')
 
     def pumpMessages(self):
         """
@@ -321,11 +320,11 @@ class boat(Node):
                             self.manualControl = True
 
                         if self.manualControl:
-                            self.logging.info(F'Received message to adjust sail to {float(ary[1])}')
+                            self.logging.debug(F'Received message to adjust sail to {float(ary[1])}')
                             self.targetSail = float(ary[1])
                             processed = True
                         else:
-                            self.logging.info("Refuse to change sail, not in RC Mode")
+                            self.logging.debug("Refuse to change sail, not in RC Mode")
 
                         # manual adjust rudder
 
@@ -344,7 +343,7 @@ class boat(Node):
                                 self.targetRudder = float(rudderMidPoint) - 45 #values read in range from 0:90 instead of -45:45
                             else:
                                 self.targetRudder = float(ary[1]) - 45 #values read in range from 0:90 instead of -45:45
-                            self.logging.info(F'Received message to adjust rudder to {float(ary[1])}')
+                            self.logging.debug(F'Received message to adjust rudder to {float(ary[1])}')
                             processed = True
                         else:
                             self.logging.info("Refuse to change sail, not in RC Mode")
@@ -353,14 +352,14 @@ class boat(Node):
                         self.manualControl = True
                         dataStr = String()
                         dataStr.data = F"(driverOffset:sail:{float(ary[1])})"
-                        self.get_logger().info(dataStr.data)
+                        self.logging.debug(dataStr.data)
                         self.pub.publish(dataStr)
 
                     elif str(ary[0]) == 'rudderOffset' or ary[0] == 'RO':
                         self.manualControl = True
                         dataStr = String()
                         dataStr.data = F"(driverOffset:rudder:{float(ary[1])})"
-                        self.get_logger().info(dataStr.data)
+                        self.logging.debug(dataStr.data)
                         self.pub.publish(dataStr)
 
                     elif ary[0] == 'controlOff':
@@ -375,19 +374,18 @@ class boat(Node):
                     elif ary[0] == 'mode': # set boats mode to the value specified, command should be formatted : "mode {value}" value is int 1-5
                         try:
                             if int(ary[1]) < 0 or int(ary[1]) > 5:
-                                self.logging.info("Outside mode range")
+                                self.logging.warning("Outside mode range")
                             else:
                                 self.logging.info(F'Setting mode to {int(ary[1])}')
                                 self.MODE_SETTING = int(ary[1])
 
-                                self.logging.info(F'Setting event array')
                                 self.event_arr = []
                                 for i in range(len(ary)-2):
                                     self.event_arr.append(ary[i+2])
 
                                 processed = True
                         except Exception as e:
-                            self.logging.info(F"Error changing mode: {e}")
+                            self.logging.error(F"Error changing mode: {e}")
 
                         if self.MODE_SETTING == c.config['MODES']['MOD_RC']:
                             self.logging.info("Setting manual mode to True")
@@ -403,7 +401,6 @@ class boat(Node):
                             #self.gps.updategps()
                             sleep(.1)
                         target = (self.gps.latitude, self.gps.longitude)
-                        self.logging.info(F"added Target at {target}")
                         self.targets.append(target)
                         self.logging.info(f"added target, current target list is {self.targets}")
                         processed = True
@@ -485,7 +482,7 @@ class boat(Node):
         """
         leftPositive = -1  # change to negative one if boat is rotating the wrong way
         
-        self.logging.info("starting turnToAngle")
+        self.logging.debug("starting turnToAngle")
         compassAngle = self.compass.angle
         while abs(compassAngle - angle) > int(c.config['CONSTANTS']['angle_margin_of_error']): # while not facing the right angle
             compassAngle = self.compass.angle
@@ -493,12 +490,12 @@ class boat(Node):
             if ((angle - compassAngle) % 360 <= 180):  # turn Left
                 # move rudder to at most 45 degrees
                 rudderPos = leftPositive * min(45, 3 * abs(compassAngle - angle))  # /c.rotationSmoothingConst)
-                self.logging.info(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
+                self.logging.debug(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
                 self.adjustRudder(int(rudderPos))
             else: 
                 # move rudder to at most -45 degrees
                 rudderPos = -1 * leftPositive * min(45, 3 * abs(compassAngle - angle))  # /c.rotationSmoothingConst)
-                self.logging.info(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
+                self.logging.debug(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
                 self.adjustRudder(int(rudderPos))
 
             if not wait_until_finished:

@@ -8,6 +8,7 @@ from sailbot.utils import dummyObject
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+import os
 
 
 class gps(Node):
@@ -36,7 +37,7 @@ class gps(Node):
         msg = String()
         msg.data = F"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
         self.pub.publish(msg)
-        self.logger.info('Publishing: "%s"' % msg.data)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     def __getattribute__(self, name):
         """

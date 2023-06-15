@@ -75,11 +75,11 @@ class boat:
             windDir = self.windvane.angle
             targetAngle = windDir + 35
             self.drivers.sail.set(targetAngle)
-            self.logging.info(F'Adjusted sail to: {targetAngle}')
+            self.logging.debug(F'Adjusted sail to: {targetAngle}')
         else:
             # move sail to home position
             self.drivers.sail.set(0)
-            self.logging.info('Adjusted sail to home position')
+            self.logging.debug('Adjusted sail to home position')
 
     def adjustRudder(self):
         if self.currentTarget:
@@ -90,12 +90,12 @@ class boat:
             if d_angle > 180: d_angle -= 180
 
             self.drivers.rudder.set(d_angle)
-            self.logging.info(F'Adjusted rudder to: {d_angle}')
+            self.logging.debug(F'Adjusted rudder to: {d_angle}')
 
         else:
             # move sail to home position
             self.drivers.rudder.set(0)
-            self.logging.info('Adjusted rudder to home position')
+            self.logging.debug('Adjusted rudder to home position')
 
     def pumpMessages(self):
         while True:
@@ -112,10 +112,10 @@ class boat:
             if len(ary) > 1:
                 if ary[0] == 'sail':
                     self.drivers.sail.set(float(ary[1]))
-                    self.logging.info('Received message to adjust sail')
+                    self.logging.debug('Received message to adjust sail')
                 elif ary[0] == 'rudder':
                     self.drivers.rudder.set(float(ary[1]))
-                    self.logging.info('Received message to adjust rudder')
+                    self.logging.debug('Received message to adjust rudder')
                 elif ary[0] == 'mode':
                     print("TODO: add Modes")
 #//////

@@ -13,6 +13,7 @@ import adafruit_lsm303dlh_mag
 from time import sleep
 from threading import Thread
 import math
+import os
 
 try:
     from boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
@@ -75,6 +76,7 @@ class gps(Node):
         #pump_thread = Thread(target=self.run)# creates a Thread running an infinite loop pumping server
         #pump_thread.start()
         super().__init__('GPS')
+        self.logging = self.get_logger()
         self.pub = self.create_publisher(String, 'GPS', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -83,7 +85,7 @@ class gps(Node):
         msg = String()
         msg.data = F"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
         self.pub.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     def __getattribute__(self, name):
         """
@@ -107,13 +109,13 @@ class gps(Node):
 
             if data is not None:
                 data_string = ''.join([chr(b) for b in data])
-                self.logging.info(data_string, end="")
+                self.logging.debug(data_string, end="")
 
                 if time.monotonic() - timestamp > 5:
                     self.gps.send_command(b'PMTK605')
                     timestamp = time.monotonic()
 
-    def updategps(self, print_info = False):
+    def updategps(self, print_info = True):
         # must be called before reading latitude and longitude, just pulls data from the sensor
         # optionally prints data read from sensor
         self.gps.update()
@@ -122,9 +124,9 @@ class gps(Node):
             self.longitude = self.gps.longitude
             self.track_angle_deg = self.gps.track_angle_deg
         if print_info:
-            #self.logging.info(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
+            #self.logging.debug(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
             if not self.gps.has_fix:
-                self.logging.info("Waiting for fix")
+                self.logging.debug("Waiting for fix")
                 return
 
             self.logging.info('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
@@ -133,15 +135,14 @@ class gps(Node):
                 self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
                 self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
                 self.gps.timestamp_utc.tm_min,   # month!
-                self.gps.timestamp_utc.tm_sec))
+                self.gps.timestamp_utc.tm_sec), once=True)
 
-            self.logging.info('Latitude: {0:.8f} degrees'.format(self.gps.latitude))
-            self.logging.info('Longitude: {0:.8f} degrees'.format(self.gps.longitude))
-            self.logging.info('Lat in decDeg:', convertDegMinToDecDeg(self.gps.latitude) )
-            self.logging.info('long in decDeg:', convertDegMinToDecDeg(self.gps.longitude) )
-            self.logging.info('Fix quality: {}'.format(self.gps.fix_quality))
-            self.latitude = self.gps.latitude
-            self.longitude = self.gps.longitude
+            self.logging.info('Latitude: {0:.8f} degrees'.format(self.gps.latitude), once=True)
+            self.logging.info('Longitude: {0:.8f} degrees'.format(self.gps.longitude), once=True)
+            self.logging.info('Lat in decDeg:', convertDegMinToDecDeg(self.gps.latitude), once=True)
+            self.logging.info('long in decDeg:', convertDegMinToDecDeg(self.gps.longitude), once=True)
+            self.logging.info('Fix quality: {}'.format(self.gps.fix_quality), once=True)
+
             # Some attributes beyond latitude, longitude and timestamp are optional
             # and might not be present.  Check if they're None before trying to use!
             """if gps.satellites is not None:

@@ -44,7 +44,9 @@ else:
 
 class obj_sail:
             
-    def __init__(self, auto = False):
+    def __init__(self, parent, auto = False):
+        self._node = parent
+        self.logging = self._node.get_logger()
         self.autoAdjust = auto
         self.current = 0
         self.offset = 0
@@ -61,7 +63,7 @@ class obj_sail:
         return min2 + (max2-min2)*((x-min1)/(max1-min1))
 
     def set(self, degrees, force = False):
-        self.logging.info(F"setting sail: {degrees}")
+        self.logging.debug(F"setting sail: {degrees}")
         degrees = float(degrees)
 
         if not force and abs(degrees - self.current) < 3:
@@ -93,7 +95,9 @@ class obj_sail:
 class obj_rudder:
     # 800 steps = 360 degrees
     #between -45 and 45 degrees
-    def __init__(self):
+    def __init__(self, parent):
+        self._node = parent
+        self.logging = self._node.get_logger()
         self.current = 0
         self.offset = 0
         if USE_STEPPER_RUDDER:
@@ -110,7 +114,7 @@ class obj_rudder:
         return min2 + (max2-min2)*((x-min1)/(max1-min1))
     
     def set(self, degrees, force = False):
-        self.logging.info(F"setting rudder: {degrees}")
+        self.logging.debug(F"setting rudder: {degrees}")
         degrees = float(degrees)
 
         if not force and abs(degrees - self.current) < 3:
@@ -132,7 +136,7 @@ class obj_rudder:
         if USE_ODRIVE_RUDDER:
             val = self.map(degrees, float(c.config['CONSTANTS']['rudder_angle_min']), float(c.config['CONSTANTS']['rudder_angle_max']), -float(c.config['ODRIVE']['odriveRudderRotations'])/2, float(c.config['ODRIVE']['odriveRudderRotations'])/2)
             DRV.posSet(self.odriveAxis, val + self.offset)
-            self.logging.info(F"set rudder to {val} {degrees + self.offset}")
+            self.logging.debug(F"set rudder to {val} {degrees + self.offset}")
 
         self.current = degrees
 
@@ -140,20 +144,22 @@ class driver(Node):
 
     def __init__(self, calibrateOdrive = False):
         super().__init__('driver')
+        self.logging = self.get_logger()
         global DRV
         if USE_ODRIVE_SAIL or USE_ODRIVE_RUDDER:
-            DRV = Odrive(calibrate=calibrateOdrive)
+            DRV = Odrive(parent=self, calibrate=calibrateOdrive)
             pass
-        self.sail = obj_sail()
-        self.rudder = obj_rudder()
+        self.sail = obj_sail(parent=self)
+        self.rudder = obj_rudder(parent=self)
 
         self.driver_subscription = self.create_subscription(String, 'driver', self.ROS_Callback, 10)
 
     def ROS_Callback(self, string):
+        string = string.data
         # string = (driver:sail/rudder:{targetAngle})
-        self.logging.info(F"driver callback {string}")
+        self.logging.debug(F"driver callback {string}")
         resolved = False
-        args = string.data.replace('(', '').replace(')', "").split(":")
+        args = string.replace('(', '').replace(')', "").split(":")
         if args[0] == 'driver':
             if args[1] == 'sail':
                 self.sail.set(float(args[2]))
@@ -168,7 +174,7 @@ class driver(Node):
                 if abs(self.sail.offset - newVal) > 0.15:
                     self.sail.offset = newVal
                     self.sail.set(self.sail.current, force=True)
-                    self.logging.info(F"Sail offset = {self.sail.offset}")
+                    self.logging.debug(F"Sail offset = {self.sail.offset}")
                 resolved = True
             elif args[1] == 'rudder':
                 self.rudder.offset = float(args[2])
@@ -176,7 +182,7 @@ class driver(Node):
                 resolved = True
 
         if not resolved:
-            self.logging.warning(F"driver failed to resolve command: {string.data}, parsed to {args}")
+            self.logging.warning(F"driver failed to resolve command: {string}, parsed to {args}")
 
 
 def main(args = None):

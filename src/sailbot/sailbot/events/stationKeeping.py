@@ -113,7 +113,7 @@ class Station_Keeping(Event):
 
         #past front line of box
         if not( self.SK_line_check(self.cool_arr[-9:-7], self.cool_arr[-3:-1],self.cool_arr[-1]) ):
-            self.logging.info("too forward")
+            self.logging.debug("too forward")
             #loosen sail, do nuthin; drift
             #.adjustSail(90)
             self.last_pnt_x, self.last_pnt_y = None,None
@@ -121,14 +121,14 @@ class Station_Keeping(Event):
         
         #past bottom line of box
         elif not( self.SK_line_check(self.cool_arr[-3:-1], self.cool_arr[-9:-7],self.cool_arr[-1]) ):
-            self.logging.info("too back")
+            self.logging.debug("too back")
             #go to 90deg line
             self.last_pnt_x, self.last_pnt_y = self.cool_arr[6],self.cool_arr[7]
             return Waypoint(self.cool_arr[6],self.cool_arr[7])
         
         #past left line of box
         elif not( self.SK_line_check(self.cool_arr[-7:-5], self.cool_arr[-5:-3],self.cool_arr[-1]) ):
-            self.logging.info("too left")
+            self.logging.debug("too left")
             #find/go-to intersect of line (+)35degrees of wind direction to left line
             #mini cart scan
             t_x, t_y = self.mini_cart_perimiter_scan(self.cool_arr[-7:-5],"L")
@@ -137,7 +137,7 @@ class Station_Keeping(Event):
 
         #past right line of box
         elif not( self.SK_line_check(self.cool_arr[-5:-3], self.cool_arr[-7:-5],self.cool_arr[-1]) ):
-            self.logging.info("too right")
+            self.logging.debug("too right")
             #find/go-to intersect of line (-)35degrees of wind direction to left line
             #mini cart scan
             t_x, t_y = self.mini_cart_perimiter_scan(self.cool_arr[-5:-3],"R")
@@ -148,15 +148,15 @@ class Station_Keeping(Event):
         #passed checks: SAILING; DOING THE EVENT========================================
         #beginning set up
         if self.start:
-            self.logging.info("start if")
+            self.logging.debug("start if")
             #if not moving and behind 80%
             if self.SK_line_check(self.cool_arr[0:2], self.cool_arr[-3:-1],self.cool_arr[-1]):
-                self.logging.info("start: behind 80%; ending start")
+                self.logging.debug("start: behind 80%; ending start")
                 self.start = False
                 self.last_pnt_x, self.last_pnt_y = self.cool_arr[6],self.cool_arr[7]
                 return Waypoint(self.cool_arr[6],self.cool_arr[7])    #go to 90deg line
             #if this doesnt pass, its WITHIN BOX but is ahead of 80; so it returns init'd last_pnt which is to loosen sail and drift (WHAT WE WANT)
-            else:   self.logging.info("start: ahead 80%")
+            else:   self.logging.debug("start: ahead 80%")
 
         #majority of the sail
         else:

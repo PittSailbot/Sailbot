@@ -102,20 +102,18 @@ class Precision_Navigation():
             if d_angle > 180: d_angle -= 180
 
             dataStr.data = F"(driver:rudder:{d_angle})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
 
             self.currentRudder = d_angle
-            self.logging.info(F'Adjusted rudder to: {d_angle}')
+            self.logging.debug(F'Adjusted rudder to: {d_angle}')
 
         else:
             # move rudder to home position
             dataStr.data = F"(driver:rudder:{0})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
 
             self.currentRudder = 0
-            self.logging.info('Adjusted rudder to home position')
+            self.logging.debug('Adjusted rudder to home position')
 
     def adjustSail(self, angle=None):
         """
@@ -125,7 +123,7 @@ class Precision_Navigation():
         if self.manualControl and angle != None:
             # set sail to angle
             dataStr.data = F"(driver:sail:{angle})"
-            self.get_logger().info(dataStr.data)
+            self.logging.debug(dataStr.data)
             self.pub.publish(dataStr)
 
         elif self.currentTarget or self.manualControl:
@@ -133,17 +131,16 @@ class Precision_Navigation():
             windDir = windVane.angle
             targetAngle = windDir + 35
             dataStr.data = F"(driver:sail:{targetAngle})"
-            self.get_logger().info(dataStr.data)
+            self.loggin.debug(dataStr.data)
             self.pub.publish(dataStr)
             self.currentSail = targetAngle
 
         else:
             # move sail to home position
             dataStr.data = F"(driver:sail:{0})"
-            self.get_logger().info(dataStr.data)
             self.pub.publish(dataStr)
             self.currentSail = 0
-            self.logging.info('Adjusted sail to home position')
+            self.logging.debug('Adjusted sail to home position')
 
     def goToGPS(self, lat, long):
         """  
@@ -190,7 +187,7 @@ class Precision_Navigation():
         """
         leftPositive = -1  # change to negative one if boat is rotating the wrong way
         
-        self.logging.info("starting turnToAngle")
+        self.logging.debug("starting turnToAngle")
         compassAngle = compass.angle
         while abs(compassAngle - angle) > int(c.config['CONSTANTS']['angle_margin_of_error']): # while not facing the right angle
             compassAngle = compass.angle
@@ -198,18 +195,18 @@ class Precision_Navigation():
             if ((angle - compassAngle) % 360 <= 180):  # turn Left
                 # move rudder to at most 45 degrees
                 rudderPos = leftPositive * min(45, 3 * abs(compassAngle - angle))  # /c.rotationSmoothingConst)
-                self.logging.info(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
+                self.logging.debug(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
                 self.adjustRudder(int(rudderPos))
             else: 
                 # move rudder to at most -45 degrees
                 rudderPos = -1 * leftPositive * min(45, 3 * abs(compassAngle - angle))  # /c.rotationSmoothingConst)
-                self.logging.info(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
+                self.logging.debug(F'turning to angle: {angle} from angle: {compassAngle} by turning rudder to {rudderPos}')
                 self.adjustRudder(int(rudderPos))
 
             if not wait_until_finished:
                 break
 
-        self.logging.info("finished turnToAngle")
+        self.logging.debug("finished turnToAngle")
 
 
     #########################################
