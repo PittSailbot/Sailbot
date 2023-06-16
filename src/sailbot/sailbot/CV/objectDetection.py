@@ -10,7 +10,7 @@ import torch
 import logging
 from dataclasses import dataclass
 
-from sailbot import constants as c
+from src.sailbot.sailbot import constants as c
 
 
 @dataclass(order=True)
@@ -73,7 +73,7 @@ class ObjectDetection:
         # Add each buoy found by the model into a list
         detections: list[Detection] = []
         for detection in result:
-            logging.info("Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
+            logging.info(f"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
             detections.append(Detection(detection))  # Convert tensors into readable Detection class and append to list
         detections.sort(reverse=True)
         return detections

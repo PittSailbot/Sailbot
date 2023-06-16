@@ -10,9 +10,10 @@ import os
 from src.sailbot.sailbot import constants as c
 from src.sailbot.sailbot.utils.utils import singleton
 from src.sailbot.sailbot.utils import boatMath
-from src.sailbot.sailbot.peripherals.compass import compass
-from src.sailbot.sailbot.peripherals.windvane import windVane
-from src.sailbot.sailbot.peripherals.GPS import gps
+from src.sailbot.sailbot.peripherals.Odrive import Odrive
+import src.sailbot.sailbot.peripherals.compass as compass
+import src.sailbot.sailbot.peripherals.windvane as windvane
+import src.sailbot.sailbot.peripherals.GPS as GPS
 
 
 @singleton
@@ -193,7 +194,7 @@ def go_to_gps(waypoint, wait_until_finished=False):
 
     """
 
-    gps = gps.gps()
+    gps = GPS.gps()
     compass = compass.compass()
     windvane = windvane.windvane()
     # rudder = Rudder()
