@@ -3,7 +3,7 @@ import math
 import time
 
 from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
-from src.sailbot.sailbot.peripherals.windvane import windVane
+from src.sailbot.sailbot.peripherals.windvane import WindVane
 from src.sailbot.sailbot.peripherals.GPS import gps
 
 import os, importlib
@@ -60,7 +60,7 @@ class StationKeeping(Event):
 
         # SENSORS
         self.gps = gps.gps
-        self.windvane = windVane()
+        self.windvane = WindVane()
 
     def next_gps(self):
         """

@@ -56,7 +56,7 @@ def test_compass():
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_windvane():
-    wv = windvane.windVane()
+    wv = windvane.WindVane()
 
     for i in range(0, 3):
         results = wv.position

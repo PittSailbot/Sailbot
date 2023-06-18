@@ -1,5 +1,5 @@
 """
-reads value from I2C rotery encoder sensor
+Interface for reading wind angle
 """
 from time import sleep
 from threading import Lock
@@ -10,7 +10,14 @@ from adafruit_seesaw import seesaw, rotaryio, digitalio
 import src.sailbot.sailbot.constants as c
 
 
-class windVane:
+class WindVane:
+    """Measures the angle of the wind
+
+    Attributes:
+        angle (float): the angle pointing into the wind
+        no_go_zone (NoGoZone): the left and right limits of the no go zone
+    """
+
     def __init__(self):
         self.stepsPerRev = 256
 
@@ -42,6 +49,8 @@ class windVane:
         pump_thread3 = Thread(target=self.update)
         pump_thread3.start()
 
+        self.no_go_zone = NoGoZone(wind_direction=self.angle)
+
     def map(self, x, min1, max1, min2, max2):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
         # ex: map(0.3, 0, 1, 0, 100) returns 30
@@ -67,25 +76,9 @@ class windVane:
         self.lock.release()
         return val
 
-    @property
-    def noGoMin(self):
-        return 360 - int(c.config["CONSTANTS"]["noGoAngle"]) / 2
-
-    @property
-    def noGoMax(self):
-        return int(c.config["CONSTANTS"]["noGoAngle"]) / 2
-
     def flush_queue(self):
         while True:
             self.counter += self.q.get()
-
-    # def run(self):
-    #     while True:
-    #         self.lock.acquire()
-    #         val = self.checkHef()
-    #         self.lock.release()
-    #         if not val:
-    #             sleep(.1)
 
     def checkHef(self):
         hefState = GPIO.input(self.hef)
@@ -114,8 +107,38 @@ class windVane:
             #     self.counter = 0
 
 
+class NoGoZone:
+    """Simplifies checking whether a compass heading is inside the no go zone
+    - Declare a WindVane object and write 'if x in windvane.no_go_zone'
+
+    Attributes:
+        left_bound (float): the compass angle of the left-most no go zone bound
+        right_bound (float): the compass angle of the right-most no go zone bound
+    """
+
+    NO_GO_RANGE = int(c.config["WINDVANE"]["no_go_range"]) / 2
+
+    def __init__(self, wind_direction):
+        self.left_bound = (wind_direction - self.NO_GO_RANGE) % 360
+        self.right_bound = (wind_direction + self.NO_GO_RANGE) % 360
+
+    def __contains__(self, heading):
+        if self.left_bound > self.right_bound:
+            heading = heading % 360
+
+            # Check if the heading is within the wrapped bounds
+            if heading >= self.left_bound or heading <= self.right_bound:
+                return True
+        else:
+            # Bounds don't wrap around
+            if self.left_bound <= heading <= self.right_bound:
+                return True
+
+        return False
+
+
 def main():
-    wv = windVane()
+    wv = WindVane()
     while True:
         sleep(0.1)
         print(f"Angle {wv.position}")

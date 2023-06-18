@@ -206,10 +206,10 @@ def go_to_gps(waypoint, wait_until_finished=False):
     target_angle = (compass.angle + deltaAngle) % 360
     windAngle = windvane.angle
 
-    if (deltaAngle + windAngle) % 360 < windvane.noGoMin:
-        target_angle = windvane.noGoMin
-    elif (deltaAngle + windAngle) % 360 < windvane.noGoMax:
-        target_angle = windvane.noGoMax
+    if (deltaAngle + windAngle) % 360 < windvane.no_go_zone.left_bound:
+        target_angle = windvane.windvane.no_go_zone.left_bound
+    elif (deltaAngle + windAngle) % 360 < windvane.no_go_zone.right_bound:
+        target_angle = windvane.windvane.no_go_zone.right_bound
 
     turn_to_angle(target_angle)
 
