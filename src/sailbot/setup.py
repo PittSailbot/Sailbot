@@ -1,7 +1,7 @@
-from setuptools import setup
+import os
 from glob import glob
 
-import os
+from setuptools import setup
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

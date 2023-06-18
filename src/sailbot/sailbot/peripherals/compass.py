@@ -5,20 +5,20 @@ Handles interfacing with the I2C compass and accelerometer sensor
 # sudo pip3 install adafruit-circuitpython-lis2mdl
 
 
+import math
 from time import sleep
-import board
-import busio
+
 import adafruit_lis2mdl
 import adafruit_lsm303_accel
 import adafruit_lsm303dlh_mag
-import math
-
-# ^^from Thread import thread
-# import RPi.GPIO as GPIO
-
+import board
+import busio
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+
+# ^^from Thread import thread
+# import RPi.GPIO as GPIO
 
 
 class compass(Node):

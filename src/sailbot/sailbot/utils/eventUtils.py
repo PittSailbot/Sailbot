@@ -3,13 +3,13 @@ Event blueprint class and common utility functions used in events
 """
 # Event descriptions can be found here: https://www.sailbot.org/wp-content/uploads/2022/05/SailBot-2022-Events.pdf
 
+import math
+import os
+import time
 from abc import abstractmethod
 from dataclasses import dataclass
-import math
-import time
-from rclpy.node import Node
 
-import os
+from rclpy.node import Node
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

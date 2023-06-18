@@ -1,7 +1,7 @@
-import RPi.GPIO as GPIO
 import random
 from time import sleep
 
+import RPi.GPIO as GPIO
 
 readPin = 12
 writePin = 13

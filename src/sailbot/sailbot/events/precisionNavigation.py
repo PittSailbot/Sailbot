@@ -1,10 +1,9 @@
-import time
 import math
+import os
+import time
 
 import src.sailbot.sailbot.constants as c
 from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
-
-import os
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

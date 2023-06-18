@@ -1,11 +1,13 @@
 # simulates boat from boatMain by creating virtualSensors
 
-import boatMain, boatMath
-import pygame
 import math
-from math import pi, sin, cos
-from time import sleep
+from math import cos, pi, sin
 from random import randint
+from time import sleep
+
+import boatMain
+import boatMath
+import pygame
 
 
 class virtualBoat(boatMain.boat):

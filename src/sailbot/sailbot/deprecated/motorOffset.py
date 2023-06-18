@@ -16,8 +16,9 @@ except:
     import sailbot.constants as c
 
 from threading import Thread
-from RPi import GPIO
 from time import sleep
+
+from RPi import GPIO
 
 
 class motorOffset(Node):

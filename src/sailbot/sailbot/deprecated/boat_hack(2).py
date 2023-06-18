@@ -1,13 +1,14 @@
 # outdated
 
+from threading import Thread
+
+import adafruit_pca9685 as pcaLib
 import board
 import busio
-import adafruit_pca9685 as pcaLib
 import constants as c
+import drivers
 import messages_pb2
 import serial
-import drivers
-from threading import Thread
 from windvane import windVane
 
 """

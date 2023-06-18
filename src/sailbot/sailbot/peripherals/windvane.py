@@ -1,11 +1,12 @@
 """
 Interface for reading wind angle
 """
-from time import sleep
 from threading import Lock
+from time import sleep
+
 import board
+from adafruit_seesaw import digitalio, rotaryio, seesaw
 from RPi import GPIO
-from adafruit_seesaw import seesaw, rotaryio, digitalio
 
 import src.sailbot.sailbot.constants as c
 

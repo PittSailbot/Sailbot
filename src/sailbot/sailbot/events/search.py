@@ -1,11 +1,18 @@
+import importlib
 import math
+import os
 import time
+
 import matplotlib.pyplot as plt
 
 from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
-
-import os, importlib
+from src.sailbot.sailbot.utils.eventUtils import (
+    Event,
+    EventFinished,
+    Waypoint,
+    distance_between,
+    has_reached_waypoint,
+)
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

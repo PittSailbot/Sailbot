@@ -1,10 +1,11 @@
 """
 reads and sends data from the connected USB transceiver
 """
-import sailbot.constants as c
-import sailbot.utils as utils
 import sys
 import time
+
+import sailbot.constants as c
+import sailbot.utils as utils
 
 I2C_SLAVE_ADDRESS = 0x10
 

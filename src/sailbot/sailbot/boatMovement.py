@@ -2,18 +2,19 @@
 Controls the boat's sails and rudder
 """
 import logging
+import os
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-import os
 
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.utils.utils import singleton
-from src.sailbot.sailbot.utils import boatMath
-from src.sailbot.sailbot.peripherals.Odrive import Odrive
 import src.sailbot.sailbot.peripherals.compass as compass
-import src.sailbot.sailbot.peripherals.windvane as windvane
 import src.sailbot.sailbot.peripherals.GPS as GPS
+import src.sailbot.sailbot.peripherals.windvane as windvane
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.peripherals.Odrive import Odrive
+from src.sailbot.sailbot.utils import boatMath
+from src.sailbot.sailbot.utils.utils import singleton
 
 
 @singleton

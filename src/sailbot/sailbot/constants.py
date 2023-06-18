@@ -1,7 +1,7 @@
 # reads values from config.ini and returns them
 import configparser
-import os
 import logging
+import os
 
 root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 config_path = rf"{root_dir}\sailbot\config.ini"

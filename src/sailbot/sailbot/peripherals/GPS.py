@@ -1,13 +1,15 @@
 """
 interfaces with USB GPS sensor
 """
+import logging
+
 # https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
 import time
-import logging
+
+import gpsd
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-import gpsd
 
 from src.sailbot.sailbot.utils.boatMath import convertDegMinToDecDeg
 from src.sailbot.sailbot.utils.utils import singleton

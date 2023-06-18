@@ -1,10 +1,11 @@
+import importlib
+import os
 import sys
 from time import sleep
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-
-import os, importlib
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

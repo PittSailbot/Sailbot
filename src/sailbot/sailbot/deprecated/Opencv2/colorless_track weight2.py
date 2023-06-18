@@ -1,8 +1,8 @@
 # import the opencv library
-import cv2
-import numpy as np
 import time
 
+import cv2
+import numpy as np
 
 # included time if want to slow down to inspect output
 

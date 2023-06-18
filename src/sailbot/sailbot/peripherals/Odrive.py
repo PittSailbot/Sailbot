@@ -1,12 +1,13 @@
 """
 calibrates and default values for Odrive and handles interfacing between Odrive and python code
 """
-from time import sleep
 import sys
 import traceback
-from rclpy.node import Node
+from time import sleep
+
 import odrive
 import odrive.utils as ut
+from rclpy.node import Node
 
 from src.sailbot.sailbot import constants as c
 

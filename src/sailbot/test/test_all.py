@@ -1,31 +1,32 @@
 """
 Tests all necessary sensors and functionality of the boat
 """
-import pytest
+import importlib
+import os
 import warnings
-import cv2
-import numpy as np
 from time import time
+
+import cv2
 import keyboard
+import numpy as np
+import pytest
 
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.peripherals import camera
-from src.sailbot.sailbot.CV import objectDetection
-from src.sailbot.sailbot.utils.eventUtils import Waypoint, distance_between
 import src.sailbot.sailbot.boatMain as boatMain
-
-
-import os, importlib
+from src.sailbot.sailbot import constants as c
+from src.sailbot.sailbot.CV import objectDetection
+from src.sailbot.sailbot.peripherals import camera
+from src.sailbot.sailbot.utils.eventUtils import Waypoint, distance_between
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 if not DOCKER:
     import rclpy
-    import src.sailbot.sailbot.peripherals.GPS as GPS
+
     import src.sailbot.sailbot.peripherals.compass as compass
-    import src.sailbot.sailbot.peripherals.windvane as windvane
+    import src.sailbot.sailbot.peripherals.GPS as GPS
     import src.sailbot.sailbot.peripherals.transceiver as transceiver
+    import src.sailbot.sailbot.peripherals.windvane as windvane
 
 
 # ---------------------------------- SENSORS ----------------------------------

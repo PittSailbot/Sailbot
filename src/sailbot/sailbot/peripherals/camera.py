@@ -1,12 +1,13 @@
 """
 Interface for camera
 """
+import importlib
 import math
-import cv2
+import os
 import time
-from rclpy.node import Node
 
-import os, importlib
+import cv2
+from rclpy.node import Node
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

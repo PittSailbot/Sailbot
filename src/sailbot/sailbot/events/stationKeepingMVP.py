@@ -1,12 +1,13 @@
-from rclpy.node import Node
+import importlib
 import math
+import os
 import time
 
-from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
-from src.sailbot.sailbot.peripherals.windvane import WindVane
-from src.sailbot.sailbot.peripherals.GPS import gps
+from rclpy.node import Node
 
-import os, importlib
+from src.sailbot.sailbot.peripherals.GPS import gps
+from src.sailbot.sailbot.peripherals.windvane import WindVane
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
