@@ -15,7 +15,8 @@ import src.sailbot.sailbot.boatMain as boatMain
 from src.sailbot.sailbot import constants as c
 from src.sailbot.sailbot.CV import objectDetection
 from src.sailbot.sailbot.peripherals import camera
-from src.sailbot.sailbot.utils.eventUtils import Waypoint, distance_between
+from src.sailbot.sailbot.utils.boatMath import distance_between
+from src.sailbot.sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -34,7 +35,7 @@ if not DOCKER:
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_gps():
-    gps = GPS.gps()
+    gps = GPS.GPS()
 
     for i in range(0, 3):
         results = (gps.latitude, gps.longitude)
@@ -44,7 +45,7 @@ def test_gps():
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_compass():
-    comp = compass.compass()
+    comp = compass.Compass()
 
     for i in range(0, 3):
         results = comp.angle
@@ -131,7 +132,7 @@ def test_gps_estimation():
 
     camera.estimate_all_buoy_gps(sim_frame)
     for detection in sim_frame.detections:
-        print(f"Detection at {detection.gps}, {distance_between(Waypoint(0,0), detection.gps)}")
+        print(f"Detection at {detection.GPS}, {distance_between(Waypoint(0, 0), detection.GPS)}")
 
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")

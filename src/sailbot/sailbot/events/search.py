@@ -6,13 +6,9 @@ import time
 import matplotlib.pyplot as plt
 
 from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.utils.eventUtils import (
-    Event,
-    EventFinished,
-    Waypoint,
-    distance_between,
-    has_reached_waypoint,
-)
+from src.sailbot.sailbot.utils.boatMath import distance_between
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
+from src.sailbot.sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -145,15 +141,15 @@ class Search(Event):
             detections = 0
             for frame in imgs:
                 for detection in frame.detections:
-                    distance_from_center = distance_between(self.search_center, detection.gps)
+                    distance_from_center = distance_between(self.search_center, detection.GPS)
 
                     if distance_from_center > self.search_bounds:
                         self.logging.info(
-                            f"SEARCHING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center"
+                            f"SEARCHING: Dropped buoy at: {detection.GPS}, {distance_from_center}m from center"
                         )
                         continue
 
-                    self.logging.info(f"SEARCHING: Buoy ({detection.conf}%) found at: {detection.gps}")
+                    self.logging.info(f"SEARCHING: Buoy ({detection.conf}%) found at: {detection.GPS}")
                     self.heatmap.append(detection)
                     detections += 1
 
@@ -213,15 +209,15 @@ class Search(Event):
                     self.missed_consecutive_detections = 0
 
                     for detection in frame.detections:
-                        distance_from_center = distance_between(self.search_center, detection.gps)
+                        distance_from_center = distance_between(self.search_center, detection.GPS)
 
                         if distance_from_center > self.search_bounds:
                             self.logging.info(
-                                f"TRACKING: Dropped buoy at: {detection.gps}, {distance_from_center}m from center"
+                                f"TRACKING: Dropped buoy at: {detection.GPS}, {distance_from_center}m from center"
                             )
                             continue
 
-                        self.logging.info(f"TRACKING: Buoy found at: {detection.gps}")
+                        self.logging.info(f"TRACKING: Buoy found at: {detection.GPS}")
                         self.heatmap.append(detection)
 
                     self.logging.info(f"TRACKING: Continuing course to buoy at: {self.best_chunk.average_gps}")
@@ -362,21 +358,21 @@ class HeatmapChunk:
 
     def __init__(self, radius, detection):
         self.radius = radius
-        self.average_gps = detection.gps
+        self.average_gps = detection.GPS
         self.detection_count = 1
         self.sum_confidence = detection.conf
 
-        self._sum_lat = detection.gps.latitude
-        self._sum_lon = detection.gps.longitude
+        self._sum_lat = detection.GPS.latitude
+        self._sum_lon = detection.GPS.longitude
 
     def __contains__(self, detection):
-        return distance_between(self.average_gps, detection.gps) <= self.radius
+        return distance_between(self.average_gps, detection.GPS) <= self.radius
 
     def append(self, detection):
         self.detection_count += 1
 
-        self._sum_lat += detection.gps.latitude
-        self._sum_lon += detection.gps.longitude
+        self._sum_lat += detection.GPS.latitude
+        self._sum_lon += detection.GPS.longitude
         self.average_gps = Waypoint(self._sum_lat / self.detection_count, self._sum_lon / self.detection_count)
 
         self.sum_confidence += detection.conf

@@ -175,7 +175,7 @@ class Camera:
         if type(detection) == Waypoint:
             self.logging.info(f"Focusing on GPS position: {detection}")
 
-            distance = distance_between(self.gps, detection.gps)
+            distance = distance_between(self.gps, detection.GPS)
             boat_angle = compass.angle
 
             def calculate_compass_angle(pt1, pt2):
@@ -337,9 +337,9 @@ def estimate_all_buoy_gps(frame):
         dx *= math.cos(frame.heading)
 
         d_lat = (dz / earth_radius) * (180 / math.pi)
-        d_lon = (dx / earth_radius) * (180 / math.pi) / math.cos(frame.gps.lat * math.pi / 180)
+        d_lon = (dx / earth_radius) * (180 / math.pi) / math.cos(frame.GPS.lat * math.pi / 180)
 
-        lat = frame.gps.lat + d_lat
-        lon = frame.gps.lon + d_lon
+        lat = frame.GPS.lat + d_lat
+        lon = frame.GPS.lon + d_lon
 
-        detection.gps = Waypoint(lat, lon)
+        detection.GPS = Waypoint(lat, lon)

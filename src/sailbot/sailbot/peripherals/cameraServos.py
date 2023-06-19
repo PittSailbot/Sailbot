@@ -53,9 +53,6 @@ class CameraServos:
         self.pitch = self.DEFAULT_ANGLE
         self.yaw = self.DEFAULT_ANGLE
 
-    # ============ HERE BE DRAGONS ============
-    # Python boilerplate for creating implicit setters and getters
-    # Instead of writing 'servos.set_pitch(90)' just write 'servos.pitch = 90'
     @property
     def pitch(self):
         return self._kit.servo[self.PITCH_PORT].angle

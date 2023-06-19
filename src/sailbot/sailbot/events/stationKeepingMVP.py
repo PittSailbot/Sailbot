@@ -5,9 +5,10 @@ import time
 
 from rclpy.node import Node
 
-from src.sailbot.sailbot.peripherals.GPS import gps
+from src.sailbot.sailbot.peripherals.GPS import GPS
 from src.sailbot.sailbot.peripherals.windvane import WindVane
-from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished, Waypoint
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
+from src.sailbot.sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -60,7 +61,7 @@ class StationKeeping(Event):
         self.waypoint_queue = []
 
         # SENSORS
-        self.gps = gps.gps
+        self.gps = GPS.gps
         self.windvane = WindVane()
 
     def next_gps(self):
@@ -75,7 +76,7 @@ class StationKeeping(Event):
 
         # Move to bounds of event
         if not self.event_started:
-            if Waypoint(self.gps.gps.latitude, self.gps.gps.longitude) in self.bounds:
+            if Waypoint(self.gps.GPS.latitude, self.gps.GPS.longitude) in self.bounds:
                 self.logging.info("Boat has entered the station keeping bounds!")
                 self.event_started = True
                 self.start_time = time.time()
@@ -91,7 +92,7 @@ class StationKeeping(Event):
         self.logging.debug("Leaving event bounds")
         downwind_angle = math.radians(abs(self.windvane.angle + 180) % 360)
 
-        escape_point = self.gps.gps
+        escape_point = self.gps.GPS
         escape_point.add_meters(30 * math.cos(downwind_angle), 30 * math.sin(downwind_angle))
         return escape_point
 

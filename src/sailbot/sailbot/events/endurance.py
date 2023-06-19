@@ -1,11 +1,7 @@
 import src.sailbot.sailbot.constants as c
-from src.sailbot.sailbot.utils.eventUtils import (
-    Event,
-    EventFinished,
-    Waypoint,
-    distance_between,
-    has_reached_waypoint,
-)
+from src.sailbot.sailbot.utils.boatMath import distance_between
+from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
+from src.sailbot.sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 """
 # Challenge Goal:

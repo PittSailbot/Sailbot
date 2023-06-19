@@ -1,10 +1,6 @@
 """
 Handles interfacing with the I2C compass and accelerometer sensor
 """
-
-# sudo pip3 install adafruit-circuitpython-lis2mdl
-
-
 import math
 from time import sleep
 
@@ -17,11 +13,19 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-# ^^from Thread import thread
-# import RPi.GPIO as GPIO
 
+class Compass(Node):
+    """Measure's the boat's heading, acceleration and gyroscopic orientation in all axes.
 
-class compass(Node):
+    Attributes:
+        angle_to_north (float):
+        accel (float):
+        angle_X (float):
+        angle_Y (float):
+        angle_Z (float):
+
+    """
+
     def __init__(self):
         # Setup I2C connections
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -42,9 +46,6 @@ class compass(Node):
         msg.data = f"{self.angle}"
         self.pub.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
-
-    def run(self):
-        pass
 
     @property
     def vector(self):
@@ -90,14 +91,14 @@ class compass(Node):
         return self.compassAngle3
 
     @property
-    def angleToNorth(self):
+    def angle_to_north(self):
         return math.atan2(-self.angle_Y, -self.angle_X) * 180 / math.pi
 
     @property
     def angle(self):
         # returns smoothed angle measurement
         alpha = 0.9
-        self.averagedAngle = self.averagedAngle * alpha + self.angleToNorth * (1 - alpha)
+        self.averagedAngle = self.averagedAngle * alpha + self.angle_to_north * (1 - alpha)
         return self.averagedAngle
 
     def printAccel(self):
@@ -112,7 +113,7 @@ class compass(Node):
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"
     rclpy.init(args=args)
-    comp = compass()
+    comp = Compass()
     rclpy.spin(comp)
 
     # Destroy the node explicitly
@@ -123,7 +124,7 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    comp = compass()
+    comp = Compass()
     while True:
         comp.printMag()
         sleep(0.2)

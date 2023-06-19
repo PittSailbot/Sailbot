@@ -3,18 +3,8 @@ Math functions useful for sailbotting
 """
 import math
 
-# Quick function reference
-# TODO: distance_between & angle_between as wp.distance_to & wp.angle_to
-"""
-math.radians(degs) - convert degrees to radians
-math.degrees(rads) - convert radians to degrees
-distance_between(wp1, wp2) - distance in meters between two Waypoints
-angle_between(wp1, wp2) - angle from wp1 to wp2 relative to north
-Waypoint.add_meters(x, y) - updates Waypoint by calculating new GPS from x and y meter offsets
-"""
 
-
-def distance_between(waypoint1, waypoint2):
+def distance_between(waypoint1, waypoint2) -> float:
     """Calculates the distance between two GPS points using the Haversine formula
     # Args:
         - waypoint1 (eventUtils.Waypoint)
@@ -39,7 +29,7 @@ def distance_between(waypoint1, waypoint2):
 
 
 # TODO: check
-def angle_between(waypoint1, waypoint2):
+def angle_between(waypoint1, waypoint2) -> float:
     """Calculates the angle from waypoint1 to waypoint2 relative to north
     # Args:
         - waypoint1 (eventUtils.Waypoint)

@@ -164,7 +164,7 @@ def turn_to_angle(angle, wait_until_finished=False, allow_tacking=True):
         - FailedTurn (Exception): the boat failed to turn to the specified angle for whatever reason
     """
     rudder = Rudder()
-    compass = compass.compass()
+    compass = compass.Compass()
     windvane = windvane.windvane()
 
     acceptable_error = float(c.config["RUDDER"]["acceptable_error"])
@@ -195,8 +195,8 @@ def go_to_gps(waypoint, wait_until_finished=False):
 
     """
 
-    gps = GPS.gps()
-    compass = compass.compass()
+    gps = GPS.GPS()
+    compass = compass.Compass()
     windvane = windvane.windvane()
     # rudder = Rudder()
 

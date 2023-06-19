@@ -16,7 +16,7 @@ from src.sailbot.sailbot.utils.utils import singleton
 
 
 @singleton
-class gps(Node):
+class GPS(Node):
     """
     Attributes:
         latitude (float): the current latitude of the boat
@@ -64,26 +64,6 @@ class gps(Node):
             return super().__getattribute__(name)
         except:
             return self.gps.__getattribute__(name)
-
-    def run(self):
-        # TODO: Delete
-        while True:
-            return  # This should use ROS now instead of a loop
-            # self.updategps()
-
-    def readgps(self):
-        # TODO: delete
-        timestamp = time.monotonic()
-        while True:
-            data = self.gps.read(64)
-
-            if data is not None:
-                data_string = "".join([chr(b) for b in data])
-                self.logging.info(data_string, end="")
-
-                if time.monotonic() - timestamp > 5:
-                    self.gps.send_command(b"PMTK605")
-                    timestamp = time.monotonic()
 
     def updategps(self, print_info=False):
         # TODO: Delete
@@ -138,20 +118,20 @@ class gps(Node):
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
     rclpy.init(args=args)
-    GPS = gps()
-    rclpy.spin(GPS)
+    gps = gps()
+    rclpy.spin(gps)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    GPS.destroy_node()
+    gps.destroy_node()
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
     rclpy.init()
-    GPS = gps()
-    rclpy.spin(GPS)
+    gps = GPS()
+    rclpy.spin(gps)
     while True:
-        GPS.updategps(print_info=True)
+        gps.updategps(print_info=True)
         sleep(1)
