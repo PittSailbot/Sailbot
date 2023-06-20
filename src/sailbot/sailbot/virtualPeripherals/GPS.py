@@ -23,7 +23,7 @@ class gps(Node):
         self.gps = dummyObject()
         self.gps.latitude = 0
         self.gps.longitude = 0
-        self.gps.track_angle_deg = 0
+        self.gps.track_angle_deg = -1
 
         super().__init__('GPS')
         self.logging = self.get_logger()

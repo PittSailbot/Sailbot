@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import os
 import rclpy
 from rclpy.node import Node
@@ -10,6 +10,11 @@ import random
 from sailbot.utils import dummyObject
 
 app = Flask(__name__)
+
+# dont print unimportant messages
+import logging 
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 class Website(Node):
@@ -50,6 +55,28 @@ class Website(Node):
             "odrive_axis0": F"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}",
             "odrive_axis1": F"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
         }
+
+        self.waypoints = [
+            {
+                'name' : 'Waypoint 1',
+                'lat' : '0.1',
+                'lon' : '0'
+            },
+
+            {
+                'name' : 'Waypoint 2',
+                'lat' : '-0.1',
+                'lon' : '0'
+            }
+        ]
+
+        self.circles = [
+            {
+                'lat' : '0',
+                'lon' : '-0.1',
+                'radius' : 500
+            }
+        ]
 
     def process(self):
         while True:
@@ -94,24 +121,66 @@ class Website(Node):
             axis.velocity = axisData[3]
             axis.currentDraw = axisData[4]
 
-        self.dataDict["odrive_axis0"] = F"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}",
-        self.dataDict["odrive_axis1"] = F"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
+        self.dataDict["odrive_axis0"] = F"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
+        self.dataDict["odrive_axis1"] = F"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"  
 
-# @app.before_request
-# def before_request():
-#     rclpy.spin_once(DATA)  
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('index.html', **DATA.dataDict)
+    if request.method == 'GET':
+        return render_template('index.html', **DATA.dataDict)
+    elif request.method == 'POST':
+        mode = request.form['SetMode']
+        print('set Mode')
 
 @app.route('/gps')
 def gps():
     return (F"{DATA.gps.latitude}, {DATA.gps.longitude}")
 
+@app.route('/gpsJSON')
+def gpsJSON():
+    jsonDict = {
+        'lat' : DATA.gps.latitude,
+        'lon' : DATA.gps.longitude
+    }
+    return (jsonDict)
+
+@app.route('/waypoints')
+def waypoints():
+    jsonDict = {
+        'waypoints' : DATA.waypoints
+    }
+    return (jsonDict)
+
+@app.route('/circles')
+def circles():
+    jsonDict = {
+        'circles' : DATA.circles
+    }
+    return (jsonDict)
+
 @app.route('/compass')
 def compass():
     return (F"{DATA.compass.angle}")
+
+@app.route('/axis0')
+def axis0():
+    return (DATA.dataDict['odrive_axis0'])
+
+@app.route('/axis1')
+def axis1():
+    return (DATA.dataDict['odrive_axis1'])
+
+
+@app.route('/map')
+def root():
+   markers=[
+   {
+   'lat':0,
+   'lon':0,
+   'popup':'This is the middle of the map.'
+    }
+   ]
+   return render_template('map.html',markers=markers )
 
 def main():
     global DATA, app

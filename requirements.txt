@@ -5,9 +5,9 @@
 numpy
 
 # objectDetection
-ultralytics
-opencv-python
-torch
+# ultralytics
+# opencv-python
+# torch
     # Debug
     # tkinter
     keyboard

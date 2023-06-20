@@ -177,3 +177,8 @@ table a{
     text-align:center;
     width: 100%;
 }
+
+#map {
+    height: 100%;
+    width: 100vw;
+    }
