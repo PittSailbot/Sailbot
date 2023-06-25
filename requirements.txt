@@ -4,9 +4,9 @@
 # Common
 numpy
 
-# objectDetection
-# ultralytics
-# opencv-python
+# objectDetection # takes up lots of space :(
+ultralytics
+opencv-python
 # torch
     # Debug
     # tkinter

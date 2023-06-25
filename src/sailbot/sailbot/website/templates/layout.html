@@ -2,7 +2,7 @@
 <title>{% block title %}Welcome{% endblock %}</title>
 
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-
+<script src="{{ url_for('static', filename='js/htmx.js') }}"></script>
 <div class="page">
 
 <body style="background-image: url({{ url_for('static', filename='images/background.jpg') }}); background-size: cover;">
@@ -16,6 +16,7 @@
       </ul>
     {% endif %}
   {% endwith %}
+  <label hx-get="/Notification" hx-trigger="every 1.0s"></label>
 
   <div class="body">
   {% block body %}{% endblock %}

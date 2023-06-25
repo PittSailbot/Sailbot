@@ -1,27 +1,32 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash, redirect
 import os
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 import threading
 import time
+import datetime
 import random
+import traceback
 
-from sailbot.utils import dummyObject
+from sailbot.utils import dummyObject, singleton
+import sailbot.constants as c
 
 app = Flask(__name__)
+app.secret_key = 'sailbot'
 
 # dont print unimportant messages
 import logging 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-
 class Website(Node):
     def __init__(self):
         super().__init__('Website')
         self.logging = self.get_logger()
         self.logging.info("WEBSITE STARTED")
+        threading.Thread(target=rclpy.spin, args=[self]).start()
+        self.notification = ""
         self.gps = dummyObject()
         self.gps.latitude = -1
         self.gps.longitude = -1
@@ -49,6 +54,8 @@ class Website(Node):
         self.compass_subscription = self.create_subscription(String, 'compass', self.ROS_compassCallback, 10)
         self.odrive_subscription = self.create_subscription(String, 'odriveStatus', self.ROS_odriveCallback, 10)
         
+        self.modePub = self.create_publisher(String, 'mode', 10)
+
         self.dataDict = {
             "gps": F"{self.gps.latitude},{self.gps.longitude}",
             "compass": F"{self.compass.angle}",
@@ -124,13 +131,15 @@ class Website(Node):
         self.dataDict["odrive_axis0"] = F"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
         self.dataDict["odrive_axis1"] = F"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"  
 
+    def publishModeChange(self, modeString):
+        msg = String()
+        msg.data = F"Set Mode:{modeString}"
+        self.modePub.publish(msg)
+        self.logging.debug('Publishing: "%s"' % msg.data)
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    if request.method == 'GET':
-        return render_template('index.html', **DATA.dataDict)
-    elif request.method == 'POST':
-        mode = request.form['SetMode']
-        print('set Mode')
+    return render_template('index.html', **DATA.dataDict)
 
 @app.route('/gps')
 def gps():
@@ -170,6 +179,36 @@ def axis0():
 def axis1():
     return (DATA.dataDict['odrive_axis1'])
 
+@app.route('/mode/<mode>')
+def setMode(mode):
+    mappingDict = {
+        "manual": c.config['MODES']['MOD_RC'],
+        "avoid": c.config['MODES']['MOD_COLLISION_AVOID'],
+        "nav": c.config['MODES']['MOD_PRECISION_NAVIGATE'],
+        "endurance": c.config['MODES']['MOD_ENDURANCE'],
+        "keeping": c.config['MODES']['MOD_STATION_KEEPING'],
+        "search": c.config['MODES']['MOD_SEARCH']
+    }
+
+    if mode.lower() in mappingDict:
+        DATA.publishModeChange(mappingDict[mode.lower()])
+        DATA.notification = F"Mode set: {mode}"
+        
+    else:
+        DATA.notification = F"ignoring attempt to set mode to unknown value"
+
+    return {}
+
+@app.route('/Notification')
+def returnNotification():
+    if DATA.notification != "":
+        message = DATA.notification
+        def resetNotifTimer():
+            time.sleep(2)
+            if DATA.notification == message:
+                DATA.notification = ""
+        threading.Thread(target=resetNotifTimer).start()
+    return DATA.notification
 
 @app.route('/map')
 def root():
@@ -182,7 +221,7 @@ def root():
    ]
    return render_template('map.html',markers=markers )
 
-def main():
+def ros_main():
     global DATA, app
     
     os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/website"
@@ -190,10 +229,11 @@ def main():
     DATA = Website()
     port = int(os.environ.get('PORT', 5000))
     # threading.Thread(target=app.run, kwargs={'debug': True, 'host': '0.0.0.0', 'port': port}).start()
-    threading.Thread(target=rclpy.spin, args=[DATA]).start()
+    
     # threading.Thread(target=DATA.process).start()
     app.run(debug=True, host='0.0.0.0', port=port)
     # rclpy.spin(DATA)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    pass

@@ -44,7 +44,7 @@ setup(
                     'main = sailbot.boatMain:main',
                     'drivers = sailbot.peripherals.drivers:main',
                     'offset = sailbot.deprecated.motorOffset:main',
-                    'website = sailbot.website.website:main',
+                    'website = sailbot.website.website:ros_main',
 
                     'virtualDrivers = sailbot.virtualPeripherals.drivers:main',
                     'virtualGPS = sailbot.virtualPeripherals.GPS:main',
