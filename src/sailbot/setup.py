@@ -16,6 +16,13 @@ data_files.append(('lib/python3.8/site-packages/sailbot/virtualPeripherals/', gl
 data_files.append(('lib/python3.8/site-packages/sailbot/peripherals/', glob(package_name + '/peripherals/*.py')))
 data_files.append(('lib/python3.8/site-packages/sailbot/CV/', glob(package_name + '/CV/*')))
 
+data_files.append(('lib//python3.8/site-packages/sailbot/website/', glob(package_name + '/website/*.py')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/templates/', glob(package_name + '/website/templates/*')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/static/css/', glob(package_name + '/website/static/css/*')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/static/js/', glob(package_name + '/website/static/js/*')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/static/images/', glob(package_name + '/website/static/images/*')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/static/leaflet/images/', glob(package_name + '/website/static/leaflet/images/*')))
+data_files.append(('lib//python3.8/site-packages/sailbot/website/static/leaflet/', glob(package_name + '/website/static/leaflet/*.*')))
 
 setup(
     name=package_name,
@@ -36,7 +43,11 @@ setup(
                     'windvane = sailbot.peripherals.windvane:main',
                     'main = sailbot.boatMain:main',
                     'drivers = sailbot.peripherals.drivers:main',
-                    'offset = sailbot.deprecated.motorOffset:main'
+                    'offset = sailbot.deprecated.motorOffset:main',
+                    'website = sailbot.website.website:ros_main',
+
+                    'virtualDrivers = sailbot.virtualPeripherals.drivers:main',
+                    'virtualGPS = sailbot.virtualPeripherals.GPS:main',
         ],
     },
 )

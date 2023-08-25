@@ -49,15 +49,19 @@ First you must install docker on your computer
 (https://docs.docker.com/desktop/install/windows-install/)  
 The docker image can be created using the following commands in a terminal which is located in the same folder as this readme file. This may take awhile the first time (docker desktop must be running)
 ```
-py ./docker.py create
+py ./Utils/docker.py create
 ```
-launch the container using
+launch the container using (add the -nd arg to prevent the container from being deleted when closed)
 ```
-py ./docker.py run
+py ./Utils/docker.py run
 ```
 connect to an already running container using
 ```
-py docker.py connect
+py ./Utils/docker.py connect
+```
+you can also run a docker container with vnc capabilities using 
+```
+py ./Utils/docker.py runVNC
 ```
 
 ### Running code in Docker container

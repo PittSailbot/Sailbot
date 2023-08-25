@@ -5,12 +5,12 @@ import time
 from sailbot.events.eventUtils import Event, EventFinished, Waypoint
 
 import os, importlib
-DOCKER = os.environ.get('IS_DOCKER', False)
-DOCKER = True if DOCKER == 'True' else False
+
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
-gps = importlib.import_module(folder + "GPS").gps
 
 """
 # Challenge	Goal:
@@ -32,8 +32,6 @@ gps = importlib.import_module(folder + "GPS").gps
             - Turn in the direction of the wind and bail
 """
 
-REQUIRED_ARGS = 4
-
 
 class Station_Keeping(Event):
     """
@@ -43,15 +41,18 @@ class Station_Keeping(Event):
                         Waypoint(bot_l_lat, bot_l_long), Waypoint(bot_r_lat, bot_r_long)]
     """
 
+    required_args = ["waypoint1", "waypoint2", "waypoint3", "waypoint4"]
+
     def __init__(self, event_info):
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        self._node = Node('stationKeeping2Event')
-        self.logging = self._node.get_logger()
         super().__init__(event_info)
-        self.logging.info("Station_Keeping moment")
 
         # EVENT INFO
+        self.buoys = [
+            event_info["waypoint1"],
+            event_info["waypoint2"],
+            event_info["waypoint3"],
+            event_info["waypoint4"],
+        ]
         self.bounds = Bounds(event_info)
         self.start_time = time.time()
         self.leave_time = self.start_time + 4.25 * 60
@@ -61,7 +62,6 @@ class Station_Keeping(Event):
         self.waypoint_queue = []
 
         # SENSORS
-        self.gps = gps.gps
         self.windvane = windVane()
 
     def next_gps(self):
@@ -76,7 +76,7 @@ class Station_Keeping(Event):
 
         # Move to bounds of event
         if not self.event_started:
-            if Waypoint(self.gps.gps.latitude, self.gps.gps.longitude) in self.bounds:
+            if Waypoint(self.gps.latitude, self.gps.longitude) in self.bounds:
                 self.logging.info("Boat has entered the station keeping bounds!")
                 self.event_started = True
                 self.start_time = time.time()
@@ -92,13 +92,16 @@ class Station_Keeping(Event):
         self.logging.debug("Leaving event bounds")
         downwind_angle = math.radians(abs(self.windvane.angle + 180) % 360)
 
-        escape_point = self.gps.gps
-        escape_point.add_meters(30 * math.cos(downwind_angle), 30 * math.sin(downwind_angle))
+        escape_point = self.gps.waypoint
+        escape_point.add_meters(
+            30 * math.cos(downwind_angle), 30 * math.sin(downwind_angle)
+        )
         return escape_point
 
 
 class Bounds:
     """Rectangular bounding box for the station keeping event"""
+
     def __init__(self, event_info):
         self.top_left = event_info[0]
         self.top_right = event_info[1]
@@ -108,14 +111,36 @@ class Bounds:
 
     def __contains__(self, waypoint):
         """Returns true if a gps waypoint is inside the bounds"""
-        latitudes = [self.top_left.lat, self.top_right.lat, self.bottom_left.lat, self.bottom_right.lat]
-        longitudes = [self.top_left.lon, self.top_right.lon, self.bottom_left.lon, self.bottom_right.lon]
+        latitudes = [
+            self.top_left.lat,
+            self.top_right.lat,
+            self.bottom_left.lat,
+            self.bottom_right.lat,
+        ]
+        longitudes = [
+            self.top_left.lon,
+            self.top_right.lon,
+            self.bottom_left.lon,
+            self.bottom_right.lon,
+        ]
 
-        return min(latitudes) <= waypoint.lat <= max(latitudes) and min(longitudes) <= waypoint.lon <= max(longitudes)
+        return min(latitudes) <= waypoint.lat <= max(latitudes) and min(
+            longitudes
+        ) <= waypoint.lon <= max(longitudes)
 
     def calculate_center_gps(self):
         """Calculates the center GPS point of the square bounds"""
-        sum_lat = self.top_left.lat + self.top_right.lat + self.bottom_left.lat + self.bottom_right.lat
-        sum_lon = self.top_left.lon + self.top_right.lon + self.bottom_left.lon + self.bottom_right.lon
+        sum_lat = (
+            self.top_left.lat
+            + self.top_right.lat
+            + self.bottom_left.lat
+            + self.bottom_right.lat
+        )
+        sum_lon = (
+            self.top_left.lon
+            + self.top_right.lon
+            + self.bottom_left.lon
+            + self.bottom_right.lon
+        )
 
         return Waypoint(sum_lat / 4, sum_lon / 4)

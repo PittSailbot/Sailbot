@@ -2,12 +2,21 @@
 interfaces with USB GPS sensor
 """
 
-from sailbot.boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
+from sailbot.boatMath import (
+    degreesToRadians,
+    getCoordinateADistanceAlongAngle,
+    distanceInMBetweenEarthCoordinates,
+    computeNewCoordinate,
+    angleBetweenCoordinates,
+    convertDegMinToDecDeg,
+    convertWindAngle,
+)
 from sailbot.utils import dummyObject
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+import os
 
 
 class gps(Node):
@@ -18,25 +27,24 @@ class gps(Node):
     """
 
     def __init__(self):
-
         self.gps = dummyObject()
         self.gps.latitude = 0
         self.gps.longitude = 0
-        self.gps.track_angle_deg = 0
+        self.gps.track_angle_deg = -1
 
-        super().__init__('GPS')
+        super().__init__("GPS")
         self.logging = self.get_logger()
-        self.pub = self.create_publisher(String, 'GPS', 10)
+        self.pub = self.create_publisher(String, "GPS", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-        
-
     def timer_callback(self):
         msg = String()
-        msg.data = F"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        msg.data = (
+            f"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        )
         self.pub.publish(msg)
-        self.logger.info('Publishing: "%s"' % msg.data)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     def __getattribute__(self, name):
         """
@@ -48,8 +56,9 @@ class gps(Node):
         except:
             return self.gps.__getattribute__(name)
 
-def main(args = None):
-    os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/gps"
+
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
     rclpy.init(args=args)
     GPS = gps()
     rclpy.spin(GPS)
@@ -60,7 +69,6 @@ def main(args = None):
     GPS.destroy_node()
     rclpy.shutdown()
 
-    
 
 if __name__ == "__main__":
     GPS = gps()

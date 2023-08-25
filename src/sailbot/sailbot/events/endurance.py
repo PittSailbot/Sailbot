@@ -1,7 +1,14 @@
 from rclpy.node import Node
+from std_msgs.msg import String
 
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
+from sailbot.events.eventUtils import (
+    Event,
+    EventFinished,
+    Waypoint,
+    distance_between,
+)
 import sailbot.constants as c
+from sailbot.utils import ros_spin_some
 
 """
 # Challenge Goal:
@@ -24,7 +31,6 @@ import sailbot.constants as c
         - TODO write psuedocode about how this event logic works
 """
 
-REQUIRED_ARGS = 4
 
 class Endurance(Event):
     """
@@ -32,39 +38,49 @@ class Endurance(Event):
         - event_info (array) - 4 GPS coordinates forming a rectangle that the boat must sail around
             event_info = [(b1_lat, b1_long),(b2_lat, b2_long),(b3_lat, b3_long), (b4_lat, b4_long)]
     """
-    
+
+    required_args = ["waypoint1", "waypoint2", "waypoint3", "waypoint4"]
+
     def __init__(self, event_info):
-        self._node = Node('enduranceEvent')
-        self.logging = self._node.get_logger()
-        if len(event_info) != REQUIRED_ARGS:
-            raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        
         super().__init__(event_info)
         self.logging.info("Endurance moment")
 
         # BOAT STATE
-        self.waypoint_queue = event_info
-        rounding_buffer = c.config["ENDURANCE"]["rounding_buffer"]
-        for buoy in self.waypoint_queue:
-            buoy.add_meters(rounding_buffer, rounding_buffer)
-        self.waypoint_queue *= 10
-        
+        self.waypoint_queue = [
+            event_info["waypoint1"],
+            event_info["waypoint2"],
+            event_info["waypoint3"],
+            event_info["waypoint4"],
+        ]
+
+        self.gps_subscription = self._node.create_subscription(
+            String, "GPS", self.ROS_GPSCallback, 10
+        )
+
+    def ROS_GPSCallback(self, data):
+        string = data.data
+
+        lat, lon, trackangle = string.replace("(", "").replace(")", "").split(",")
+        currentPos = Waypoint(float(lat), float(lon))
+
+        if distance_between(currentPos, self.waypoint_queue[0]) < float(
+            c.config["CONSTANTS"]["reached_waypoint_distance"]
+        ):
+            self.logging.info(
+                f"reached: {self.waypoint_queue[0]}, moving to: {self.waypoint_queue[1]}"
+            )
+            self.waypoint_queue.append(self.waypoint_queue[0])
+            self.waypoint_queue.pop(0)
 
     def next_gps(self):
         """
         Main event script logic. Executed continuously by boatMain.
-        
+
         Returns either:
             - The next GPS point that the boat should sail to stored as a Waypoint object
             - OR None to signal the boat to drop sails and clear waypoint queue
             - OR EventFinished exception to signal that the event has been completed
         """
-
-        if has_reached_waypoint(self.waypoint_queue[0], distance=10):
-            self.logging.info("Rounded buoy")
-            self.waypoint_queue.pop()
-
-        if len(self.waypoint_queue) == 0:
-            raise EventFinished
+        ros_spin_some(self._node)
 
         return self.waypoint_queue[0]

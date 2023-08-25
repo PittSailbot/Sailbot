@@ -14,19 +14,22 @@ def get_args(argv):
     parser = argparse.ArgumentParser(description="Script for testing sailbot code")
     subparsers = parser.add_subparsers(required=True, help='available commands')
 
-    parser_init = subparsers.add_parser('create', description='Initialize Docker image')
-    parser_init.set_defaults(func=init_image)
+    parser_create = subparsers.add_parser('create', description='Initialize Docker image')
+    parser_create.set_defaults(func=init_image)
 
     parser_init = subparsers.add_parser('run', description='Initialize Docker container')
+    parser_init.add_argument('-nd', action='store_true', help="prevent the docker container from being deleted when closed")
+    parser_init.add_argument('--name', help="name the docker container")
     parser_init.set_defaults(func=init_container)
 
-    parser_init = subparsers.add_parser('connect', description='connect to Docker container')
-    parser_init.set_defaults(func=connect_container)
+    parser_connect = subparsers.add_parser('connect', description='connect to Docker container')
+    parser_connect.set_defaults(func=connect_container)
 
-    parser_init = subparsers.add_parser('runVNC', description='Initialize Docker container with VNC')
-    parser_init.set_defaults(func=init_vnc)
+    parser_vnc = subparsers.add_parser('runVNC', description='Initialize Docker container with VNC')
+    parser_vnc.set_defaults(func=init_vnc)
 
     parser_rm = subparsers.add_parser('rm', description='Remove Docker containers')
+    parser_rm.add_argument('--name', help="name the docker container")
     parser_rm.set_defaults(func=cleanup)
 
     return parser.parse_args()
@@ -38,23 +41,25 @@ def init_image(args):
 
 # Create server containers and attach them to bridge network
 def init_container(args):
+    name = args.name if args.name else 'sailbot_client'
 
-    cmd_str = "docker create -it --name sailbot_client sailbot"
+    cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     subprocess.run(cmd_str, shell=True)
     #subprocess.Popen(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    cmd_str = "docker start sailbot_client"
+    cmd_str = F"docker start {name}"
     subprocess.run(cmd_str, shell=True)
 
-    cmd_str = "docker cp ./ sailbot_client:/workspace/"
+    cmd_str = F"docker cp ./ {name}:/workspace/"
     subprocess.run(cmd_str, shell=True)
 
     print("type: 'exit' to close connection")
 
-    cmd_str = "docker exec -it sailbot_client bash"
+    cmd_str = F"docker exec -it {name} bash"
     subprocess.run(cmd_str, shell=True)
 
-    cleanup()
+    if not args.nd:
+        cleanup(args)
 
 def connect_container(args):
     print("type: 'exit' to close connection")
@@ -68,12 +73,13 @@ def init_vnc(args):
     print("vnc available at: http://127.0.0.1:6080/")
 
 # Stop all containers, then remove containers and network
-def cleanup(args = None):
+def cleanup(args):
+    name = args.name if args.name else 'sailbot_client'
 
-    cmd_str = "docker kill sailbot_client"
+    cmd_str = F"docker kill {name}"
     subprocess.run(cmd_str, shell=True)
 
-    cmd_str = "docker rm sailbot_client"
+    cmd_str = F"docker rm {name}"
     subprocess.run(cmd_str, shell=True)
 
 def main(argv):

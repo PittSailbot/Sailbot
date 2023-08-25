@@ -72,7 +72,7 @@ class ObjectDetection:
         # Add each buoy found by the model into a list
         detections = []
         for detection in result:
-            self.logging.info(F"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
+            self.logging.debug(F"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
             detections.append(Detection(detection)) # Convert tensors into readable Detection class and append to list
         detections.sort(reverse=True)
         return detections

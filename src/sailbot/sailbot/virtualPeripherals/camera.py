@@ -174,7 +174,7 @@ class Camera:
                 - NOTE: Should be pretty rare but occurs when trying to focus on something behind the boat
         """
         if type(detection) == Waypoint:
-            self.logging.info(f"Focusing on GPS position: {detection}")
+            self.logging.debug(f"Focusing on GPS position: {detection}")
 
             distance = distance_between(self.gps, detection.gps)
             boat_angle = compass.angle
@@ -192,7 +192,7 @@ class Camera:
             self.servos.yaw = 0
             self.servos.pitch = 70
         else:
-            self.logging.info(f"Focusing on camera pixel detection")
+            self.logging.debug(f"Focusing on camera pixel detection")
             Cx, Cy = detection.x, detection.y
             Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
             if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"][

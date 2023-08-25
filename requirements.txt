@@ -4,10 +4,10 @@
 # Common
 numpy
 
-# objectDetection
+# objectDetection # takes up lots of space :(
 ultralytics
 opencv-python
-torch
+# torch
     # Debug
     # tkinter
     keyboard
