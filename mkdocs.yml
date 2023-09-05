@@ -3,9 +3,9 @@ site_url: https://pitt_sailbot.io
 site_description: Documentation for Pitt's Sailbot team!
 site_author: Pitt Sailbot
 repo_url: https://github.com/PittSailbot/Sailbot
-edit_url: https://github.com/PittSailbot/Sailbot/docs
+edit_url: https://github.com/PittSailbot/Sailbot/tree/docs
 repo_name: Pitt Sailbot
-remote_name: https://github.com/PittSailbot/Sailbot/docs
+remote_name: https://github.com/PittSailbot/Sailbot/tree/docs
 
 # Website Structure
 nav:
