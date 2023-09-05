@@ -5,7 +5,7 @@ site_author: Pitt Sailbot
 repo_url: https://github.com/PittSailbot/Sailbot
 edit_url: https://github.com/PittSailbot/Sailbot/tree/docs
 repo_name: Pitt Sailbot
-remote_name: https://github.com/PittSailbot/Sailbot/tree/docs
+remote_name: https://github.com/PittSailbot/Sailbot
 
 # Website Structure
 nav:
