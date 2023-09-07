@@ -1,6 +1,6 @@
 This guide walks you through all of the steps to get started with contributing to Sailbot! :D
 
-# Installing Git & Using Github
+## Installing Git & Using Github
 Git is the industry standard for collaborating on projects. It allows multiple people to work on different features and easily share changes. If you're majoring in CS you'll be forced to learn this eventually, and its a great time to get a head start for your classes.
 
 1\. Install [Git](https://git-scm.com/downloads)
@@ -11,7 +11,7 @@ Git is the industry standard for collaborating on projects. It allows multiple p
 
 2\. Navigate over to [Github](https://github.com/PittSailbot/Sailbot). If you don't have an account, create one! Using Github early on is great for saving progress and safeguarding against academic dishonesty claims (hopefully *very rare*)
 
-# Installing Python
+## Installing Python
 Pretty much everything we write is using Python. Its much easier to pick up than other languages and has good supporting libraries for working with the Raspberry Pi.
 
 3\. Install [Python 3.10](https://www.python.org/downloads/release/python-31011/)
@@ -23,7 +23,7 @@ Pretty much everything we write is using Python. Its much easier to pick up than
 
 > Or, if you just need a refresher or want to see some *cool advanced features* [click here](https://gto76.github.io/python-cheatsheet/).
 
-# Installing IDE/Code Editor
+## Installing IDE/Code Editor
 Pycharm is a great editor for Python with lots of advanced features. VS Code is also another great option if you'd prefer a lightweight editor that works with any language.
 
 4\. Download [Pycharm](https://www.jetbrains.com/pycharm/download/#section=windows)
@@ -36,6 +36,8 @@ Pycharm is a great editor for Python with lots of advanced features. VS Code is 
 	![](\assets\Pycharm Installation Options.png)
 
 6\. Launch Pycharm and select "Get from VCS" in the welcome menu
+
+> Pycharm keeps all projects in the /PycharmProjects folder. If you want to install the repo somewhere else, then navigate to where you want to install the repository in the terminal using `cd C:\Path/to/folder`.
 
 7\. Paste this URL and click 'clone'
 ```console
@@ -60,7 +62,7 @@ pip install -r requirements-dev.txt
 
 This will install most of the third party modules that we need. There may be some modules we've missed which you can install using pip. Some modules like the adafruit libraries and GPIO can only be installed on the Raspberry Pi which is ok.
 
-# Testing our Environment
+## Testing our Environment
 
 We use pytest to ensure that our code works (most of the time). 
 
