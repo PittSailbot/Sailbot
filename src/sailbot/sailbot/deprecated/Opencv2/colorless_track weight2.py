@@ -40,8 +40,7 @@ vid = cv2.VideoCapture(0)
 # LOOP
 
 
-while (True):
-
+while True:
     # //////////////////////////////////////////////////
     # set up
 
@@ -61,20 +60,19 @@ while (True):
     # runs through ripped image and inspects every contour collection for the highest area
     # the values for the biggest are overwritten until only the largest "tobeat" score remains
     for cnt in contours:
-
         # print(tobeat)
 
         # calc area and remove small elments
         area = round(cv2.contourArea(cnt))
 
-        if (area > 1050):
+        if area > 1050:
             cv2.drawContours(frame, [cnt], -1, (255, 165, 0), 2)
             x, y, w, h = cv2.boundingRect(cnt)
 
-            perc = area/(w*h) # diff from 'dominant_track.py'
+            perc = area / (w * h)  # diff from 'dominant_track.py'
 
             # CHANGE THIS VALUE IF FAR/CLOSE
-            if (perc > tobeat):
+            if perc > tobeat:
                 print("PASS x:", x, "y:", y)
                 # print(perc," , ",tobeat)
 
@@ -92,17 +90,16 @@ while (True):
                 cv2.drawContours(frame, [cnt], -1, (120, 80, 0), 2)
                 x, y, w, h = cv2.boundingRect(cnt)
                 Fxystr = str(x) + ", " + str(y)
-                cv2.putText(frame, Fxystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                cv2.putText(
+                    frame, Fxystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+                )
         # print(tobeat)
-
-
 
     # //////////////////////////////////////////////////
     # scouring the ripped image is done
     # taking the values from the remaining and overlapping things over the coords taken
     # isnt actually directly related to an area, just the remnants of it
-    if (passed):
-
+    if passed:
         cv2.rectangle(frame, (fx, fy), (fx + fw, fy + fh), (255, 0, 0), 3)
 
         xystr = str(fx) + ", " + str(fy)
@@ -111,7 +108,15 @@ while (True):
         avgx = round(fx + (fw / 2))
         avgy = round(fy + (fh / 2))
         # print(avgx, avgy)
-        cv2.putText(frame, str(avgx) + ", " + str(avgy), (avgx, avgy - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        cv2.putText(
+            frame,
+            str(avgx) + ", " + str(avgy),
+            (avgx, avgy - 7),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (0, 0, 0),
+            2,
+        )
 
         cv2.putText(frame, "x", (avgx, avgy), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
 
@@ -123,13 +128,13 @@ while (True):
     # clean up
 
     # Display the resulting frame
-    cv2.imshow('frame', frame)
-    cv2.imshow('mask', mask)
+    cv2.imshow("frame", frame)
+    cv2.imshow("mask", mask)
 
     # time.sleep(1)
 
     # quits when pressing 'q'
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 # ////////////////////////////////////////

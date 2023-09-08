@@ -2,7 +2,7 @@
 Handles interfacing with the I2C compass and accelerometer sensor
 """
 
-#sudo pip3 install adafruit-circuitpython-lis2mdl
+# sudo pip3 install adafruit-circuitpython-lis2mdl
 
 
 from time import sleep
@@ -12,8 +12,9 @@ import adafruit_lis2mdl
 import adafruit_lsm303_accel
 import adafruit_lsm303dlh_mag
 import math
-#^^from Thread import thread
-#import RPi.GPIO as GPIO
+
+# ^^from Thread import thread
+# import RPi.GPIO as GPIO
 
 import rclpy
 from rclpy.node import Node
@@ -26,20 +27,20 @@ class compass(Node):
         i2c = busio.I2C(board.SCL, board.SDA)
         self.mag = adafruit_lsm303dlh_mag.LSM303DLH_Mag(i2c)
         self.accel = adafruit_lsm303_accel.LSM303_Accel(i2c)
-        self.compassAngle=0
-        self.errcnt=0
-        
+        self.compassAngle = 0
+        self.errcnt = 0
+
         self.averagedAngle = 0
 
-        super().__init__('Compass')
+        super().__init__("Compass")
         self.logging = self.get_logger()
-        self.pub = self.create_publisher(String, 'compass', 10)
+        self.pub = self.create_publisher(String, "compass", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         msg = String()
-        msg.data = F"{self.angle}"
+        msg.data = f"{self.angle}"
         self.pub.publish(msg)
         self.logging.debug('Publishing: "%s"' % msg.data)
 
@@ -48,66 +49,75 @@ class compass(Node):
 
     @property
     def vector(self):
-        return sensor.magnetic # (mag_x, mag_y, mag_z)
+        return sensor.magnetic  # (mag_x, mag_y, mag_z)
 
     @property
     def angle_X(self):
         # return X component of compass, occasionally the compass fails to read, if this happens 10 times in a row raise error
         try:
-            self.compassAngle1 = self.mag.magnetic[0]   
-            self.errcnt=0
+            self.compassAngle1 = self.mag.magnetic[0]
+            self.errcnt = 0
         except:
-            self.errcnt+=1
-            if self.errcnt>10:
+            self.errcnt += 1
+            if self.errcnt > 10:
                 raise Exception("DISCONNECTED COMPASS")
-        
+
         return self.compassAngle1
+
     @property
     def angle_Y(self):
         # return Y component of compass, occasionally the compass fails to read, if this happens 10 times in a row raise error
         try:
-            self.compassAngle2 = self.mag.magnetic[1]    #issues
-            self.errcnt=0
+            self.compassAngle2 = self.mag.magnetic[1]  # issues
+            self.errcnt = 0
         except:
-            self.errcnt+=1
-            if self.errcnt>10:
+            self.errcnt += 1
+            if self.errcnt > 10:
                 raise Exception("DISCONNECTED COMPASS")
-        
+
         return self.compassAngle2
+
     @property
     def angle_Z(self):
         # return Z component of compass, occasionally the compass fails to read, if this happens 10 times in a row raise error
         try:
-            self.compassAngle3 = self.mag.magnetic[2]    #issues
-            self.errcnt=0
+            self.compassAngle3 = self.mag.magnetic[2]  # issues
+            self.errcnt = 0
         except:
-            self.errcnt+=1
-            if self.errcnt>10:
+            self.errcnt += 1
+            if self.errcnt > 10:
                 raise Exception("DISCONNECTED COMPASS")
-        
+
         return self.compassAngle3
-    
+
     @property
     def angleToNorth(self):
-        return (math.atan2(-self.angle_Y, -self.angle_X) * 180 / math.pi)
-    
+        return math.atan2(-self.angle_Y, -self.angle_X) * 180 / math.pi
+
     @property
     def angle(self):
         # returns smoothed angle measurement
-        alpha = .9
-        self.averagedAngle = self.averagedAngle * alpha + self.angleToNorth * (1-alpha)
+        alpha = 0.9
+        self.averagedAngle = self.averagedAngle * alpha + self.angleToNorth * (
+            1 - alpha
+        )
         return self.averagedAngle
-    
-    def printAccel(self):
-        self.logging.info("Acceleration (m/s^2)): X=%0.3f Y=%0.3f Z=%0.3f"%self.accel.acceleration)
-    def printMag(self):
-        self.logging.info("Magnetometer (micro-Teslas)): X=%0.3f Y=%0.3f Z=%0.3f"%self.mag.magnetic)
-        self.logging.info(F"Angle {self.angle}")
-        #self.logging.info(F"angle to north: {self.angleToNorth}")
-            
 
-def main(args = None):
-    os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/compass"
+    def printAccel(self):
+        self.logging.info(
+            "Acceleration (m/s^2)): X=%0.3f Y=%0.3f Z=%0.3f" % self.accel.acceleration
+        )
+
+    def printMag(self):
+        self.logging.info(
+            "Magnetometer (micro-Teslas)): X=%0.3f Y=%0.3f Z=%0.3f" % self.mag.magnetic
+        )
+        self.logging.info(f"Angle {self.angle}")
+        # self.logging.info(F"angle to north: {self.angleToNorth}")
+
+
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"
     rclpy.init(args=args)
     comp = compass()
     rclpy.spin(comp)
@@ -118,13 +128,9 @@ def main(args = None):
     comp.destroy_node()
     rclpy.shutdown()
 
+
 if __name__ == "__main__":
     comp = compass()
     while True:
         comp.printMag()
-        sleep(.2)
-        
-
-    
-
-
+        sleep(0.2)

@@ -20,6 +20,7 @@ class CameraServos:
     Functions:
         - reset(): returns camera servos to center
     """
+
     # Yaw and Pitch assumed to have same range limits
     MIN_ANGLE = int(c.config["CAMERASERVOS"]["min_angle"])
     MAX_ANGLE = int(c.config["CAMERASERVOS"]["max_angle"])
@@ -36,7 +37,7 @@ class CameraServos:
         self._pitch = self.DEFAULT_ANGLE
         self._yaw = self.DEFAULT_ANGLE
 
-        self._node = Node('vitualCameraServos')
+        self._node = Node("vitualCameraServos")
         self.logging = self._node.get_logger()
 
         self.logging.debug("Initializing camera servos")

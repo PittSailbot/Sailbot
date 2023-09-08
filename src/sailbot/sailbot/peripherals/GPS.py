@@ -1,12 +1,13 @@
 """
 interfaces with USB GPS sensor
 """
-#https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
+# https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
 import time
 
 import board
 import busio
 import adafruit_gps
+
 # import adafruit_lsm303_accel
 import adafruit_lsm303dlh_mag
 
@@ -16,17 +17,31 @@ import math
 import os
 
 try:
-    from boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
+    from boatMath import (
+        degreesToRadians,
+        getCoordinateADistanceAlongAngle,
+        distanceInMBetweenEarthCoordinates,
+        computeNewCoordinate,
+        angleBetweenCoordinates,
+        convertDegMinToDecDeg,
+        convertWindAngle,
+    )
 except:
-    from sailbot.boatMath import degreesToRadians, getCoordinateADistanceAlongAngle, distanceInMBetweenEarthCoordinates, computeNewCoordinate, angleBetweenCoordinates, convertDegMinToDecDeg, convertWindAngle
+    from sailbot.boatMath import (
+        degreesToRadians,
+        getCoordinateADistanceAlongAngle,
+        distanceInMBetweenEarthCoordinates,
+        computeNewCoordinate,
+        angleBetweenCoordinates,
+        convertDegMinToDecDeg,
+        convertWindAngle,
+    )
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
 from utils import singleton
-
-
 
 
 @singleton
@@ -38,52 +53,53 @@ class gps(Node):
     """
 
     def __init__(self):
-
         # a slightly higher timeout (GPS modules typically update once a second).
         # These are the defaults you should use for the GPS FeatherWing.
         # For other boards set RX = GPS module TX, and TX = GPS module RX pins.
-        #self.uart = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
+        # self.uart = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
         #
 
         # for a computer, use the pyserial library for uart access
         import serial
-        self.latitude =  None
+
+        self.latitude = None
         self.longitude = None
         self.track_angle_deg = 0
-        #self.uart = serial.Serial("/dev/ttyACM1", baudrate=9600, timeout=10)
+        # self.uart = serial.Serial("/dev/ttyACM1", baudrate=9600, timeout=10)
         self.uart = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=10)
         self.gps = adafruit_gps.GPS(self.uart, debug=False)
 
-
         # Turn on the basic GGA and RMC info (what you typically want)
-        self.gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        self.gps.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
         # Turn on just minimum info (RMC only, location):
-        #gps.send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # gps.send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
         # Turn off everything:
-        #gps.send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # gps.send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
         # Turn on everything (not all of it is parsed!)
-        #gps.send_command(b'PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # gps.send_command(b'PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0')
 
         # Set update rate to once a second (1hz) which is what you typically want.
-        self.gps.send_command(b'PMTK220,1000')
+        self.gps.send_command(b"PMTK220,1000")
         # Or decrease to once every two seconds by doubling the millisecond value.
         # Be sure to also increase your UART timeout above!
-        #gps.send_command(b'PMTK220,2000')
+        # gps.send_command(b'PMTK220,2000')
         # You can also speed up the rate, but don't go too fast or else you can lose
         # data during parsing.  This would be twice a second (2hz, 500ms delay):
-        #gps.send_command(b'PMTK220,500')
+        # gps.send_command(b'PMTK220,500')
 
-        #pump_thread = Thread(target=self.run)# creates a Thread running an infinite loop pumping server
-        #pump_thread.start()
-        super().__init__('GPS')
+        # pump_thread = Thread(target=self.run)# creates a Thread running an infinite loop pumping server
+        # pump_thread.start()
+        super().__init__("GPS")
         self.logging = self.get_logger()
-        self.pub = self.create_publisher(String, 'GPS', 10)
+        self.pub = self.create_publisher(String, "GPS", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         msg = String()
-        msg.data = F"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        msg.data = (
+            f"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        )
         self.pub.publish(msg)
         self.logging.debug('Publishing: "%s"' % msg.data)
 
@@ -99,8 +115,8 @@ class gps(Node):
 
     def run(self):
         while True:
-            return # This should use ROS now instead of a loop
-            #self.updategps()
+            return  # This should use ROS now instead of a loop
+            # self.updategps()
 
     def readgps(self):
         timestamp = time.monotonic()
@@ -108,40 +124,52 @@ class gps(Node):
             data = self.gps.read(64)
 
             if data is not None:
-                data_string = ''.join([chr(b) for b in data])
+                data_string = "".join([chr(b) for b in data])
                 self.logging.debug(data_string, end="")
 
                 if time.monotonic() - timestamp > 5:
-                    self.gps.send_command(b'PMTK605')
+                    self.gps.send_command(b"PMTK605")
                     timestamp = time.monotonic()
 
-    def updategps(self, print_info = True):
+    def updategps(self, print_info=True):
         # must be called before reading latitude and longitude, just pulls data from the sensor
         # optionally prints data read from sensor
         self.gps.update()
-        if(self.gps.has_fix):
+        if self.gps.has_fix:
             self.latitude = self.gps.latitude
             self.longitude = self.gps.longitude
             self.track_angle_deg = self.gps.track_angle_deg
         if print_info:
-            #self.logging.debug(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
+            # self.logging.debug(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
             if not self.gps.has_fix:
                 self.logging.debug("Waiting for fix")
                 return
 
-            self.logging.info('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
-                self.gps.timestamp_utc.tm_mon,   # Grab parts of the time from the
-                self.gps.timestamp_utc.tm_mday,  # struct_time object that holds
-                self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-                self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-                self.gps.timestamp_utc.tm_min,   # month!
-                self.gps.timestamp_utc.tm_sec), once=True)
+            self.logging.info(
+                "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
+                    self.gps.timestamp_utc.tm_mon,  # Grab parts of the time from the
+                    self.gps.timestamp_utc.tm_mday,  # struct_time object that holds
+                    self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
+                    self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
+                    self.gps.timestamp_utc.tm_min,  # month!
+                    self.gps.timestamp_utc.tm_sec,
+                ),
+                once=True,
+            )
 
-            self.logging.info('Latitude: {0:.8f} degrees'.format(self.gps.latitude), once=True)
-            self.logging.info('Longitude: {0:.8f} degrees'.format(self.gps.longitude), once=True)
-            self.logging.info('Lat in decDeg:', convertDegMinToDecDeg(self.gps.latitude), once=True)
-            self.logging.info('long in decDeg:', convertDegMinToDecDeg(self.gps.longitude), once=True)
-            self.logging.info('Fix quality: {}'.format(self.gps.fix_quality), once=True)
+            self.logging.info(
+                "Latitude: {0:.8f} degrees".format(self.gps.latitude), once=True
+            )
+            self.logging.info(
+                "Longitude: {0:.8f} degrees".format(self.gps.longitude), once=True
+            )
+            self.logging.info(
+                "Lat in decDeg:", convertDegMinToDecDeg(self.gps.latitude), once=True
+            )
+            self.logging.info(
+                "long in decDeg:", convertDegMinToDecDeg(self.gps.longitude), once=True
+            )
+            self.logging.info("Fix quality: {}".format(self.gps.fix_quality), once=True)
 
             # Some attributes beyond latitude, longitude and timestamp are optional
             # and might not be present.  Check if they're None before trying to use!
@@ -159,8 +187,9 @@ class gps(Node):
                 print('Height geo ID: {} meters'.format(self.gps.height_geoid))
             """
 
-def main(args = None):
-    os.environ['ROS_LOG_DIR'] = os.environ['ROS_LOG_DIR_BASE'] + "/gps"
+
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
     rclpy.init(args=args)
     GPS = gps()
     rclpy.spin(GPS)
@@ -171,7 +200,6 @@ def main(args = None):
     GPS.destroy_node()
     rclpy.shutdown()
 
-    
 
 if __name__ == "__main__":
     GPS = gps()
