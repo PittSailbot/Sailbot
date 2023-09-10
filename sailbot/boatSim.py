@@ -2,11 +2,9 @@
 
 import math
 from math import cos, pi, sin
-from random import randint
 from time import sleep
 
 import boatMain
-import boatMath
 import pygame
 
 

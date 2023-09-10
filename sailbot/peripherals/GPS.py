@@ -10,8 +10,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from src.sailbot.sailbot.utils.boatMath import convertDegMinToDecDeg
-from src.sailbot.sailbot.utils.utils import singleton
+from sailbot.utils.utils import singleton
 
 
 @singleton

@@ -12,7 +12,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 import sailbot.constants as c
-from sailbot.utils import dummyObject
+from sailbot.utils.utils import dummyObject
 
 
 class Odrive:

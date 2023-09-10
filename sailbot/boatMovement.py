@@ -6,15 +6,12 @@ import os
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 
-import src.sailbot.sailbot.peripherals.compass as compass
-import src.sailbot.sailbot.peripherals.GPS as GPS
-import src.sailbot.sailbot.peripherals.windvane as windvane
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.peripherals.Odrive import Odrive
-from src.sailbot.sailbot.utils import boatMath
-from src.sailbot.sailbot.utils.utils import singleton
+import sailbot.peripherals.GPS as GPS
+from sailbot import constants as c
+from sailbot.peripherals.Odrive import Odrive
+from sailbot.utils import boatMath
+from sailbot.utils.utils import singleton
 
 
 @singleton

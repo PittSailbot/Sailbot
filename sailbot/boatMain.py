@@ -12,7 +12,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-import sailbot.boatMath as boatMath
+import sailbot.utils.boatMath as boatMath
 import sailbot.constants as c
 import sailbot.utils as utils
 from sailbot.events.eventUtils import (EventFinished, Waypoint,

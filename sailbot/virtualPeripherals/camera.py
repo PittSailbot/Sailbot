@@ -11,8 +11,8 @@ from rclpy.node import Node
 
 import sailbot.constants as c
 from sailbot.events.eventUtils import Waypoint, distance_between
-from sailbot.objectDetection import ObjectDetection, draw_bbox
-from sailbot.utils import singleton
+from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.utils.utils import singleton
 
 
 class Frame:

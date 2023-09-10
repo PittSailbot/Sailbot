@@ -3,17 +3,17 @@ import math
 import os
 from dataclasses import dataclass
 
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.peripherals.GPS import GPS
-from src.sailbot.sailbot.utils.boatMath import distance_between
+from sailbot import constants as c
+from sailbot.peripherals.GPS import GPS
+from sailbot.utils.boatMath import distance_between
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 if not DOCKER:
-    from src.sailbot.sailbot.peripherals.GPS import gps
+    pass
 else:
-    from src.sailbot.sailbot.virtualPeripherals.GPS import gps
+    pass
 
 
 def singleton(cls):
