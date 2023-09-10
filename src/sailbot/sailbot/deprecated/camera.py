@@ -114,7 +114,9 @@ class camera:
         # mask
         self.mask = self.clr_iso(self.frame, LOWER, UPPER)
         # make list of contours on screen
-        contours, self._ = cv2.findContours(self.mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, self._ = cv2.findContours(
+            self.mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         # cool boarder
         cv2.rectangle(self.frame, (5, 5), (210, 75), [50, 150, 255], -1)
@@ -154,19 +156,75 @@ class camera:
             ctstr = "object cnt: " + str(cnt_count)
 
             if self.find_side(self.vid_feed, x + (w / 2)) == "RIGHT":
-                cv2.putText(self.frame, xystr, (x - 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)  # xy
-                cv2.putText(self.frame, whstr, (x - 50, y - 24), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # wh
+                cv2.putText(
+                    self.frame,
+                    xystr,
+                    (x - 50, y - 7),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1,
+                    (0, 0, 0),
+                    2,
+                )  # xy
+                cv2.putText(
+                    self.frame,
+                    whstr,
+                    (x - 50, y - 24),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1,
+                    (255, 255, 255),
+                    2,
+                )  # wh
             else:
-                cv2.putText(self.frame, xystr, (x + 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)  # xy
-                cv2.putText(self.frame, whstr, (x + 50, y - 24), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # wh
+                cv2.putText(
+                    self.frame,
+                    xystr,
+                    (x + 50, y - 7),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1,
+                    (0, 0, 0),
+                    2,
+                )  # xy
+                cv2.putText(
+                    self.frame,
+                    whstr,
+                    (x + 50, y - 24),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1,
+                    (255, 255, 255),
+                    2,
+                )  # wh
 
-            cv2.putText(self.frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)  # center
-            cv2.putText(self.frame, ctstr, (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # num of cnts
-            cv2.putText(self.frame, arstr, (10, 37), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # area of max
+            cv2.putText(
+                self.frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2
+            )  # center
+            cv2.putText(
+                self.frame,
+                ctstr,
+                (10, 20),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+            )  # num of cnts
+            cv2.putText(
+                self.frame,
+                arstr,
+                (10, 37),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+            )  # area of max
 
             # perform REAL operations for max contour found in for statement
             cv2.putText(
-                self.frame, "TARGET OUTPUT: " + str(x + (w / 2)), (10, 54), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+                self.frame,
+                "TARGET OUTPUT: " + str(x + (w / 2)),
+                (10, 54),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (0, 0, 0),
+                2,
             )  # TARGET cords
             cv2.putText(
                 self.frame,
@@ -180,7 +238,13 @@ class camera:
 
         else:
             cv2.putText(
-                self.frame, "NO CONTOURS", (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2
+                self.frame,
+                "NO CONTOURS",
+                (10, 20),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
             )  # area of max
 
 

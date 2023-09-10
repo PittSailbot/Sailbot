@@ -1,0 +1,1 @@
+GPIO Pins - https://pinout.xyz/pinout/pin5_gpio3/

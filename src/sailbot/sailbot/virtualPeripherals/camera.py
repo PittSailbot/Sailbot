@@ -32,7 +32,9 @@ class Frame:
                 - OR pass 'detect=True' on capture() or survey()
     """
 
-    def __init__(self, img=None, time=None, gps=None, heading=None, pitch=None, detections=None):
+    def __init__(
+        self, img=None, time=None, gps=None, heading=None, pitch=None, detections=None
+    ):
         self.img = img
         self.time = time
         self.gps = gps
@@ -113,7 +115,16 @@ class Camera:
 
         return frame
 
-    def survey(self, num_images=3, pitch=70, servo_range=180, context=True, detect=False, annotate=False, save=False):
+    def survey(
+        self,
+        num_images=3,
+        pitch=70,
+        servo_range=180,
+        context=True,
+        detect=False,
+        annotate=False,
+        save=False,
+    ):
         """Takes a horizontal panaroma over the camera's field of view
             - Maximum boat FoV is ~242.2 degrees (not tested)
         # Args:
@@ -146,11 +157,19 @@ class Camera:
         if self.servos.yaw <= 90:
             # Survey left -> right when camera is facing left or center
             for self.servos.yaw in range(MIN_ANGLE, MAX_ANGLE, servo_step):
-                images.append(self.capture(context=context, annotate=annotate, save=save, detect=False))
+                images.append(
+                    self.capture(
+                        context=context, annotate=annotate, save=save, detect=False
+                    )
+                )
         else:
             # Survey right -> left when camera is facing right
             for self.servos.yaw in range(MAX_ANGLE, MIN_ANGLE, servo_step):
-                images.append(self.capture(context=context, annotate=annotate, save=save, detect=False))
+                images.append(
+                    self.capture(
+                        context=context, annotate=annotate, save=save, detect=False
+                    )
+                )
 
         if detect:
             object_detection = ObjectDetection()
@@ -173,17 +192,21 @@ class Camera:
                 - NOTE: Should be pretty rare but occurs when trying to focus on something behind the boat
         """
         if type(detection) == Waypoint:
-            self.logging.info(f"Focusing on GPS position: {detection}")
+            self.logging.debug(f"Focusing on GPS position: {detection}")
 
-            distance = distance_between(self.gps, detection.GPS)
+            distance = distance_between(self.gps, detection.gps)
             boat_angle = compass.angle
 
             def calculate_compass_angle(pt1, pt2):
                 delta_lon = pt2.lon - pt1.lon
                 y = math.sin(math.radians(delta_lon)) * math.cos(math.radians(pt2.lat))
-                x = math.cos(math.radians(pt1.lat)) * math.sin(math.radians(pt2.lat)) - math.sin(
-                    math.radians(pt1.lat)
-                ) * math.cos(math.radians(pt2.lat)) * math.cos(math.radians(delta_lon))
+                x = math.cos(math.radians(pt1.lat)) * math.sin(
+                    math.radians(pt2.lat)
+                ) - math.sin(math.radians(pt1.lat)) * math.cos(
+                    math.radians(pt2.lat)
+                ) * math.cos(
+                    math.radians(delta_lon)
+                )
                 angle = math.atan2(y, x)
                 angle_deg = math.degrees(angle)
                 compass_angle = (angle_deg + 360) % 360
@@ -192,9 +215,12 @@ class Camera:
             self.servos.yaw = 0
             self.servos.pitch = 70
         else:
-            self.logging.info(f"Focusing on camera pixel detection")
+            self.logging.debug(f"Focusing on camera pixel detection")
             Cx, Cy = detection.x, detection.y
-            Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
+            Px, Py = (
+                Cx / c.config["OBJECTDETECTION"]["camera_width"],
+                Cy / c.config["OBJECTDETECTION"]["camera_height"],
+            )
             if (
                 Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
                 and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
@@ -242,9 +268,15 @@ class Camera:
     # rework events to work on ever updating gps coords rather then fantom radius area?
     # how would you differenciate them from eachother?
     def coordcalc(self, obj_width):
-        if c.config["OBJECTDETECTION"]["Width_Real"] == 0 or c.config["OBJECTDETECTION"]["Focal_Length"] == 0:
+        if (
+            c.config["OBJECTDETECTION"]["Width_Real"] == 0
+            or c.config["OBJECTDETECTION"]["Focal_Length"] == 0
+        ):
             raise Exception("MISSING WIDTH REAL/FOCAL LENGTH INFO IN CONSTANTS")
-        dist = (c.config["OBJECTDETECTION"]["Width_Real"] * c.config["OBJECTDETECTION"]["Focal_Length"]) / obj_width
+        dist = (
+            c.config["OBJECTDETECTION"]["Width_Real"]
+            * c.config["OBJECTDETECTION"]["Focal_Length"]
+        ) / obj_width
         # TODO: either add angle its away from boat or focus boat at coord
         comp = compass()  # assume 0 is north(y pos)
         geep = gps()
@@ -280,7 +312,9 @@ class Camera:
             dets.extend(img.detections)
         # survey by groups of (1-thres)/steps
         curr = []
-        st = (1 - c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]) / c.config["OBJECTDETECTION"]["SCAN_major_steps"]
+        st = (1 - c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]) / c.config[
+            "OBJECTDETECTION"
+        ]["SCAN_major_steps"]
         for j in range(c.config["OBJECTDETECTION"]["SCAN_major_steps"]):
             for i in dets:
                 if i.conf > 1 - (st * j):
@@ -337,9 +371,13 @@ def estimate_all_buoy_gps(frame):
         dx *= math.cos(frame.heading)
 
         d_lat = (dz / earth_radius) * (180 / math.pi)
-        d_lon = (dx / earth_radius) * (180 / math.pi) / math.cos(frame.GPS.lat * math.pi / 180)
+        d_lon = (
+            (dx / earth_radius)
+            * (180 / math.pi)
+            / math.cos(frame.gps.lat * math.pi / 180)
+        )
 
-        lat = frame.GPS.lat + d_lat
-        lon = frame.GPS.lon + d_lon
+        lat = frame.gps.lat + d_lat
+        lon = frame.gps.lon + d_lon
 
-        detection.GPS = Waypoint(lat, lon)
+        detection.gps = Waypoint(lat, lon)

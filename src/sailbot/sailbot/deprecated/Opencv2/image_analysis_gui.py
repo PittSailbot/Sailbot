@@ -27,14 +27,19 @@ def main_loop():
         for y, row in enumerate(array):
             for x, elem in enumerate(row):
                 if elem:
-                    surface = pygame.Surface((constants.IMG_ACCURACY, constants.IMG_ACCURACY))
+                    surface = pygame.Surface(
+                        (constants.IMG_ACCURACY, constants.IMG_ACCURACY)
+                    )
 
                     # Define the color of activated boxes
                     surface.fill((100, 100, 255))
 
                     # Define the transparancy of activated boxes
                     surface.set_alpha(100)
-                    SURFACE_MAIN.blit(surface, (x * constants.IMG_ACCURACY, y * constants.IMG_ACCURACY))
+                    SURFACE_MAIN.blit(
+                        surface,
+                        (x * constants.IMG_ACCURACY, y * constants.IMG_ACCURACY),
+                    )
                     i += 1
 
         pygame.display.flip()
@@ -47,7 +52,9 @@ def init():
     pygame.display.set_caption(constants.WIN_TITLE)
     pygame.key.set_repeat(200, 70)
 
-    SURFACE_MAIN = pygame.display.set_mode((constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT))
+    SURFACE_MAIN = pygame.display.set_mode(
+        (constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT)
+    )
     SURFACE_MAIN.fill((255, 255, 255))
 
     CAM = PiCamera()

@@ -37,6 +37,7 @@ class Compass(Node):
         self.averagedAngle = 0
 
         super().__init__("Compass")
+        self.logging = self.get_logger()
         self.pub = self.create_publisher(String, "compass", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -45,7 +46,7 @@ class Compass(Node):
         msg = String()
         msg.data = f"{self.angle}"
         self.pub.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     @property
     def vector(self):

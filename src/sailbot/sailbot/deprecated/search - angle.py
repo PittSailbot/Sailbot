@@ -86,7 +86,9 @@ for i in range(0, 5):
 
     # print("tarx[", i, "]: ", tarx[i])
     # print("tary[", i, "]: ", tary[i],"\n")
-    print("(" + str(round(tarx[i], 4)) + ", " + str(round(tary[i], 4)) + ")")  # coords along circle
+    print(
+        "(" + str(round(tarx[i], 4)) + ", " + str(round(tary[i], 4)) + ")"
+    )  # coords along circle
 
 print("\n" + equ_2pnts(gpslat, gpslong, tarx[0], tary[0]))
 for i in range(0, 4):

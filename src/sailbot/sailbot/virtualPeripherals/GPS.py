@@ -2,19 +2,17 @@
 interfaces with USB GPS sensor
 """
 
+import os
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from sailbot.boatMath import (
-    angleBetweenCoordinates,
-    computeNewCoordinate,
-    convertDegMinToDecDeg,
-    convertWindAngle,
-    degreesToRadians,
-    distanceInMBetweenEarthCoordinates,
-    getCoordinateADistanceAlongAngle,
-)
+from sailbot.boatMath import (angleBetweenCoordinates, computeNewCoordinate,
+                              convertDegMinToDecDeg, convertWindAngle,
+                              degreesToRadians,
+                              distanceInMBetweenEarthCoordinates,
+                              getCoordinateADistanceAlongAngle)
 from sailbot.utils import dummyObject
 
 
@@ -29,7 +27,7 @@ class gps(Node):
         self.gps = dummyObject()
         self.gps.latitude = 0
         self.gps.longitude = 0
-        self.gps.track_angle_deg = 0
+        self.gps.track_angle_deg = -1
 
         super().__init__("GPS")
         self.logging = self.get_logger()
@@ -39,9 +37,11 @@ class gps(Node):
 
     def timer_callback(self):
         msg = String()
-        msg.data = f"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        msg.data = (
+            f"{self.gps.latitude},{self.gps.longitude},{self.gps.track_angle_deg}"
+        )
         self.pub.publish(msg)
-        self.logger.info('Publishing: "%s"' % msg.data)
+        self.logging.debug('Publishing: "%s"' % msg.data)
 
     def __getattribute__(self, name):
         """

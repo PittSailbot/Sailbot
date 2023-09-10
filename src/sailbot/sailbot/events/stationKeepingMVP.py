@@ -5,17 +5,16 @@ import time
 
 from rclpy.node import Node
 
-from src.sailbot.sailbot.peripherals.GPS import GPS
-from src.sailbot.sailbot.peripherals.windvane import WindVane
-from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
-from src.sailbot.sailbot.utils.utils import Waypoint
+from sailbot.peripherals.GPS import GPS
+from sailbot.peripherals.windvane import WindVane
+from sailbot.utils.eventUtils import Event, EventFinished
+from sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
-gps = importlib.import_module(folder + "GPS").gps
 
 """
 # Challenge	Goal:
@@ -46,12 +45,18 @@ class StationKeeping(Event):
                 - top left, top right, bottom left, bottom right
     """
 
-    REQUIRED_ARGS = 4
+    required_args = ["waypoint1", "waypoint2", "waypoint3", "waypoint4"]
 
     def __init__(self, event_info):
         super().__init__(event_info)
 
         # EVENT INFO
+        self.buoys = [
+            event_info["waypoint1"],
+            event_info["waypoint2"],
+            event_info["waypoint3"],
+            event_info["waypoint4"],
+        ]
         self.bounds = Bounds(event_info)
         self.start_time = time.time()
         self.leave_time = self.start_time + 4.25 * 60

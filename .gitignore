@@ -1,6 +1,7 @@
 *.pyc
 *.out
 *.log
+*.vs
 /build
 /install
 /logs

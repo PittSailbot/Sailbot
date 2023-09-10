@@ -1,0 +1,69 @@
+site_name: Pitt Sailbot
+site_url: https://pitt_sailbot.io
+site_description: Documentation for Pitt's Sailbot team!
+site_author: Pitt Sailbot
+repo_url: https://github.com/PittSailbot/Sailbot
+edit_url: https://github.com/PittSailbot/Sailbot/tree/docs
+repo_name: Pitt Sailbot
+remote_name: https://github.com/PittSailbot/Sailbot
+
+# Website Structure
+nav:
+  - Home: "index.md"
+  - Getting Started: "Getting Started.md"
+  - Tips:
+    - Pi Cheat Sheet: "Pi Cheat Sheet.md"
+    - Shell Commands: "Shell Commands.md"
+  - Starting the Boat: "Starting the Boat.md"
+  - Workshops:
+      - Github: "Github Workshop.md"
+
+theme:
+  name: material
+  # custom_dir: docs/overrides
+  # logo: https://github.com/ultralytics/assets/raw/main/logo/Ultralytics_Logotype_Reverse.svg
+  favicon: assets/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Helvetica
+    code: Roboto Mono
+
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      # primary: grey
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      # primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    # - announce.dismiss
+    - content.action.edit
+    # - content.code.annotate
+    - content.code.copy
+    # - content.tooltips
+    - search.highlight
+    # - search.share
+    # - search.suggest
+    # - toc.follow
+    - toc.integrate
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    # - navigation.expand
+    - navigation.footer
+    # - navigation.tracking
+    - navigation.instant
+    - navigation.indexes
+    - content.tabs.link  # all code tabs change simultaneously
+
+plugins:
+  - search
+  - git-revision-date-localized

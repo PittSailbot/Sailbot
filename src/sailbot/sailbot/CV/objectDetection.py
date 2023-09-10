@@ -8,9 +8,10 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 import torch
+from rclpy.node import Node
 from ultralytics import YOLO  # Documentation: https://docs.ultralytics.com/cfg/
 
-from src.sailbot.sailbot import constants as c
+import sailbot.constants as c
 
 
 @dataclass(order=True)
@@ -66,14 +67,17 @@ class ObjectDetection:
         """
         # TODO: test results.cpu() or results.to("cpu") for performance on Pi
         result = self.model.predict(
-            source=image, conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]), save=False, line_thickness=1
+            source=image,
+            conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]),
+            save=False,
+            line_thickness=1,
         )
         result = result[0]  # metadata -> list[tensor]
 
         # Add each buoy found by the model into a list
         detections: list[Detection] = []
         for detection in result:
-            logging.info(f"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
+            logging.debug(f"Buoy ({detection.conf}): at ({detection.x},{detection.y})\n")
             detections.append(Detection(detection))  # Convert tensors into readable Detection class and append to list
         detections.sort(reverse=True)
         return detections

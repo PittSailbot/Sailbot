@@ -8,7 +8,7 @@ import board
 from adafruit_seesaw import digitalio, rotaryio, seesaw
 from RPi import GPIO
 
-import src.sailbot.sailbot.constants as c
+import sailbot.constants as c
 
 
 class WindVane:

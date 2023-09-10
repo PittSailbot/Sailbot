@@ -16,10 +16,11 @@ folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 gps = importlib.import_module(folder + "GPS").gps
 CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
 compass = importlib.import_module(folder + "compass").compass
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.CV.objectDetection import ObjectDetection, draw_bbox
-from src.sailbot.sailbot.utils.boatMath import distance_between
-from src.sailbot.sailbot.utils.utils import Waypoint, singleton
+
+import sailbot.constants as c
+from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.utils.boatMath import distance_between
+from sailbot.utils.utils import Waypoint, singleton
 
 
 class Frame:
@@ -134,9 +135,10 @@ class Camera:
 
         return frame
 
-    def survey(
-        self, num_images=3, pitch=70, servo_range=180, context=True, detect=False, annotate=False, save=False
-    ) -> list[Frame]:
+    def survey(self, num_images=3, pitch=70,
+               servo_range=180, context=True,
+               detect=False, annotate=False,
+               save=False) -> list[Frame]:
         """Takes a horizontal panaroma over the camera's field of view
             - Maximum boat FoV is ~242.2 degrees (not tested)
         # Args:

@@ -2,6 +2,7 @@ import importlib
 import math
 import os
 import time
+from rclpy.node import Node
 
 import src.sailbot.sailbot.constants as c
 from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
@@ -12,7 +13,6 @@ DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
-gps = importlib.import_module(folder + "GPS").gps
 
 """
 # Challenge	Goal:
@@ -52,7 +52,7 @@ class StationKeeping(Event):
                 - top left, top right, bottom left, bottom right
     """
 
-    REQUIRED_ARGS = 4
+    required_args = ["waypoint1", "waypoint2", "waypoint3", "waypoint4"]
 
     def __init__(self, event_info):
         super().__init__(event_info)
@@ -73,7 +73,14 @@ class StationKeeping(Event):
         # send in wanted %s in desmos calculation, and return what they are (m,b in y=mx+b; or x,y cord of center of box on %'s line)
         type_inpArr = [0, 0, 0, 1]  # m,b or x,y
         perc_inpArr = [80, 75, 90, 90]  # %'s
-        self.cool_arr = self.SK_perc_guide(perc_inpArr, type_inpArr, self.event_info)
+        self.buoys = [
+            event_info["waypoint1"],
+            event_info["waypoint2"],
+            event_info["waypoint3"],
+            event_info["waypoint4"],
+        ]
+
+        self.cool_arr = self.SK_perc_guide(perc_inpArr, type_inpArr, self.buoys)
         del type_inpArr, perc_inpArr
         # whats contained in cool_arr:
         # (0,1)80-line,      (2,3)75-line,
@@ -115,23 +122,35 @@ class StationKeeping(Event):
         # also put before time because then it doesnt matter cause it's already out
 
         # past front line of box
-        if not (self.SK_line_check(self.cool_arr[-9:-7], self.cool_arr[-3:-1], self.cool_arr[-1])):
-            self.logging.info("too forward")
+        if not (
+            self.SK_line_check(
+                self.cool_arr[-9:-7], self.cool_arr[-3:-1], self.cool_arr[-1]
+            )
+        ):
+            self.logging.debug("too forward")
             # loosen sail, do nuthin; drift
             # .adjustSail(90)
             self.last_pnt_x, self.last_pnt_y = None, None
             return None
 
         # past bottom line of box
-        elif not (self.SK_line_check(self.cool_arr[-3:-1], self.cool_arr[-9:-7], self.cool_arr[-1])):
-            self.logging.info("too back")
+        elif not (
+            self.SK_line_check(
+                self.cool_arr[-3:-1], self.cool_arr[-9:-7], self.cool_arr[-1]
+            )
+        ):
+            self.logging.debug("too back")
             # go to 90deg line
             self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
             return Waypoint(self.cool_arr[6], self.cool_arr[7])
 
         # past left line of box
-        elif not (self.SK_line_check(self.cool_arr[-7:-5], self.cool_arr[-5:-3], self.cool_arr[-1])):
-            self.logging.info("too left")
+        elif not (
+            self.SK_line_check(
+                self.cool_arr[-7:-5], self.cool_arr[-5:-3], self.cool_arr[-1]
+            )
+        ):
+            self.logging.debug("too left")
             # find/go-to intersect of line (+)35degrees of wind direction to left line
             # mini cart scan
             t_x, t_y = self.mini_cart_perimiter_scan(self.cool_arr[-7:-5], "L")
@@ -139,8 +158,12 @@ class StationKeeping(Event):
             return Waypoint(t_x, t_y)
 
         # past right line of box
-        elif not (self.SK_line_check(self.cool_arr[-5:-3], self.cool_arr[-7:-5], self.cool_arr[-1])):
-            self.logging.info("too right")
+        elif not (
+            self.SK_line_check(
+                self.cool_arr[-5:-3], self.cool_arr[-7:-5], self.cool_arr[-1]
+            )
+        ):
+            self.logging.debug("too right")
             # find/go-to intersect of line (-)35degrees of wind direction to left line
             # mini cart scan
             t_x, t_y = self.mini_cart_perimiter_scan(self.cool_arr[-5:-3], "R")
@@ -150,30 +173,40 @@ class StationKeeping(Event):
         # passed checks: SAILING; DOING THE EVENT========================================
         # beginning set up
         if self.start:
-            self.logging.info("start if")
+            self.logging.debug("start if")
             # if not moving and behind 80%
-            if self.SK_line_check(self.cool_arr[0:2], self.cool_arr[-3:-1], self.cool_arr[-1]):
-                self.logging.info("start: behind 80%; ending start")
+            if self.SK_line_check(
+                self.cool_arr[0:2], self.cool_arr[-3:-1], self.cool_arr[-1]
+            ):
+                self.logging.debug("start: behind 80%; ending start")
                 self.start = False
                 self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
                 return Waypoint(self.cool_arr[6], self.cool_arr[7])  # go to 90deg line
             # if this doesnt pass, its WITHIN BOX but is ahead of 80; so it returns init'd last_pnt which is to loosen sail and drift (WHAT WE WANT)
             else:
-                self.logging.info("start: ahead 80%")
+                self.logging.debug("start: ahead 80%")
 
         # majority of the sail
         else:
             # if behind 75%:sail back
-            if self.SK_line_check(self.cool_arr[2:4], self.cool_arr[-3:-1], self.cool_arr[-1]):
+            if self.SK_line_check(
+                self.cool_arr[2:4], self.cool_arr[-3:-1], self.cool_arr[-1]
+            ):
                 self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
                 return Waypoint(self.cool_arr[6], self.cool_arr[7])  # go to 90deg line
 
             # if past or at 90% (redundence reduction)
-            elif not (self.SK_line_check(self.cool_arr[4:6], self.cool_arr[-3:-1], self.cool_arr[-1])):
+            elif not (
+                self.SK_line_check(
+                    self.cool_arr[4:6], self.cool_arr[-3:-1], self.cool_arr[-1]
+                )
+            ):
                 self.last_pnt_x, self.last_pnt_y = None, None
                 return None  # loosen sail, do nuthin
 
-        return Waypoint(self.last_pnt_x, self.last_pnt_y)  # fall back return if nested if's dont pass
+        return Waypoint(
+            self.last_pnt_x, self.last_pnt_y
+        )  # fall back return if nested if's dont pass
 
     # give %-line of box and other lines(details in SK) used in algo
     def SK_perc_guide(self, inp_arr, type_arr, buoy_arr):
@@ -208,7 +241,7 @@ class StationKeeping(Event):
         """
         #   (12,13,34,24);(front,left,back,right)
         #   02,04,46,26
-        a = [0, 2, 0, 4, 4, 6, 2, 6]  # optimizing code with for rather then long ass list
+        a = [0, 2, 0, 4, 4, 6, 2, 6]    #optimizing code with for rather then long ass list
         # 0,1, 2,3, 4,5, 6,7
         for i in range(4):  # 0,1,2,3
             # TODO: remove nice variables: just fill in and make two lines (optimization)

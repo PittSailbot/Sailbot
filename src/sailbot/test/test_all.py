@@ -11,12 +11,12 @@ import keyboard
 import numpy as np
 import pytest
 
-import src.sailbot.sailbot.boatMain as boatMain
-from src.sailbot.sailbot import constants as c
-from src.sailbot.sailbot.CV import objectDetection
-from src.sailbot.sailbot.peripherals import camera
-from src.sailbot.sailbot.utils.boatMath import distance_between
-from src.sailbot.sailbot.utils.utils import Waypoint
+import sailbot.boatMain as boatMain
+from sailbot import constants as c
+from sailbot.CV import objectDetection
+from sailbot.peripherals import camera
+from sailbot.utils.boatMath import distance_between
+from sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -24,18 +24,44 @@ DOCKER = True if DOCKER == "True" else False
 if not DOCKER:
     import rclpy
 
-    import src.sailbot.sailbot.peripherals.compass as compass
-    import src.sailbot.sailbot.peripherals.GPS as GPS
-    import src.sailbot.sailbot.peripherals.transceiver as transceiver
-    import src.sailbot.sailbot.peripherals.windvane as windvane
+    import sailbot.peripherals.compass as compass
+    import sailbot.peripherals.GPS as GPS
+    import sailbot.peripherals.transceiver as transceiver
+    import sailbot.peripherals.windvane as windvane
+
+    rclpy.init()
+
+# ----------------------------------  BASIC  ----------------------------------
+def test_mainInit():
+    boat = boatMain.boat(calibrateOdrive=False)
+
+
+def test_eventInit():
+    boat = boatMain.boat(calibrateOdrive=False)
+
+    _node = rclpy.Node()
+    _node.create_publisher(String, "mode", 10)
+    modes = [
+        c.config["MODES"]["MOD_RC"],
+        c.config["MODES"]["MOD_COLLISION_AVOID"],
+        c.config["MODES"]["MOD_PRECISION_NAVIGATE"],
+        c.config["MODES"]["MOD_ENDURANCE"],
+        c.config["MODES"]["MOD_STATION_KEEPING"],
+        c.config["MODES"]["MOD_SEARCH"],
+    ]
+    for mode in modes:
+        msg = String()
+        msg.data = f"Set Mode:{mode}"
+        _node.publish(msg)
+        rclpy.spin_once(boat)
+        assert boat.modeSetting == mode
 
 
 # ---------------------------------- SENSORS ----------------------------------
 
-
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_gps():
-    gps = GPS.GPS()
+    gps = GPS.gps()
 
     for i in range(0, 3):
         results = (gps.latitude, gps.longitude)
@@ -84,9 +110,7 @@ def test_servos():
     assert 69 < servos.pitch < 71, f"Camera servo pitch outside of acceptable error, expected 70, got: {servos.pitch}"
 
     servos.yaw = 2000
-    assert (
-        179 < servos.yaw < 181
-    ), f"Camera servo yaw unprotected from impossible range, expected 180, got: {servos.yaw}"
+    assert 179 < servos.yaw < 181, f"Camera servo yaw unprotected from impossible range, expected 180, got: {servos.yaw}"
 
 
 def test_cam_detect():
@@ -117,7 +141,11 @@ def test_img_detect(img=rf"{c.root_dir}\data\CV\test_buoy.jpg"):
     object_detection = objectDetection.ObjectDetection()
 
     object_detection.model.predict(
-        source=img, show=True, conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]), save=False, line_thickness=1
+        source=img,
+        show=True,
+        conf=float(c.config["OBJECTDETECTION"]["conf_thresh"]),
+        save=False,
+        line_thickness=1,
     )
 
 
@@ -127,7 +155,10 @@ def test_gps_estimation():
     object_detection = objectDetection.ObjectDetection()
 
     sim_frame = camera.Frame(
-        gps=Waypoint(0, 0), heading=90, pitch=45, detections=object_detection.analyze("CV/test_buoy.jpg")
+        gps=Waypoint(0, 0),
+        heading=90,
+        pitch=45,
+        detections=object_detection.analyze("sailbot/CV/test_buoy.jpg"),
     )
 
     camera.estimate_all_buoy_gps(sim_frame)
@@ -234,7 +265,7 @@ def manual_test_go_to_gps():
     destination = Waypoint(boat.gps.latitude, boat.gps.longitude)
     destination.add_meters(10, 10)
     print(f"Going to {destination}")
-    boat.goToGPS(destination.lat, destination.lon)
+    boat.goToGPS(destination)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
 """
 interfaces with USB GPS sensor
 """
-import logging
-
 # https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
-import time
+from time import sleep
+import os
 
 import gpsd
 import rclpy
@@ -37,9 +36,9 @@ class GPS(Node):
         if packet.mode >= 2:
             self.latitude = packet.position()[0]
             self.longitude = packet.position()[1]
-            logging.debug(f"GPS: {self.latitude} {self.longitude}")
+            self.logging.debug(f"GPS: {self.latitude} {self.longitude}")
         else:
-            logging.warning(f"No GPS fix")
+            self.logging.warning(f"No GPS fix")
 
         super().__init__("GPS")
         self.pub = self.create_publisher(String, "GPS", 10)
@@ -65,55 +64,6 @@ class GPS(Node):
         except:
             return self.gps.__getattribute__(name)
 
-    def updategps(self, print_info=False):
-        # TODO: Delete
-        # must be called before reading latitude and longitude, just pulls data from the sensor
-        # optionally prints data read from sensor
-        self.gps.update()
-        if self.gps.has_fix:
-            self.latitude = self.gps.latitude
-            self.longitude = self.gps.longitude
-            self.track_angle_deg = self.gps.track_angle_deg
-        if print_info:
-            # self.logging.info(self.latitude,self.longitude, self.gps.latitude,self.gps.longitude)
-            if not self.gps.has_fix:
-                self.logging.info("Waiting for fix")
-                return
-
-            self.logging.info(
-                "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
-                    self.gps.timestamp_utc.tm_mon,  # Grab parts of the time from the
-                    self.gps.timestamp_utc.tm_mday,  # struct_time object that holds
-                    self.gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-                    self.gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-                    self.gps.timestamp_utc.tm_min,  # month!
-                    self.gps.timestamp_utc.tm_sec,
-                )
-            )
-
-            self.logging.info("Latitude: {0:.8f} degrees".format(self.gps.latitude))
-            self.logging.info("Longitude: {0:.8f} degrees".format(self.gps.longitude))
-            self.logging.info("Lat in decDeg:", convertDegMinToDecDeg(self.gps.latitude))
-            self.logging.info("long in decDeg:", convertDegMinToDecDeg(self.gps.longitude))
-            self.logging.info("Fix quality: {}".format(self.gps.fix_quality))
-            self.latitude = self.gps.latitude
-            self.longitude = self.gps.longitude
-            # Some attributes beyond latitude, longitude and timestamp are optional
-            # and might not be present.  Check if they're None before trying to use!
-            """if gps.satellites is not None:
-                print('# satellites: {}'.format(self.gps.satellites))
-            if gps.altitude_m is not None:
-                print('Altitude: {} meters'.format(self.gps.altitude_m))
-            if gps.speed_knots is not None:
-                print('Speed: {} knots'.format(self.gps.speed_knots))
-            if gps.track_angle_deg is not None:
-                print('Track angle: {} degrees'.format(self.gps.track_angle_deg))
-            if gps.horizontal_dilution is not None:
-                print('Horizontal dilution: {}'.format(self.gps.horizontal_dilution))
-            if gps.height_geoid is not None:
-                print('Height geo ID: {} meters'.format(self.gps.height_geoid))
-            """
-
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
@@ -133,5 +83,5 @@ if __name__ == "__main__":
     gps = GPS()
     rclpy.spin(gps)
     while True:
-        gps.updategps(print_info=True)
+        # GPS.updategps() Deprecated function
         sleep(1)

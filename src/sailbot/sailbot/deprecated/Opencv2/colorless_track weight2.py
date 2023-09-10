@@ -90,7 +90,9 @@ while True:
                 cv2.drawContours(frame, [cnt], -1, (120, 80, 0), 2)
                 x, y, w, h = cv2.boundingRect(cnt)
                 Fxystr = str(x) + ", " + str(y)
-                cv2.putText(frame, Fxystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                cv2.putText(
+                    frame, Fxystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+                )
         # print(tobeat)
 
     # //////////////////////////////////////////////////
@@ -106,7 +108,15 @@ while True:
         avgx = round(fx + (fw / 2))
         avgy = round(fy + (fh / 2))
         # print(avgx, avgy)
-        cv2.putText(frame, str(avgx) + ", " + str(avgy), (avgx, avgy - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        cv2.putText(
+            frame,
+            str(avgx) + ", " + str(avgy),
+            (avgx, avgy - 7),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (0, 0, 0),
+            2,
+        )
 
         cv2.putText(frame, "x", (avgx, avgy), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
 

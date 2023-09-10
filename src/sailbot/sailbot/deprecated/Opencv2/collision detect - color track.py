@@ -32,7 +32,9 @@ SIZE = 900
 # hold with dots horizontal (upright paperwise)
 # length in mm
 Wid_real = 14  # find model
-Focal_L = (30 * 310) / Wid_real  # (W*P_ex)/D_ex#calc (find pixels found and real distance in a case then plug in)
+Focal_L = (
+    30 * 310
+) / Wid_real  # (W*P_ex)/D_ex#calc (find pixels found and real distance in a case then plug in)
 
 # ////////color mask values////////
 # BLUE / GREEN / RED
@@ -135,31 +137,85 @@ while True:
         ctstr = "object cnt: " + str(cnt_count)
 
         if find_side(vid_feed, x + (w / 2)) == "RIGHT":
-            cv2.putText(frame, xystr, (x - 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)  # xy
-            cv2.putText(frame, whstr, (x - 50, y - 24), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # wh
+            cv2.putText(
+                frame, xystr, (x - 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+            )  # xy
+            cv2.putText(
+                frame,
+                whstr,
+                (x - 50, y - 24),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+            )  # wh
         else:
-            cv2.putText(frame, xystr, (x + 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)  # xy
-            cv2.putText(frame, whstr, (x + 50, y - 24), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # wh
+            cv2.putText(
+                frame, xystr, (x + 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+            )  # xy
+            cv2.putText(
+                frame,
+                whstr,
+                (x + 50, y - 24),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+            )  # wh
 
-        cv2.putText(frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)  # center
-        cv2.putText(frame, ctstr, (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # num of cnts
-        cv2.putText(frame, arstr, (10, 37), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # area of max
+        cv2.putText(
+            frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2
+        )  # center
+        cv2.putText(
+            frame, ctstr, (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2
+        )  # num of cnts
+        cv2.putText(
+            frame, arstr, (10, 37), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2
+        )  # area of max
 
         # perform REAL operations for max contour found in for statement
         cv2.putText(
-            frame, "TARGET OUTPUT(midx): " + str(x + (w / 2)), (10, 54), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+            frame,
+            "TARGET OUTPUT(midx): " + str(x + (w / 2)),
+            (10, 54),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (0, 0, 0),
+            2,
         )  # TARGET cords
         cv2.putText(
-            frame, find_side(vid_feed, x + (w / 2)), (10, 71), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2
+            frame,
+            find_side(vid_feed, x + (w / 2)),
+            (10, 71),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (0, 0, 255),
+            2,
         )  # TARGET output
         # print( find_side(vid_feed, x+(w/2)) )
 
         # distance formula
         D = (Wid_real * Focal_L) / w
-        cv2.putText(frame, "DISTANCE: " + str(D), (10, 88), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)  # TARGET output
+        cv2.putText(
+            frame,
+            "DISTANCE: " + str(D),
+            (10, 88),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (0, 0, 255),
+            2,
+        )  # TARGET output
 
     else:
-        cv2.putText(frame, "NO CONTOURS", (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # area of max
+        cv2.putText(
+            frame,
+            "NO CONTOURS",
+            (10, 20),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (255, 255, 255),
+            2,
+        )  # area of max
 
     #####////////////////////////////////////////
     #####Display the resulting frame

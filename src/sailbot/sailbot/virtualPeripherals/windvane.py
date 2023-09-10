@@ -19,11 +19,11 @@ class windVane:
 
     @property
     def noGoMin(self):
-        return 360 - int(c.config["CONSTANTS"]["noGoAngle"]) / 2
+        return 360 - int(c.config["MAIN"]["no_go_angle"]) / 2
 
     @property
     def noGoMax(self):
-        return int(c.config["CONSTANTS"]["noGoAngle"]) / 2
+        return int(c.config["MAIN"]["no_go_angle"]) / 2
 
 
 def main():

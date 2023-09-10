@@ -53,7 +53,9 @@ while True:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
 
             xystr = str(x) + ", " + str(y)
-            cv2.putText(frame, xystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+            cv2.putText(
+                frame, xystr, (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+            )
 
             arr.append([x + (w / 2), y + (h / 2)])
 

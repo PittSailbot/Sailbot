@@ -8,8 +8,9 @@ from time import sleep
 import odrive
 import odrive.utils as ut
 from rclpy.node import Node
+from std_msgs.msg import String
 
-from src.sailbot.sailbot import constants as c
+import sailbot.constants as c
 
 
 class Odrive:
@@ -33,7 +34,8 @@ class Odrive:
         """
         self._node = Node("odrive")
         self.logging = self._node.get_logger()
-        self.logging.info(f"Initializing ODrive with preset: {preset}")
+        self.logging.debug(f"Initializing ODrive with preset: {preset}")
+
         self.od = odrive.find_any()
         self.preset = preset
 
@@ -125,7 +127,7 @@ class Odrive:
         # this will change current drawn
         # TODO: (TOM) which return statement?
         # getDrawnCurrent typo? or different from getDemandedCurrent()?
-        return 8.27 * getDrawnCurrent / self.KVRating  # Used by torque and torque0
+        # return 8.27 * getDrawnCurrent / self.KVRating  # Used by torque and torque0
         return self.axis.controller.input_torque  # Used by torque1
 
     @torque.setter

@@ -90,10 +90,24 @@ while True:
         xystr = "xy:" + str(x) + ", " + str(y)
         whstr = "wh:" + str(w) + ", " + str(h)
         arstr = "max area: " + str(cv2.contourArea(max_cnt))
-        cv2.putText(frame, xystr, (x - 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)  # xy
-        cv2.putText(frame, whstr, (x - 50, y - 24), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # wh
-        cv2.putText(frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)  # center
-        cv2.putText(frame, arstr, (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2)  # area of max
+        cv2.putText(
+            frame, xystr, (x - 50, y - 7), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2
+        )  # xy
+        cv2.putText(
+            frame,
+            whstr,
+            (x - 50, y - 24),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (255, 255, 255),
+            2,
+        )  # wh
+        cv2.putText(
+            frame, "x", (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2
+        )  # center
+        cv2.putText(
+            frame, arstr, (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2
+        )  # area of max
 
     #####////////////////////////////////////////
     #####Display the resulting frame

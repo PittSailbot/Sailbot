@@ -1,7 +1,10 @@
-import src.sailbot.sailbot.constants as c
-from src.sailbot.sailbot.utils.boatMath import distance_between
-from src.sailbot.sailbot.utils.eventUtils import Event, EventFinished
-from src.sailbot.sailbot.utils.utils import Waypoint, has_reached_waypoint
+from rclpy.node import Node
+from std_msgs.msg import String
+
+import sailbot.constants as c
+from sailbot.utils.boatMath import distance_between
+from sailbot.utils.eventUtils import Event, EventFinished
+from sailbot.utils.utils import Waypoint, has_reached_waypoint, ros_spin_some
 
 """
 # Challenge Goal:
@@ -33,17 +36,40 @@ class Endurance(Event):
                 - top left, top right, bottom left, bottom right
     """
 
-    REQUIRED_ARGS = 4
+    required_args = ["waypoint1", "waypoint2", "waypoint3", "waypoint4"]
 
     def __init__(self, event_info):
         super().__init__(event_info)
+        self.logging.info("Endurance moment")
 
         # BOAT STATE
-        self.waypoint_queue = event_info
+        self.waypoint_queue = [
+            event_info["waypoint1"],
+            event_info["waypoint2"],
+            event_info["waypoint3"],
+            event_info["waypoint4"],
+        ]
+        # TODO: ADD ROUNDING BUFFER to waypoints
         rounding_buffer = c.config["ENDURANCE"]["rounding_buffer"]
-        for buoy in self.waypoint_queue:
-            buoy.add_meters(rounding_buffer, rounding_buffer)
-        self.waypoint_queue *= 10
+
+        self.gps_subscription = self._node.create_subscription(
+            String, "GPS", self.ROS_GPSCallback, 10
+        )
+
+    def ROS_GPSCallback(self, data):
+        string = data.data
+
+        lat, lon, trackangle = string.replace("(", "").replace(")", "").split(",")
+        currentPos = Waypoint(float(lat), float(lon))
+
+        if distance_between(currentPos, self.waypoint_queue[0]) < float(
+            c.config["CONSTANTS"]["reached_waypoint_distance"]
+        ):
+            self.logging.info(
+                f"reached: {self.waypoint_queue[0]}, moving to: {self.waypoint_queue[1]}"
+            )
+            self.waypoint_queue.append(self.waypoint_queue[0])
+            self.waypoint_queue.pop(0)
 
     def next_gps(self):
         """

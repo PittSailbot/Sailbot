@@ -33,15 +33,24 @@ class boat:
         pump_thread.start()
 
     def move(self):
-        if self.gps.distanceTo(currentTarget) < float(c.config["MAIN"]["acceptable_range"]) and len(self.targets) > 0:
+        if (
+            self.gps.distanceTo(currentTarget)
+            < float(c.config["MAIN"]["acceptable_range"])
+            and len(self.targets) > 0
+        ):
             # next target
 
             targetAngle = TargetAngleRelativeToNorth()  # Func doesnt exist yet
 
             windAngleRelativeToNorth = convertWindAngle(self.windVane.angle)
 
-            if tempTarget == False and targetAngle - windAngleRelativeToNorth < (noGoZoneDegs / 2):
-                if targetAngle < windAngleRelativeToNorth or abs(targetAngle - 360) < windAngleRelativeToNorth:
+            if tempTarget == False and targetAngle - windAngleRelativeToNorth < (
+                noGoZoneDegs / 2
+            ):
+                if (
+                    targetAngle < windAngleRelativeToNorth
+                    or abs(targetAngle - 360) < windAngleRelativeToNorth
+                ):
                     # newTargetAngle < targetangle
                     newTargetAngle = windAngleRelativeToNorth - (noGoZoneDegs / 2 + 10)
                 else:
@@ -52,7 +61,9 @@ class boat:
                 rotateToAngle(newTargetAngle)
                 self.logging.info(f"Heading to temp target at: {newTargetAngle}")
 
-            elif tempTarget and targetAngle - windAngleRelativeToNorth > (noGoZoneDegs / 2):
+            elif tempTarget and targetAngle - windAngleRelativeToNorth > (
+                noGoZoneDegs / 2
+            ):
                 tempTarget = False
                 self.logging.info(f"Heading to target at: {targetAngle}")
                 rotateToAngle(targetAngle)
@@ -74,11 +85,11 @@ class boat:
             windDir = self.windvane.angle
             targetAngle = windDir + 35
             self.drivers.sail.set(targetAngle)
-            self.logging.info(f"Adjusted sail to: {targetAngle}")
+            self.logging.debug(f"Adjusted sail to: {targetAngle}")
         else:
             # move sail to home position
             self.drivers.sail.set(0)
-            self.logging.info("Adjusted sail to home position")
+            self.logging.debug("Adjusted sail to home position")
 
     def adjustRudder(self):
         if self.currentTarget:
@@ -90,12 +101,12 @@ class boat:
                 d_angle -= 180
 
             self.drivers.rudder.set(d_angle)
-            self.logging.info(f"Adjusted rudder to: {d_angle}")
+            self.logging.debug(f"Adjusted rudder to: {d_angle}")
 
         else:
             # move sail to home position
             self.drivers.rudder.set(0)
-            self.logging.info("Adjusted rudder to home position")
+            self.logging.debug("Adjusted rudder to home position")
 
     def pumpMessages(self):
         while True:
@@ -112,10 +123,10 @@ class boat:
             if len(ary) > 1:
                 if ary[0] == "sail":
                     self.drivers.sail.set(float(ary[1]))
-                    self.logging.info("Received message to adjust sail")
+                    self.logging.debug("Received message to adjust sail")
                 elif ary[0] == "rudder":
                     self.drivers.rudder.set(float(ary[1]))
-                    self.logging.info("Received message to adjust rudder")
+                    self.logging.debug("Received message to adjust rudder")
                 elif ary[0] == "mode":
                     print("TODO: add Modes")
 

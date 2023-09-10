@@ -101,7 +101,9 @@ def computeNewCoordinate(lat, lon, d_lat, d_lon):
     d_lon /= 1000
 
     new_lat = lat + (d_lat / earthRadiusKm) * (180 / math.pi)
-    new_lon = lon + (d_lon / earthRadiusKm) * (180 / math.pi) / math.cos(lat * math.pi / 180)
+    new_lon = lon + (d_lon / earthRadiusKm) * (180 / math.pi) / math.cos(
+        lat * math.pi / 180
+    )
 
     return (new_lat, new_lon)
 
@@ -174,7 +176,9 @@ def drawBoat():
 
     # Rudder
     coords = polarToRect(25, (180 - BOAT.compass.angle) % 360, (50, 50))
-    coords2 = polarToRect(10, -BOAT.drivers.rudder.angle + (180 - BOAT.compass.angle) % 360, coords)
+    coords2 = polarToRect(
+        10, -BOAT.drivers.rudder.angle + (180 - BOAT.compass.angle) % 360, coords
+    )
     pygame.draw.line(boat, WHITE, coords, coords2)
 
     # Sail
@@ -225,10 +229,17 @@ def drawBoat():
         optAngle = max(min(windDir / 2, 90), 3)
         # BOAT.drivers.sail.set(optAngle)
 
-        if BOAT.windvane.angle < BOAT.windvane.noGoMin and BOAT.windvane.angle > BOAT.windvane.noGoMax:
-            BOAT.vel = min(0.05, BOAT.vel + 0.001) * max((1 - abs(BOAT.drivers.sail.angle - optAngle) / 30), 0)
+        if (
+            BOAT.windvane.angle < BOAT.windvane.noGoMin
+            and BOAT.windvane.angle > BOAT.windvane.noGoMax
+        ):
+            BOAT.vel = min(0.05, BOAT.vel + 0.001) * max(
+                (1 - abs(BOAT.drivers.sail.angle - optAngle) / 30), 0
+            )
         else:
-            BOAT.vel = max(BOAT.vel - 0.0001, 0) * max((1 - abs(BOAT.drivers.sail.angle - optAngle) / 30), 0)
+            BOAT.vel = max(BOAT.vel - 0.0001, 0) * max(
+                (1 - abs(BOAT.drivers.sail.angle - optAngle) / 30), 0
+            )
 
         BOAT.gps.latitude = nx
         BOAT.gps.longitude = ny

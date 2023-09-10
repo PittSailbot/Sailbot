@@ -79,9 +79,13 @@ class arduino:
     def __init__(self):
         # self.ser1 = serial.Serial('COM'+portnum, 9600)
         try:
-            self.ser1 = serial.Serial(str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"])
+            self.ser1 = serial.Serial(
+                str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"]
+            )
         except:
-            self.ser1 = serial.Serial(str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"])
+            self.ser1 = serial.Serial(
+                str(c.config["MAIN"]["ardu_port"]), c.config["MAIN"]["baudrate"]
+            )
         print(repr(self.ser1))
 
     def send(self, data):
@@ -135,7 +139,12 @@ def handle_input():
         #       "sail" : mSail.set,
         #      "rudder" : mRudder.set
         # }
-        commands = {"skipper": proto_both, "sail": proto_sail, "rudder": proto_rudder, "mode": proto_mode}
+        commands = {
+            "skipper": proto_both,
+            "sail": proto_sail,
+            "rudder": proto_rudder,
+            "mode": proto_mode,
+        }
 
         if message:
             # ary = message.split(' ')

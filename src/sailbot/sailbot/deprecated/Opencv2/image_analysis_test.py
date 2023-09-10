@@ -34,7 +34,9 @@ def get_pixel_array(spacer=10):
     return array
 
 
-def color_meets_a_req(hls, h_ranges=[(0, 80), (250, 360)], s_ranges=[(1, 1)], v_ranges=[(1, 1), (0, 0)]):
+def color_meets_a_req(
+    hls, h_ranges=[(0, 80), (250, 360)], s_ranges=[(1, 1)], v_ranges=[(1, 1), (0, 0)]
+):
     interesting = False
     for hmin, hmax in h_ranges:
         if hls[0] >= hmin and hls[0] <= hmax:
@@ -54,7 +56,9 @@ def color_meets_a_req(hls, h_ranges=[(0, 80), (250, 360)], s_ranges=[(1, 1)], v_
     return interesting
 
 
-def color_meets_all_reqs(hls, h_ranges=[(0, 80), (300, 360)], s_ranges=[(0, 1)], v_ranges=[(0.6, 1)]):
+def color_meets_all_reqs(
+    hls, h_ranges=[(0, 80), (300, 360)], s_ranges=[(0, 1)], v_ranges=[(0.6, 1)]
+):
     interesting = False
     for hmin, hmax in h_ranges:
         if hls[0] >= hmin and hls[0] <= hmax:
@@ -71,7 +75,9 @@ def color_meets_all_reqs(hls, h_ranges=[(0, 80), (300, 360)], s_ranges=[(0, 1)],
 # Param: hls defines an HSV color value
 # Return: is_orange defines if orange is found in the pixels
 def color_orange(hls):
-    is_orange = color_meets_all_reqs(hls, h_ranges=[(0, 56)], s_ranges=[(0.3, 1)], v_ranges=[(0.25, 1)])
+    is_orange = color_meets_all_reqs(
+        hls, h_ranges=[(0, 56)], s_ranges=[(0.3, 1)], v_ranges=[(0.25, 1)]
+    )
     return is_orange
 
 

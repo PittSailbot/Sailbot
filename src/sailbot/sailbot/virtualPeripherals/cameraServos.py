@@ -40,7 +40,7 @@ class CameraServos:
         self._node = Node("vitualCameraServos")
         self.logging = self._node.get_logger()
 
-        self.logging.info("Initializing camera servos")
+        self.logging.debug("Initializing camera servos")
         self.reset()
 
     def __del__(self):
