@@ -1,10 +1,11 @@
-from rclpy.node import Node
+import importlib
 import math
+import os
 import time
 
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
+from rclpy.node import Node
 
-import os, importlib
+from sailbot.events.eventUtils import Event, EventFinished, Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

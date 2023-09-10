@@ -1,16 +1,17 @@
-from flask import Flask, render_template, request, flash, redirect
+import datetime
 import os
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
+import random
 import threading
 import time
-import datetime
-import random
 import traceback
 
-from sailbot.utils import dummyObject, singleton
+import rclpy
+from flask import Flask, flash, redirect, render_template, request
+from rclpy.node import Node
+from std_msgs.msg import String
+
 import sailbot.constants as c
+from sailbot.utils import dummyObject, singleton
 
 app = Flask(__name__)
 app.secret_key = "sailbot"

@@ -1,10 +1,10 @@
-import pygame
-import constants
 import sys
-from picamera import PiCamera
 from time import sleep
 
+import constants
 import image_analysis_test as iat
+import pygame
+from picamera import PiCamera
 
 
 def main_loop():

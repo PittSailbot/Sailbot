@@ -1,5 +1,6 @@
-import sys, argparse
+import argparse
 import subprocess
+import sys
 import time
 from threading import Thread
 

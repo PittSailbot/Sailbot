@@ -1,8 +1,9 @@
 import os
-from rclpy.node import Node
-from rclpy.executors import ShutdownException, TimeoutException
-import rclpy
 from datetime import datetime
+
+import rclpy
+from rclpy.executors import ShutdownException, TimeoutException
+from rclpy.node import Node
 
 
 def singleton(cls):

@@ -1,6 +1,7 @@
-from rclpy.node import Node
 import math
 import time
+
+from rclpy.node import Node
 
 from sailbot.events.eventUtils import Event, EventFinished, Waypoint
 

@@ -2,21 +2,18 @@
 interfaces with USB GPS sensor
 """
 
-from sailbot.boatMath import (
-    degreesToRadians,
-    getCoordinateADistanceAlongAngle,
-    distanceInMBetweenEarthCoordinates,
-    computeNewCoordinate,
-    angleBetweenCoordinates,
-    convertDegMinToDecDeg,
-    convertWindAngle,
-)
-from sailbot.utils import dummyObject
+import os
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-import os
+
+from sailbot.boatMath import (angleBetweenCoordinates, computeNewCoordinate,
+                              convertDegMinToDecDeg, convertWindAngle,
+                              degreesToRadians,
+                              distanceInMBetweenEarthCoordinates,
+                              getCoordinateADistanceAlongAngle)
+from sailbot.utils import dummyObject
 
 
 class gps(Node):

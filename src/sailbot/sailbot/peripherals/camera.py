@@ -1,16 +1,16 @@
 """
 Interface for camera
 """
+import importlib
 import math
-import cv2
-import time
-from rclpy.node import Node
-import numpy as np
 import os
+import time
+
+import cv2
+import numpy as np
+from rclpy.node import Node
 
 import sailbot.constants as c
-
-import os, importlib
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -20,8 +20,8 @@ gps = importlib.import_module(folder + "GPS").gps
 CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
 compass = importlib.import_module(folder + "compass").compass
 
-from sailbot.objectDetection import ObjectDetection, draw_bbox
 from sailbot.events.eventUtils import Waypoint, distance_between
+from sailbot.objectDetection import ObjectDetection, draw_bbox
 from sailbot.utils import singleton
 
 

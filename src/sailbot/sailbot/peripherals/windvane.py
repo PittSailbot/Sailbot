@@ -1,12 +1,13 @@
 """
 reads value from I2C rotery encoder sensor
 """
-from time import sleep
-from threading import Thread, Lock
 from queue import Queue
+from threading import Lock, Thread
+from time import sleep
+
 import board
+from adafruit_seesaw import digitalio, rotaryio, seesaw
 from RPi import GPIO
-from adafruit_seesaw import seesaw, rotaryio, digitalio
 
 try:
     import sailbot.constants as c

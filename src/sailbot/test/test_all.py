@@ -1,36 +1,38 @@
 """
 Tests all necessary sensors and functionality of the boat
 """
+import os
 # TODO: Package repo and split into individual files
 import sys
-import os
+
 import rclpy
 
 sys.path.append(os.getcwd())  # Bootleg fix for imports until repo is packaged
 
-import pytest
+import importlib
+import os
 import warnings
-import cv2
-import numpy as np
 from time import time
+
+import cv2
 import keyboard
+import numpy as np
+import pytest
 
-import sailbot.constants as c
-import sailbot.peripherals.camera as camera
-import sailbot.objectDetection as objectDetection
-from sailbot.events.eventUtils import Waypoint, distance_between
 import sailbot.boatMain
-
-import os, importlib
+import sailbot.constants as c
+import sailbot.objectDetection as objectDetection
+import sailbot.peripherals.camera as camera
+from sailbot.events.eventUtils import Waypoint, distance_between
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 if not DOCKER:
-    import sailbot.peripherals.GPS
     import sailbot.peripherals.compass
-    import sailbot.peripherals.windvane
+    import sailbot.peripherals.GPS
     import sailbot.peripherals.transceiver
+    import sailbot.peripherals.windvane
 
 rclpy.init()
 

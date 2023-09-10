@@ -1,26 +1,21 @@
-from re import A
+import math
 import sys
-from PyQt5.QtWidgets import *
-from PyQt5 import QtCore
-
-from PyQt5.QtCore import *  # pyqtSlot, QTimer, Qt,
-import PyQt5.QtGui as QtGui
-from PyQt5.QtGui import QPainter, QColor, QPen, QKeySequence
-import keyboard
-
-import PodSixNet
-from PodSixNet.Connection import connection, ConnectionListener
-from PodSixNet.Channel import Channel
-from PodSixNet.Server import Server
-
+from re import A
 from threading import Thread
 from time import sleep
 
-from inputs import get_gamepad
-
-import math
-
+import keyboard
+import PodSixNet
+import PyQt5.QtGui as QtGui
 import serial
+from inputs import get_gamepad
+from PodSixNet.Channel import Channel
+from PodSixNet.Connection import ConnectionListener, connection
+from PodSixNet.Server import Server
+from PyQt5 import QtCore
+from PyQt5.QtCore import *  # pyqtSlot, QTimer, Qt,
+from PyQt5.QtGui import QColor, QKeySequence, QPainter, QPen
+from PyQt5.QtWidgets import *
 
 #TODO:
 #add mode section along with fields for needed inputted variables (ex buoy coords for search)

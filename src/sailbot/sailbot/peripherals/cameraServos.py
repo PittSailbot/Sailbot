@@ -1,9 +1,9 @@
 """
 Drivers and interface for camera servos
 """
+import adafruit_servokit
 # Code adapted from https://github.com/ArduCAM/PCA9685
 from rclpy.node import Node
-import adafruit_servokit
 
 import sailbot.constants as c
 from utils import singleton

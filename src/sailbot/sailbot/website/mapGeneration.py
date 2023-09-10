@@ -1,15 +1,13 @@
 # https://towardsdatascience.com/host-your-own-offline-mapping-server-with-jupyter-notebook-ff21b878b4d7
 
+import json
 import math
-from math import pow
 import os
 import os.path
-import requests
-import json
+from math import pow
 
-from flask import Flask
-from flask import render_template
-from flask import request
+import requests
+from flask import Flask, render_template, request
 from werkzeug.wrappers import Request, Response
 
 

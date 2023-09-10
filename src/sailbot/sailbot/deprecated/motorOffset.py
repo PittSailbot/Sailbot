@@ -4,7 +4,6 @@ hadles turning motors using Odrive/Stepper driver
 
 import board
 import busio
-
 # import adafruit_pca9685 as pcaLib
 import rclpy
 from rclpy.node import Node
@@ -16,8 +15,9 @@ except:
     import sailbot.constants as c
 
 from threading import Thread
-from RPi import GPIO
 from time import sleep
+
+from RPi import GPIO
 
 
 class motorOffset(Node):

@@ -2,16 +2,17 @@
 hadles turning motors using Odrive/Stepper driver 
 """
 
+import os
+from threading import Thread
+from time import sleep
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+
 import sailbot.constants as c
 import sailbot.utils as utils
 from sailbot.virtualPeripherals.Odrive import Odrive
-
-from threading import Thread
-from time import sleep
-import os
 
 # define type of motor that is being used
 USE_ODRIVE_SAIL = True

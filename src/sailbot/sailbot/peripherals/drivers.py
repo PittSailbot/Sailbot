@@ -4,7 +4,6 @@ hadles turning motors using Odrive/Stepper driver
 
 import board
 import busio
-
 # import adafruit_pca9685 as pcaLib
 import rclpy
 from rclpy.node import Node
@@ -22,9 +21,9 @@ except:
     from sailbot.windvane import windVane
 
 from threading import Thread
-from RPi import GPIO
 from time import sleep
 
+from RPi import GPIO
 
 # define type of motor that is being used
 USE_ODRIVE_SAIL = True

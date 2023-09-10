@@ -1,31 +1,24 @@
 """
 interfaces with USB GPS sensor
 """
-# https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
-import time
-
-import board
-import busio
-import adafruit_gps
-
-# import adafruit_lsm303_accel
-import adafruit_lsm303dlh_mag
-
-from time import sleep
-from threading import Thread
 import math
 import os
+# https://learn.adafruit.com/adafruit-ultimate-gps/circuitpython-parsing
+import time
+from threading import Thread
+from time import sleep
+
+import adafruit_gps
+# import adafruit_lsm303_accel
+import adafruit_lsm303dlh_mag
+import board
+import busio
 
 try:
-    from boatMath import (
-        degreesToRadians,
-        getCoordinateADistanceAlongAngle,
-        distanceInMBetweenEarthCoordinates,
-        computeNewCoordinate,
-        angleBetweenCoordinates,
-        convertDegMinToDecDeg,
-        convertWindAngle,
-    )
+    from boatMath import (angleBetweenCoordinates, computeNewCoordinate,
+                          convertDegMinToDecDeg, convertWindAngle,
+                          degreesToRadians, distanceInMBetweenEarthCoordinates,
+                          getCoordinateADistanceAlongAngle)
 except:
     from sailbot.boatMath import (
         degreesToRadians,

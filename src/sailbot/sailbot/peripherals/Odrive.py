@@ -2,15 +2,17 @@
 calibrates and default values for Odrive and handles interfacing between Odrive and python code
 """
 
+import sys
+import threading
+import traceback
+from time import sleep
+
 import odrive
 import odrive.utils as ut
-import sailbot.constants as c
-from time import sleep
-import sys
-import traceback
 from rclpy.node import Node
 from std_msgs.msg import String
-import threading
+
+import sailbot.constants as c
 
 
 class Odrive:

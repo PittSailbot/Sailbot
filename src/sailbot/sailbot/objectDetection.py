@@ -1,14 +1,15 @@
 """
 Interface for detecting buoys
 """
-from ultralytics import YOLO  # Documentation: https://docs.ultralytics.com/cfg/
+from dataclasses import dataclass
 
 # from supervision.tools.detections
 import cv2
 import numpy as np
 import torch
-from dataclasses import dataclass
 from rclpy.node import Node
+from ultralytics import \
+    YOLO  # Documentation: https://docs.ultralytics.com/cfg/
 
 import sailbot.constants as c
 

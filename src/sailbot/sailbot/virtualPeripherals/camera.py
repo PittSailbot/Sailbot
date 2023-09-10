@@ -2,16 +2,16 @@
 Interface for camera
 """
 import math
-import cv2
-import time
-from rclpy.node import Node
-import numpy as np
 import os
+import time
+
+import cv2
+import numpy as np
+from rclpy.node import Node
 
 import sailbot.constants as c
-
-from sailbot.objectDetection import ObjectDetection, draw_bbox
 from sailbot.events.eventUtils import Waypoint, distance_between
+from sailbot.objectDetection import ObjectDetection, draw_bbox
 from sailbot.utils import singleton
 
 

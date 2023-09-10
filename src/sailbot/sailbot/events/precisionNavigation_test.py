@@ -1,19 +1,14 @@
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
-import sailbot.constants as c
-
+import importlib
+import os
 import sys
 
-import sailbot.constants as c
 import sailbot.boatMath as boatMath
-
+import sailbot.constants as c
 # from camera import camera
 from sailbot.events.endurance import Endurance
-from sailbot.events.stationKeeping import Station_Keeping
-
 # import Precision_Navigation,Endurance,Station_Keeping,Search
-from sailbot.events.eventUtils import Waypoint, EventFinished
-
-import os, importlib
+from sailbot.events.eventUtils import Event, EventFinished, Waypoint
+from sailbot.events.stationKeeping import Station_Keeping
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -34,6 +29,7 @@ if __name__ == "__main__":
 from datetime import date, datetime
 from threading import Thread
 from time import sleep, time
+
 import numpy
 import rclpy
 from rclpy.node import Node

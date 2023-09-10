@@ -8,9 +8,11 @@ try:
     import constants as c
 except:
     import sailbot.constants as c
+
 import sys
-import smbus2 as smbus  # ,smbus2
 import time
+
+import smbus2 as smbus  # ,smbus2
 
 I2C_SLAVE_ADDRESS = 0x10
 

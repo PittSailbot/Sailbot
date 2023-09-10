@@ -1,26 +1,22 @@
-import sys
-
-import traceback
+import importlib
 import math
+import os
+import sys
+import traceback
 from datetime import date, datetime
 from threading import Thread
 from time import sleep
+
 import numpy
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-import sailbot.constants as c
 import sailbot.boatMath as boatMath
+import sailbot.constants as c
 import sailbot.utils as utils
-from sailbot.events.eventUtils import (
-    EventFinished,
-    Waypoint,
-    getEventDict,
-    getDefaultEventParams,
-)
-
-import os, importlib
+from sailbot.events.eventUtils import (EventFinished, Waypoint,
+                                       getDefaultEventParams, getEventDict)
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

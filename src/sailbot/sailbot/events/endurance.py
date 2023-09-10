@@ -1,13 +1,9 @@
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from sailbot.events.eventUtils import (
-    Event,
-    EventFinished,
-    Waypoint,
-    distance_between,
-)
 import sailbot.constants as c
+from sailbot.events.eventUtils import (Event, EventFinished, Waypoint,
+                                       distance_between)
 from sailbot.utils import ros_spin_some
 
 """

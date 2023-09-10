@@ -3,13 +3,13 @@ Event blueprint class and common utility functions used in events
 """
 # Event descriptions can be found here: https://www.sailbot.org/wp-content/uploads/2022/05/SailBot-2022-Events.pdf
 
+import configparser
+import math
+import os
+import time
 from abc import abstractmethod
 from dataclasses import dataclass
-import math
-import time
 
-import os
-import configparser
 from rclpy.node import Node
 
 DOCKER = os.environ.get("IS_DOCKER", False)
@@ -34,10 +34,10 @@ def __generateEventDict():
     waits to import the events to prevent circular dependencies
     """
     import sailbot.events.collisionAvoidance as collisionAvoidance
-    import sailbot.events.precisionNavigation as precisionNavigation
     import sailbot.events.endurance as endurance
-    import sailbot.events.stationKeeping as stationKeeping
+    import sailbot.events.precisionNavigation as precisionNavigation
     import sailbot.events.search as search
+    import sailbot.events.stationKeeping as stationKeeping
 
     eventDict = {
         c.config["MODES"]["MOD_RC"]: lambda *args: None,
