@@ -1,7 +1,7 @@
 """
 hadles turning motors using Odrive/Stepper driver 
 """
-
+# TODO: to be replaced with boatMovement.py and Odrive.py
 import os
 from threading import Thread
 from time import sleep

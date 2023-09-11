@@ -351,9 +351,9 @@ def estimate_all_buoy_gps(frame) -> None:
         dx *= math.cos(frame.heading)
 
         d_lat = (dz / earth_radius) * (180 / math.pi)
-        d_lon = (dx / earth_radius) * (180 / math.pi) / math.cos(frame.GPS.lat * math.pi / 180)
+        d_lon = (dx / earth_radius) * (180 / math.pi) / math.cos(frame.gps.lat * math.pi / 180)
 
-        lat = frame.GPS.lat + d_lat
-        lon = frame.GPS.lon + d_lon
+        lat = frame.gps.lat + d_lat
+        lon = frame.gps.lon + d_lon
 
-        detection.GPS = Waypoint(lat, lon)
+        detection.gps = Waypoint(lat, lon)

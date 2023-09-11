@@ -7,7 +7,7 @@ import sailbot.constants as c
 # from camera import camera
 from sailbot.events.endurance import Endurance
 # import Precision_Navigation,Endurance,Station_Keeping,Search
-from sailbot.events.eventUtils import Event, EventFinished, Waypoint
+from sailbot.utils.eventUtils import Event, EventFinished, Waypoint
 from sailbot.events.stationKeeping import StationKeeping
 
 DOCKER = os.environ.get("IS_DOCKER", False)

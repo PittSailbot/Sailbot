@@ -15,8 +15,7 @@ from std_msgs.msg import String
 import sailbot.utils.boatMath as boatMath
 import sailbot.constants as c
 import sailbot.utils as utils
-from sailbot.events.eventUtils import (EventFinished, Waypoint,
-                                       getDefaultEventParams, getEventDict)
+from sailbot.utils.eventUtils import EventFinished, Waypoint, getDefaultEventParams, getEventDict
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

@@ -282,6 +282,7 @@ class Heatmap:
         - Decrease chunk radius if two separate buoys are being grouped as one
         - Increase chunk radius if the same buoy is creating multiple chunks (caused by GPS estimation error)
     - NOTE: Chunks can overlap which may cause problems (if so, then extend code to use tri/square/hex chunks instead of circles)
+        - New detections will only increase the confidence of the first overlapping chunk it is contained in
 
     Attributes:
         - chunks (list[HeatmapChunk])
@@ -353,21 +354,21 @@ class HeatmapChunk:
 
     def __init__(self, radius, detection):
         self.radius = radius
-        self.average_gps = detection.GPS
+        self.average_gps = detection.gps
         self.detection_count = 1
         self.sum_confidence = detection.conf
 
-        self._sum_lat = detection.GPS.latitude
-        self._sum_lon = detection.GPS.longitude
+        self._sum_lat = detection.gps.latitude
+        self._sum_lon = detection.gps.longitude
 
     def __contains__(self, detection):
-        return distance_between(self.average_gps, detection.GPS) <= self.radius
+        return distance_between(self.average_gps, detection.gps) <= self.radius
 
     def append(self, detection):
         self.detection_count += 1
 
-        self._sum_lat += detection.GPS.latitude
-        self._sum_lon += detection.GPS.longitude
+        self._sum_lat += detection.gps.latitude
+        self._sum_lon += detection.gps.longitude
         self.average_gps = Waypoint(self._sum_lat / self.detection_count, self._sum_lon / self.detection_count)
 
         self.sum_confidence += detection.conf

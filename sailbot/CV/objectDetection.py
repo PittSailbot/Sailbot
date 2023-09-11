@@ -24,7 +24,7 @@ class Detection:
         - w (int): - width (in pixels) of bounding box rectangle
         - h (int): - height (in pixels) of bounding box rectangle
         - conf (float): - confidence level that detected object is a buoy [0-1]
-        - self.gps (Waypoint) - approximate gps position of buoy
+        - gps (Waypoint) - approximate gps position of buoy
     """
 
     def __init__(self, result: torch.tensor):

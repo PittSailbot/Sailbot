@@ -12,7 +12,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 import sailbot.constants as c
-from sailbot.utils.utils import dummyObject
+from sailbot.utils.utils import DummyObject
 
 
 class Odrive:
@@ -23,32 +23,32 @@ class Odrive:
 
         self.od = self
 
-        self.axis0 = dummyObject()
+        self.axis0 = DummyObject()
         self.axis0.requested_state = 8
-        self.axis0.motor = dummyObject()
-        self.axis0.motor.config = dummyObject()
-        self.axis0.motor.current_control = dummyObject()
+        self.axis0.motor = DummyObject()
+        self.axis0.motor.config = DummyObject()
+        self.axis0.motor.current_control = DummyObject()
         self.axis0.motor.current_control.Iq_setpoint = 0
-        self.axis0.encoder = dummyObject()
-        self.axis0.encoder.config = dummyObject()
+        self.axis0.encoder = DummyObject()
+        self.axis0.encoder.config = DummyObject()
         self.axis0.encoder.pos_estimate = 0
         self.axis0.encoder.vel_estimate = 0
-        self.axis0.controller = dummyObject()
-        self.axis0.controller.config = dummyObject()
+        self.axis0.controller = DummyObject()
+        self.axis0.controller.config = DummyObject()
         self.axis0.controller.input_pos = 0
 
-        self.axis1 = dummyObject()
+        self.axis1 = DummyObject()
         self.axis1.requested_state = 8
-        self.axis1.motor = dummyObject()
-        self.axis1.motor.config = dummyObject()
-        self.axis1.motor.current_control = dummyObject()
+        self.axis1.motor = DummyObject()
+        self.axis1.motor.config = DummyObject()
+        self.axis1.motor.current_control = DummyObject()
         self.axis1.motor.current_control.Iq_setpoint = 1
-        self.axis1.encoder = dummyObject()
-        self.axis1.encoder.config = dummyObject()
+        self.axis1.encoder = DummyObject()
+        self.axis1.encoder.config = DummyObject()
         self.axis1.encoder.pos_estimate = 1
         self.axis1.encoder.vel_estimate = 1
-        self.axis1.controller = dummyObject()
-        self.axis1.controller.config = dummyObject()
+        self.axis1.controller = DummyObject()
+        self.axis1.controller.config = DummyObject()
         self.axis1.controller.input_pos = 1
 
         self.setConstants()

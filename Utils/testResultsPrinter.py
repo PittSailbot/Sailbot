@@ -16,9 +16,7 @@ def parseXML(xmlfile):
                     print(f"{child.tag} : {child.text}")
 
         suiteVals = dict(suite.items())
-        print(
-            f"{suiteVals['name']}: (errors: {suiteVals['errors']}, failures: {suiteVals['failures']}, skipped {suiteVals['skipped']}, tests: {suiteVals['tests']})"
-        )
+        print(f"{suiteVals['name']}: (errors: {suiteVals['errors']}, failures: {suiteVals['failures']}, skipped {suiteVals['skipped']}, tests: {suiteVals['tests']})")
 
 
 parseXML("build/sailbot/pytest.xml")

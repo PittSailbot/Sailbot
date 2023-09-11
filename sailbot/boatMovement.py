@@ -1,5 +1,5 @@
 """
-Controls the boat's sails and rudder
+Controls the boat's sails and rudder. Also includes functions to autonomously drive the boat to a specific gps position or heading
 """
 import logging
 import os
@@ -7,13 +7,15 @@ import os
 import rclpy
 from rclpy.node import Node
 
-import sailbot.peripherals.GPS as GPS
+from sailbot.peripherals.GPS import GPS
+from sailbot.peripherals.windvane import WindVane, NoGoZone
+from sailbot.peripherals.compass import Compass
 from sailbot import constants as c
 from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
 from sailbot.utils.utils import singleton
 
-
+# TODO: Add ROS Callback
 @singleton
 class Sail(Node):
     """
@@ -21,8 +23,6 @@ class Sail(Node):
 
     Attributes:
         angle (float): the current angle of the sail (between 0 and 90 degrees)
-
-        ignore_limits (bool): whether to limit angles outside of range
 
     Functions:
         auto_adjust(): moves the sail to the optimal angle for speed
@@ -36,14 +36,13 @@ class Sail(Node):
     MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
     DEFAULT_ANGLE = int(c.config["SAIL"]["default_angle"])
 
-    def __init__(self, ignore_limits=False):
+    def __init__(self):
         super().__init__("Sail")
         self.logging = self.get_logger()
 
         self.logging.info("Initializing sail")
 
         self.odrive = Odrive(preset="sail")
-        self.ignore_limits = ignore_limits
 
         self._angle = self.DEFAULT_ANGLE
 
@@ -53,11 +52,10 @@ class Sail(Node):
 
     @angle.setter
     def angle(self, angle):
-        if not self.ignore_limits:
-            if angle < self.MIN_ANGLE:
-                angle = self.MIN_ANGLE
-            elif angle > self.MAX_ANGLE:
-                angle = self.MAX_ANGLE
+        if angle < self.MIN_ANGLE:
+            angle = self.MIN_ANGLE
+        elif angle > self.MAX_ANGLE:
+            angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving sail to {angle} degrees")
         rotations = self.odrive.rotations_per_degree * (angle - self.angle)
@@ -65,8 +63,7 @@ class Sail(Node):
         self._angle = angle
 
     def auto_adjust(self):
-        windvane = windvane.windvane()
-        wind_direction = windvane.angle
+        wind_direction = WindVane().angle
 
         if wind_direction > 180:
             wind_direction = 180 - (wind_direction - 180)
@@ -81,6 +78,7 @@ class Sail(Node):
         self.angle = 0
 
 
+# TODO: Add ROS Callback
 @singleton
 class Rudder(Node):
     """
@@ -88,8 +86,6 @@ class Rudder(Node):
 
     Attributes:
         angle (float): the current angle of the rudder (between -45 and 45 deg)
-
-        ignore_limits (bool): whether to limit angles outside of range
 
     Functions:
         reset(): returns rudder to home (center)
@@ -101,14 +97,13 @@ class Rudder(Node):
     MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
     DEFAULT_ANGLE = int(c.config["RUDDER"]["default_angle"])
 
-    def __init__(self, ignore_limits=False):
+    def __init__(self):
         super().__init__("Rudder")
         self.logging = self.get_logger()
 
         self.logging.info("Initializing rudder")
 
         self.odrive = Odrive(preset="rudder")
-        self.ignore_limits = ignore_limits
 
         self._angle = self.DEFAULT_ANGLE
 
@@ -118,11 +113,10 @@ class Rudder(Node):
 
     @angle.setter
     def angle(self, angle):
-        if not self.ignore_limits:
-            if angle < self.MIN_ANGLE:
-                angle = self.MIN_ANGLE
-            elif angle > self.MAX_ANGLE:
-                angle = self.MAX_ANGLE
+        if angle < self.MIN_ANGLE:
+            angle = self.MIN_ANGLE
+        elif angle > self.MAX_ANGLE:
+            angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving rudder to {angle} degrees")
         rotations = self.odrive.rotations_per_degree * (angle - self.angle)
@@ -140,7 +134,6 @@ class Rudder(Node):
 
 class FailedTurn(RuntimeError):
     """Signals that the boat failed to turn to the proper angle, usually indicates a failed tack"""
-
     pass
 
 
@@ -161,8 +154,8 @@ def turn_to_angle(angle, wait_until_finished=False, allow_tacking=True):
         - FailedTurn (Exception): the boat failed to turn to the specified angle for whatever reason
     """
     rudder = Rudder()
-    compass = compass.Compass()
-    windvane = windvane.windvane()
+    compass = Compass()
+    windvane = WindVane()
 
     acceptable_error = float(c.config["RUDDER"]["acceptable_error"])
     smoothing_constant = float(c.config["RUDDER"]["smooth_const"])
@@ -193,8 +186,9 @@ def go_to_gps(waypoint, wait_until_finished=False):
     """
 
     gps = GPS.GPS()
-    compass = compass.Compass()
-    windvane = windvane.windvane()
+    compass = Compass()
+    windvane = WindVane()
+    no_go_zone = NoGoZone()
     # rudder = Rudder()
 
     # acceptable_error = float(c.config['CONSTANTS']['reachedGPSThreshhold'])
@@ -204,10 +198,10 @@ def go_to_gps(waypoint, wait_until_finished=False):
     target_angle = (compass.angle + deltaAngle) % 360
     windAngle = windvane.angle
 
-    if (deltaAngle + windAngle) % 360 < windvane.no_go_zone.left_bound:
-        target_angle = windvane.windvane.no_go_zone.left_bound
-    elif (deltaAngle + windAngle) % 360 < windvane.no_go_zone.right_bound:
-        target_angle = windvane.windvane.no_go_zone.right_bound
+    if (deltaAngle + windAngle) % 360 < no_go_zone.left_bound:
+        target_angle = no_go_zone.left_bound
+    elif (deltaAngle + windAngle) % 360 < no_go_zone.right_bound:
+        target_angle = no_go_zone.right_bound
 
     turn_to_angle(target_angle)
 
