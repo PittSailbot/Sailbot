@@ -34,7 +34,6 @@
 
 # RUN mkdir workspace
 # WORKDIR /workspace/
-# # RUN pip3 install -r sailbot/sailbot/requirements.txt
 # # RUN pip3 install -r sailbot/sailbot/requirements-dev.txt
 # ENTRYPOINT /bin/bash
 
@@ -91,10 +90,8 @@ RUN gosu ubuntu rosdep update && \
 
 RUN apt update
 RUN apt install -y pip
-COPY requirements.txt /workspace/
 COPY requirements-dev.txt /workspace/
 
-RUN pip install --no-cache-dir -r /workspace/requirements.txt
 RUN pip install --no-cache-dir -r /workspace/requirements-dev.txt
 
 # temporally fix to enable resize uri

@@ -8,3 +8,5 @@
 /.vscode
 .ipynb_checkpoints
 .idea/
+/.pytest_cache
+/venv
