@@ -14,16 +14,16 @@ data_files = [("share/ament_index/resource_index/packages", ["resource/" + packa
               glob(package_name + "/virtualPeripherals/*.py")),
               ("lib/python3.10/site-packages/sailbot/peripherals/", glob(package_name + "/peripherals/*.py"),),
               ("lib/python3.10/site-packages/sailbot/CV/", glob(package_name + "/CV/*")),
-              ("lib//python3.8/site-packages/sailbot/website/", glob(package_name + "/website/*.py"),),
-              ("lib//python3.8/site-packages/sailbot/website/templates/", glob(package_name + "/website/templates/*"),),
-              ("lib//python3.8/site-packages/sailbot/website/static/css/",
+              ("lib//python3.10/site-packages/sailbot/website/", glob(package_name + "/website/*.py"),),
+              ("lib//python3.10/site-packages/sailbot/website/templates/", glob(package_name + "/website/templates/*"),),
+              ("lib//python3.10/site-packages/sailbot/website/static/css/",
                glob(package_name + "/website/static/css/*"),),
-              ("lib//python3.8/site-packages/sailbot/website/static/js/", glob(package_name + "/website/static/js/*"),),
-              ("lib//python3.8/site-packages/sailbot/website/static/images/",
+              ("lib//python3.10/site-packages/sailbot/website/static/js/", glob(package_name + "/website/static/js/*"),),
+              ("lib//python3.10/site-packages/sailbot/website/static/images/",
                glob(package_name + "/website/static/images/*"),), (
-              "lib//python3.8/site-packages/sailbot/website/static/leaflet/images/",
+              "lib//python3.10/site-packages/sailbot/website/static/leaflet/images/",
               glob(package_name + "/website/static/leaflet/images/*"),), (
-              "lib//python3.8/site-packages/sailbot/website/static/leaflet/",
+              "lib//python3.10/site-packages/sailbot/website/static/leaflet/",
               glob(package_name + "/website/static/leaflet/*.*"),)]
 
 setup(
