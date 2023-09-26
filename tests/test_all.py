@@ -12,10 +12,10 @@ import pytest
 
 import sailbot.boatMain as boatMain
 from sailbot import constants as c
-from src.sailbot.CV import objectDetection
+from sailbot.CV import objectDetection
 from sailbot.peripherals import camera
-from src.sailbot.utils import distance_between
-from src.sailbot.utils import Waypoint
+from sailbot.utils import distance_between
+from sailbot.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -25,8 +25,8 @@ if not DOCKER:
 
     import sailbot.peripherals.compass as compass
     import sailbot.peripherals.GPS as GPS
-    import src.sailbot.peripherals.transceiver as transceiver
-    import src.sailbot.peripherals.windvane as windvane
+    import sailbot.peripherals.transceiver as transceiver
+    import sailbot.peripherals.windvane as windvane
 
     rclpy.init()
 

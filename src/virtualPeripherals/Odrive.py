@@ -7,7 +7,7 @@ from time import sleep
 from std_msgs.msg import String
 
 import sailbot.constants as c
-from src.sailbot.utils.utils import DummyObject
+from sailbot.utils.utils import DummyObject
 
 
 class Odrive:

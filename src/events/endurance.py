@@ -1,9 +1,9 @@
 from std_msgs.msg import String
 
 import sailbot.constants as c
-from src.sailbot.utils import distance_between
-from src.sailbot.utils import Event, EventFinished
-from src.sailbot.utils.utils import Waypoint, has_reached_waypoint
+from sailbot.utils import distance_between
+from sailbot.utils import Event, EventFinished
+from sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 """
 # Challenge Goal:

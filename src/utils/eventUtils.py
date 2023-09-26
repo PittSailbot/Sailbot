@@ -5,8 +5,8 @@ from abc import abstractmethod
 import configparser
 from rclpy.node import Node
 
-import sailbot.constants as c
-from src.sailbot.utils.utils import Waypoint
+import src.constants as c
+from src.utils.utils import Waypoint
 
 EVENT_DICT_INITIALIZED = False
 
@@ -78,10 +78,10 @@ def __generateEventDict():
     """
     waits to import the events to prevent circular dependencies
     """
-    import sailbot.events.endurance as endurance
-    import sailbot.events.precisionNavigation as precisionNavigation
-    import sailbot.events.search as search
-    import src.sailbot.events.stationKeeping as stationKeeping
+    import src.events.endurance as endurance
+    import src.events.precisionNavigation as precisionNavigation
+    import src.events.search as search
+    import src.events.stationKeeping as stationKeeping
 
     eventDict = {
         c.config["MODES"]["MOD_RC"]: lambda *args: None,

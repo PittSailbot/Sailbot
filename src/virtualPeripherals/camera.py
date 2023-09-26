@@ -9,9 +9,9 @@ import cv2
 from rclpy.node import Node
 
 import sailbot.constants as c
-from src.sailbot.utils import distance_between
-from src.sailbot.CV.objectDetection import ObjectDetection, draw_bbox
-from src.sailbot.utils.utils import singleton, Waypoint
+from sailbot.utils import distance_between
+from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.utils.utils import singleton, Waypoint
 
 
 class Frame:

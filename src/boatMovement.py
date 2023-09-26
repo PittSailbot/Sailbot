@@ -7,13 +7,13 @@ import os
 import rclpy
 from rclpy.node import Node
 
-from sailbot.peripherals.GPS import GPS
-from src.sailbot.peripherals.windvane import WindVane, NoGoZone
-from sailbot.peripherals.compass import Compass
-from sailbot import constants as c
-from sailbot.peripherals.Odrive import Odrive
-from src.sailbot.utils import boatMath
-from src.sailbot.utils.utils import singleton
+from .peripherals.GPS import GPS
+from .peripherals.windvane import WindVane, NoGoZone
+from .peripherals.compass import Compass
+import constants as c
+from .peripherals.Odrive import Odrive
+from .utils import boatMath
+from .utils.utils import singleton
 
 # TODO: Add ROS Callback
 @singleton

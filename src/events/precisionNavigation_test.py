@@ -2,11 +2,11 @@ import importlib
 import os
 import sys
 
-import src.sailbot.utils.boatMath as boatMath
+import sailbot.utils.boatMath as boatMath
 import sailbot.constants as c
 # from camera import camera
 # import Precision_Navigation,Endurance,Station_Keeping,Search
-from src.sailbot.utils import EventFinished, Waypoint
+from sailbot.utils import EventFinished, Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from src.sailbot.virtualPeripherals.Odrive import Odrive
+from sailbot.virtualPeripherals.Odrive import Odrive
 
 # define type of motor that is being used
 USE_ODRIVE_SAIL = True

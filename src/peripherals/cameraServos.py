@@ -6,7 +6,7 @@ import adafruit_servokit
 from rclpy.node import Node
 
 from sailbot import constants as c
-from src.sailbot.utils.utils import singleton
+from sailbot.utils.utils import singleton
 
 
 @singleton

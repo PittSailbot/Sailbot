@@ -4,9 +4,9 @@ import os
 import time
 
 from sailbot.peripherals.GPS import GPS
-from src.sailbot.peripherals.windvane import WindVane
-from src.sailbot.utils import Event
-from src.sailbot.utils.utils import Waypoint
+from sailbot.peripherals.windvane import WindVane
+from sailbot.utils import Event
+from sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

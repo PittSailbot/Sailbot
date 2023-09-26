@@ -18,9 +18,9 @@ CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
 compass = importlib.import_module(folder + "compass").compass
 
 import sailbot.constants as c
-from src.sailbot.CV.objectDetection import ObjectDetection, draw_bbox
-from src.sailbot.utils import distance_between
-from src.sailbot.utils.utils import Waypoint, singleton
+from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.utils import distance_between
+from sailbot.utils.utils import Waypoint, singleton
 
 
 class Frame:

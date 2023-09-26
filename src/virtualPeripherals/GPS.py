@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from src.sailbot.utils import dummyObject
+from sailbot.utils import dummyObject
 
 
 class gps(Node):

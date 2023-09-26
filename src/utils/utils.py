@@ -8,7 +8,7 @@ from rclpy.executors import ShutdownException, TimeoutException
 
 from sailbot import constants as c
 from sailbot.peripherals.GPS import GPS
-from src.sailbot.utils import distance_between
+from sailbot.utils import distance_between
 
 
 def singleton(cls):
