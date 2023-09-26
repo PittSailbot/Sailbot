@@ -7,29 +7,29 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 package_name = "sailbot"
-data_files = [("share/ament_index/resource_index/packages", ["resource/" + package_name]),
-              ("share/" + package_name, ["package.xml"]), ("share/" + package_name, glob("launch/*.py")),
-              ("lib/python3.10/site-packages/sailbot/events/", glob(package_name + "/events/*.py")), (
-              "lib/python3.10/site-packages/sailbot/virtualPeripherals/",
-              glob(package_name + "/virtualPeripherals/*.py")),
-              ("lib/python3.10/site-packages/sailbot/peripherals/", glob(package_name + "/peripherals/*.py"),),
-              ("lib/python3.10/site-packages/sailbot/CV/", glob(package_name + "/CV/*")),
-              ("lib//python3.10/site-packages/sailbot/website/", glob(package_name + "/website/*.py"),),
-              ("lib//python3.10/site-packages/sailbot/website/templates/", glob(package_name + "/website/templates/*"),),
-              ("lib//python3.10/site-packages/sailbot/website/static/css/",
-               glob(package_name + "/website/static/css/*"),),
-              ("lib//python3.10/site-packages/sailbot/website/static/js/", glob(package_name + "/website/static/js/*"),),
-              ("lib//python3.10/site-packages/sailbot/website/static/images/",
-               glob(package_name + "/website/static/images/*"),), (
-              "lib//python3.10/site-packages/sailbot/website/static/leaflet/images/",
-              glob(package_name + "/website/static/leaflet/images/*"),), (
-              "lib//python3.10/site-packages/sailbot/website/static/leaflet/",
-              glob(package_name + "/website/static/leaflet/*.*"),)]
+data_files=[]
+data_files.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
+data_files.append(('share/' + package_name, ['package.xml']))
+data_files.append(('share/' + package_name, glob('launch/*.py')))
+
+data_files.append(('lib/python3.10/site-packages/sailbot/', glob(package_name + '/*')))
+data_files.append(('lib/python3.10/site-packages/sailbot/CV/', glob(package_name + '/CV/*')))
+data_files.append(('lib/python3.10/site-packages/sailbot/events/', glob(package_name + '/events/*.py')))
+data_files.append(('lib/python3.10/site-packages/sailbot/peripherals/', glob(package_name + '/peripherals/*.py')))
+data_files.append(('lib/python3.10/site-packages/sailbot/utils/', glob(package_name + '/utils/*.py')))
+data_files.append(('lib/python3.10/site-packages/sailbot/virtualPeripherals/', glob(package_name + '/virtualPeripherals/*.py')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/', glob(package_name + '/website/*.py')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/templates/', glob(package_name + '/website/templates/*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/static/css/', glob(package_name + '/website/static/css/*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/static/js/', glob(package_name + '/website/static/js/*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/static/images/', glob(package_name + '/website/static/images/*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet/images/', glob(package_name + '/website/static/leaflet/images/*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet/', glob(package_name + '/website/static/leaflet/*.*')))
 
 setup(
     name="sailbot",
     version="0.0.0",
-    packages=find_packages(),
+    packages=find_packages(where="sailbot"),
     data_files=data_files,
     include_package_data=True,
     install_requires=["setuptools"],
