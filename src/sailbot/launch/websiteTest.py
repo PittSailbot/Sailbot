@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 
-from src.launch import LaunchDescription
-from src.launch import DeclareLaunchArgument
-from src.launch import LaunchConfiguration, TextSubstitution
+from src import LaunchDescription
+from src import DeclareLaunchArgument
+from src import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 

@@ -7,11 +7,11 @@ import os
 import rclpy
 from rclpy.node import Node
 
-from .peripherals.GPS import GPS
-from .peripherals.windvane import WindVane, NoGoZone
-from .peripherals.compass import Compass
+from src.sailbot.sailbot.peripherals.GPS import GPS
+from src.sailbot.sailbot.peripherals.windvane import WindVane, NoGoZone
+from src.sailbot.sailbot.peripherals import Compass
 import constants as c
-from .peripherals.Odrive import Odrive
+from src.sailbot.sailbot.peripherals.Odrive import Odrive
 from .utils import boatMath
 from .utils.utils import singleton
 

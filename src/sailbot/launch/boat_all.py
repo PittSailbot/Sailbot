@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 
-from src.launch import LaunchDescription
-from src.launch import DeclareLaunchArgument
-from src.launch import TextSubstitution
+from src import LaunchDescription
+from src import DeclareLaunchArgument
+from src import TextSubstitution
 from launch_ros.actions import Node
 
 
@@ -27,5 +27,12 @@ def generate_launch_description():
                 name="drivers",
             ),
             Node(package="sailbot", namespace="boat", executable="main", name="main"),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="compass",
+                name="compass",
+            ),
+            Node(package="sailbot", namespace="boat", executable="gps", name="gps"),
         ]
     )

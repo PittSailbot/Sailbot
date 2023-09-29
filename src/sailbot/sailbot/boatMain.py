@@ -9,10 +9,10 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-import src.utils.boatMath as boatMath
+import src.sailbot.sailbot.utils.boatMath as boatMath
 import constants as c
-import src.utils as utils
-from src.utils.eventUtils import EventFinished, Waypoint, getDefaultEventParams, getEventDict
+import src.sailbot.sailbot.utils as utils
+from src.sailbot.sailbot.utils.eventUtils import EventFinished, Waypoint, getDefaultEventParams, getEventDict
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

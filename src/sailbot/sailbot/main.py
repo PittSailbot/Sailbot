@@ -7,9 +7,10 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 import boatMovement
-from src.events import endurance, precisionNavigation, search, stationKeeping
-from src.utils import eventUtils as eventUtils
-from src.utils.utils import singleton, Waypoint
+from src.sailbot.sailbot.events import precisionNavigation
+from src.sailbot.sailbot.events import endurance, search, stationKeeping
+from src.sailbot.sailbot.utils import eventUtils as eventUtils
+from src.sailbot.sailbot.utils.utils import singleton, Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False

@@ -10,9 +10,10 @@ package_name = "sailbot"
 data_files=[]
 data_files.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
 data_files.append(('share/' + package_name, ['package.xml']))
-data_files.append(('share/' + package_name, glob('launch/*.py')))
+data_files.append(('share/' + package_name, glob('src/sailbot/launch/*.py')))
 
-data_files.append(('lib/python3.10/site-packages/sailbot/', glob(package_name + '/*')))
+data_files.append(('lib/python3.10/site-packages/sailbot/', glob(package_name + '/*.py')))
+data_files.append(('lib/python3.10/site-packages/sailbot/', glob(package_name + '/*.ini')))
 data_files.append(('lib/python3.10/site-packages/sailbot/CV/', glob(package_name + '/CV/*')))
 data_files.append(('lib/python3.10/site-packages/sailbot/events/', glob(package_name + '/events/*.py')))
 data_files.append(('lib/python3.10/site-packages/sailbot/peripherals/', glob(package_name + '/peripherals/*.py')))
@@ -27,9 +28,9 @@ data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet
 data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet/', glob(package_name + '/website/static/leaflet/*.*')))
 
 setup(
-    name="sailbot",
+    name=package_name,
     version="0.0.0",
-    packages=find_packages(where="sailbot"),
+    packages=find_packages(where=package_name),
     data_files=data_files,
     include_package_data=True,
     install_requires=["setuptools"],
