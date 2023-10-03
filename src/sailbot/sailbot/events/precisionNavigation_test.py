@@ -14,8 +14,7 @@ folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
 camera = importlib.import_module(folder + "camera").Camera
 gps = importlib.import_module(folder + "GPS").GPS
-arduino = importlib.import_module(folder + "transceiver").Transceiver
-driver = importlib.import_module(folder + "drivers").driver # TODO: deprecated
+transceiver = importlib.import_module(folder + "transceiver").Transceiver
 windVane = importlib.import_module(folder + "windvane").WindVane
 
 

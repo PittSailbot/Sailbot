@@ -13,9 +13,9 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
-gps = importlib.import_module(folder + "GPS").gps
+gps = importlib.import_module(folder + "GPS").GPS
 CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
-compass = importlib.import_module(folder + "compass").compass
+compass = importlib.import_module(folder + "compass").Compass
 
 from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox

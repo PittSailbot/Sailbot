@@ -10,7 +10,7 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
-windVane = importlib.import_module(folder + "windvane").windVane
+windVane = importlib.import_module(folder + "windvane").WindVane
 
 """
 # Challenge	Goal:
