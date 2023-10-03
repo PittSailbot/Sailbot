@@ -1,8 +1,8 @@
 from std_msgs.msg import String
 
-import sailbot.constants as c
-from sailbot.utils import distance_between
-from sailbot.utils import Event, EventFinished
+from sailbot import constants as c
+from sailbot.utils.boatMath import distance_between
+from sailbot.utils.eventUtils import Event, EventFinished
 from sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 """

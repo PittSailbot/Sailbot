@@ -12,7 +12,7 @@ from sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
-folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
 camera = importlib.import_module(folder + "camera").Camera
 

@@ -3,7 +3,7 @@ import os
 import sys
 
 from sailbot.utils import boatMath as boatMath
-from sailbot import as c
+from sailbot import constants as c
 # from camera import camera
 # import Precision_Navigation,Endurance,Station_Keeping,Search
 from sailbot.utils.eventUtils import EventFinished, Waypoint

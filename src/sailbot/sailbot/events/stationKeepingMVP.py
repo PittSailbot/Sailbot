@@ -10,7 +10,7 @@ from sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
-folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
 windVane = importlib.import_module(folder + "windvane").windVane
 

@@ -15,7 +15,7 @@ from sailbot.utils.utils import singleton, Waypoint
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
-folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 windVane = importlib.import_module(folder + "windvane").WindVane
 gps = importlib.import_module(folder + "GPS").GPS
 compass = importlib.import_module(folder + "compass").Compass
