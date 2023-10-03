@@ -5,7 +5,7 @@ from abc import abstractmethod
 import configparser
 from rclpy.node import Node
 
-import sailbot.constants as c
+from sailbot import constants as c
 from sailbot.utils.utils import Waypoint
 
 EVENT_DICT_INITIALIZED = False

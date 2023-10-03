@@ -1,3 +1,4 @@
+# TODO: deprecate
 import importlib
 import os
 import sys
@@ -18,12 +19,12 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 # import the peripherals from the appropriate folder
-folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
-windVane = importlib.import_module(folder + "windvane").windVane
-gps = importlib.import_module(folder + "GPS").gps
-compass = importlib.import_module(folder + "compass").compass
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
+windVane = importlib.import_module(folder + "windvane").WindVane
+gps = importlib.import_module(folder + "GPS").GPS
+compass = importlib.import_module(folder + "compass").Compass
 drivers = importlib.import_module(folder + "drivers").driver
-arduino = importlib.import_module(folder + "transceiver").arduino
+arduino = importlib.import_module(folder + "transceiver").Transceiver
 
 
 class boat(Node):

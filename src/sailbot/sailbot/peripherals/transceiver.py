@@ -10,7 +10,7 @@ import smbus2 as smbus  # ,smbus2
 from rclpy.node import Node
 from std_msgs.msg import String
 
-import sailbot.constants as c
+from sailbot import constants as c
 
 I2C_SLAVE_ADDRESS = 0x10
 

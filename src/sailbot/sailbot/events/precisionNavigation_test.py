@@ -2,21 +2,21 @@ import importlib
 import os
 import sys
 
-import sailbot.utils.boatMath as boatMath
-import sailbot.constants as c
+from sailbot.utils import boatMath as boatMath
+from sailbot import as c
 # from camera import camera
 # import Precision_Navigation,Endurance,Station_Keeping,Search
-from sailbot.utils import EventFinished, Waypoint
+from sailbot.utils.eventUtils import EventFinished, Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
-folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
 camera = importlib.import_module(folder + "camera").Camera
-gps = importlib.import_module(folder + "GPS").gps
-arduino = importlib.import_module(folder + "transceiver").arduino
-driver = importlib.import_module(folder + "drivers").driver
-windVane = importlib.import_module(folder + "windvane").windVane
+gps = importlib.import_module(folder + "GPS").GPS
+arduino = importlib.import_module(folder + "transceiver").Transceiver
+driver = importlib.import_module(folder + "drivers").driver # TODO: deprecated
+windVane = importlib.import_module(folder + "windvane").WindVane
 
 
 import math

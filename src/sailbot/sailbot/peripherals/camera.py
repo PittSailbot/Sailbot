@@ -17,9 +17,9 @@ gps = importlib.import_module(folder + "GPS").gps
 CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
 compass = importlib.import_module(folder + "compass").compass
 
-import sailbot.constants as c
+from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
-from sailbot.utils import distance_between
+from sailbot.utils.boatMath import distance_between
 from sailbot.utils.utils import Waypoint, singleton
 
 

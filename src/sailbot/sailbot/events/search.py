@@ -6,8 +6,8 @@ import time
 import matplotlib.pyplot as plt
 
 from sailbot import constants as c
-from sailbot.utils import distance_between
-from sailbot.utils import Event, EventFinished
+from sailbot.utils.boatMath import distance_between
+from sailbot.utils.eventUtils import Event, EventFinished
 from sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)

@@ -7,8 +7,7 @@ import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
 
 from sailbot import constants as c
-from sailbot.peripherals.GPS import GPS
-from sailbot.utils import distance_between
+from sailbot.utils.boatMath import distance_between
 
 
 def singleton(cls):
@@ -59,11 +58,13 @@ class DummyObject:
         pass
 
 
+# TODO: make function use ROS to resolve circulat import error
 def has_reached_waypoint(waypoint, distance=float(c.config["CONSTANTS"]["reached_waypoint_distance"])):
     """Returns true/false if the boat is close enough to the waypoint"""
-    a = GPS()
-    boat_gps = Waypoint(a.latitude, a.longitude)
-    return distance_between(boat_gps, waypoint) < distance
+    # a = GPS()
+    # boat_gps = Waypoint(a.latitude, a.longitude)
+    # return distance_between(boat_gps, waypoint) < distance
+    return None
 
 
 def ros_spin_some(node, executor=None, timeout_sec=0, wait_condition=lambda: False):

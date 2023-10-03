@@ -6,7 +6,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-import boatMovement
+from sailbot import boatMovement
 from sailbot.events import precisionNavigation
 from sailbot.events import endurance, search, stationKeeping
 from sailbot.utils import eventUtils as eventUtils
@@ -16,11 +16,10 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
 folder = "sailbot.peripherals" if not DOCKER else "sailbot.virtualPeripherals."
-windVane = importlib.import_module(folder + "windvane").windVane
-gps = importlib.import_module(folder + "GPS").gps
-compass = importlib.import_module(folder + "compass").compass
-drivers = importlib.import_module(folder + "drivers").driver
-transceiver = importlib.import_module(folder + "transceiver").transceiver
+windVane = importlib.import_module(folder + "windvane").WindVane
+gps = importlib.import_module(folder + "GPS").GPS
+compass = importlib.import_module(folder + "compass").Compass
+transceiver = importlib.import_module(folder + "transceiver").Transceiver
 
 
 events = {

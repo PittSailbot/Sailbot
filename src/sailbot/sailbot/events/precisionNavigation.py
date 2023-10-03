@@ -2,7 +2,7 @@ import math
 import os
 import time
 
-from sailbot.utils import Event, EventFinished
+from sailbot.utils.eventUtils import Event, EventFinished
 from sailbot.utils.utils import Waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
