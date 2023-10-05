@@ -28,4 +28,4 @@ def save():
 
 if __name__ == "__main__":
     print(config.sections())
-    print(config["CONSTANTS"]["win_title"])
+    print(config["MAIN"]["device"])
