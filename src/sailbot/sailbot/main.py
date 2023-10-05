@@ -1,5 +1,4 @@
 import importlib
-import logging
 import os
 
 import rclpy
@@ -7,19 +6,20 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from sailbot import boatMovement
-from sailbot.events import precisionNavigation
-from sailbot.events import endurance, search, stationKeeping
-from sailbot.utils import eventUtils as eventUtils
+from sailbot.events import precisionNavigation, endurance, search, stationKeeping
+from sailbot.utils.eventUtils import EventFinished
 from sailbot.utils.utils import singleton, Waypoint
+
+from sailbot.peripherals import windvane, GPS, compass, transceiver
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
-folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
-windVane = importlib.import_module(folder + "windvane").WindVane
-gps = importlib.import_module(folder + "GPS").GPS
-compass = importlib.import_module(folder + "compass").Compass
-transceiver = importlib.import_module(folder + "transceiver").Transceiver
+# folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
+# windVane = importlib.import_module(folder + "windvane").WindVane
+# gps = importlib.import_module(folder + "GPS").GPS
+# compass = importlib.import_module(folder + "compass").Compass
+# transceiver = importlib.import_module(folder + "transceiver").Transceiver
 
 
 events = {
@@ -39,7 +39,7 @@ class Boat(Node):
     """
 
     def __init__(self, event=None, event_data=None):
-        super().__init__("main_subscriber")
+        super().__init__("main")
         self.logging = self.get_logger()
 
         # BOAT STATE
@@ -49,17 +49,16 @@ class Boat(Node):
 
         # SENSORS
         self.transceiver = transceiver.Transceiver()
-        self.gps = gps()
-        self.compass = compass()
-        self.windvane = windVane()
+        self.gps = GPS.GPS()
+        self.compass = compass.Compass()
+        self.windvane = windvane.WindVane()
 
         # Controls
         self.sail = boatMovement.Sail()
         self.rudder = boatMovement.Rudder()
 
     def __del__(self):
-        logging.info("Shutting down")
-        transceiver.send("Shutting down")
+        self.logging.info("Shutting down")
 
     def main_loop(self):
         """
@@ -71,8 +70,8 @@ class Boat(Node):
 
         if self.is_RC:
             # TODO: read from controller
-            self.sail.angle = target_sail
-            self.rudder.angle = target_rudder
+            self.sail.angle = 0
+            self.rudder.angle = 0
 
         else:
             try:
@@ -85,19 +84,15 @@ class Boat(Node):
                 else:
                     self.sail.angle = 0
 
-            except eventUtils.EventFinished:
-                msg = "Event finished. Returning to RC"
-                self.logging.info(msg)
-                self.transceiver.send(msg)
+            except EventFinished:
+                self.logging.info("Event finished. Returning to RC")
 
                 self.is_RC = True
                 self.event = None
 
             except Exception as e:
-                msg = f"""Unhandled exception occured: {e}
-                        Returning to RC!"""
-                self.logging.critical(msg)
-                self.transceiver.send(msg)
+                self.logging.critical(f"""Unhandled exception occured: {e}
+                        Returning to RC!""")
 
                 self.is_RC = True
                 self.event = None
@@ -105,14 +100,17 @@ class Boat(Node):
     def execute_command(self, args):
         """Executes commands given to the boat from the transceiver
 
+        Args:
+            - args (String): any of the following valid commands
+
         Valid Commands:
-        - RC {on/off}: enable or disable RC
-        - sail {float}: set the sail to a specific angle
-        - rudder {float}: set the rudder to a specific angle
-        - sailoffset {float}: set the offset for the sail
-        - rudderoffset {float}: set the offset for the rudder
-        - setevent {str} {args}: set a new event with specified arguments (INCOMPLETE)
-        - goto {lat} {lon}: autonomously move the boat to the determined waypoint
+            - RC {on/off}: enable or disable RC
+            - sail {float}: set the sail to a specific angle
+            - rudder {float}: set the rudder to a specific angle
+            - sailoffset {float}: set the offset for the sail
+            - rudderoffset {float}: set the offset for the rudder
+            - setevent {str} {args}: set a new event with specified arguments (INCOMPLETE)
+            - goto {lat} {lon}: autonomously move the boat to the determined waypoint
         """
         if args is None:
             return

@@ -47,7 +47,7 @@ setup(
             "gps = sailbot.peripherals.GPS:main",
             "windvane = sailbot.peripherals.windvane:main",
             "main = sailbot.main:main",
-            "drivers = sailbot.peripherals.drivers:main",
+            "drivers = sailbot.boatMovement:main",
             "offset = sailbot.deprecated.motorOffset:main",
             "website = sailbot.website.website:ros_main",
             "virtualDrivers = sailbot.virtualPeripherals.drivers:main",

@@ -26,7 +26,7 @@ class Transceiver(Node):
         super().__init__("Transceiver")
         self.logging = self.get_logger()
 
-        ports = [c.config["MAIN"]["ardu_port"], c.config["MAIN"]["ardu_port2"], c.config["MAIN"]["ardu_port3"]]
+        ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
         for i, port in enumerate(ports):
             try:
                 self.ser1 = serial.Serial(port, int(c.config["MAIN"]["baudrate"]), timeout=0.5)
@@ -86,6 +86,7 @@ def ConvertStringsToBytes(src) -> list[int]:
         converted.append(ord(b))
     return converted
 
+# TODO: deprecate
 class arduino:
 
     def __init__(self, port_num):
