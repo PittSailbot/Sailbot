@@ -39,23 +39,28 @@ class Odrive:
         self.od = odrive.find_any()
         self.preset = preset
 
-        self.axis = self.od.axis
+        # Switch if sail and rudder are reversed
+        if self.preset == "sail":
+            self.axis = self.od.axis0
+        elif self.preset == "rudder":
+            self.axis = self.od.axis1
+
         self.mo = self.axis.motor
         self.enc = self.axis.encoder
 
         self.offset = 0
 
-        self.enc.config.cpr = c.config["ODRIVE_SAIL"]["odriveEncoderCPR"]
-        self.od.axis.motor.config.pole_pairs = c.config["ODRIVE_SAIL"]["odrivepolepairs"]
+        self.enc.config.cpr = c.config["ODRIVE"]["odriveEncoderCPR"]
+        self.axis.motor.config.pole_pairs = c.config["ODRIVE"]["odrivepolepairs"]
 
-        self.od.axis.motor.config.torque_constant = 1  # read the getting started guide on this, to be changed later
-        self.od.axis.motor.config.motor_type = 0
+        self.axis.motor.config.torque_constant = 1  # read the getting started guide on this, to be changed later
+        self.axis.motor.config.motor_type = 0
 
         self.KVRating = int(c.config["ODRIVE"]["motorKV"])
         self.current_limit = int(c.config["ODRIVE"]["currentLimit"])
 
         self.axis.controller.config.enable_overspeed_error = False
-        self.od.config.brake_resistance = float(c.config["CONSTANTS"]["odrivebreakresistor"])
+        self.od.config.brake_resistance = float(c.config["ODRIVE"]["odrivebreakresistor"])
 
         if preset == "sail":
             self.axis.controller.config.pos_gain = int(c.config["ODRIVE_SAIL"]["posGain"])

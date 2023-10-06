@@ -3,8 +3,9 @@ import configparser
 import logging
 import os
 
-root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-config_path = rf"{root_dir}/sailbot/config.ini"
+# returns the 4th parent directory from constants.py (/Sailbot)
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+config_path = rf"{root_dir}/src/sailbot/config.ini"
 
 if not os.path.isfile(config_path):
     raise Exception(f"cannot find config.ini file in {config_path}")

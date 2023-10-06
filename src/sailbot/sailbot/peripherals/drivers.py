@@ -11,16 +11,9 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-try:
-    import constants as c
-    import stepper
-    from Odrive import Odrive
-    from windvane import windVane
-except:
-    import sailbot.constants as c
-    import sailbot.stepper as stepper
-    from sailbot.Odrive import Odrive
-    from sailbot.windvane import windVane
+import sailbot.constants as c
+from sailbot.peripherals.Odrive import Odrive
+from sailbot.peripherals.windvane import WindVane
 
 from threading import Thread
 from time import sleep
