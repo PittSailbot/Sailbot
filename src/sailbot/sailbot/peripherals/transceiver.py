@@ -29,8 +29,11 @@ class Transceiver(Node):
         ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
         for i, port in enumerate(ports):
             try:
-                self.ser1 = serial.Serial(port, int(c.config["MAIN"]["baudrate"]), timeout=0.5)
-                assert self.readData() != "'"
+                # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
+                # May cause runtime latency tho if not threaded and the transceiver arduino code isn't writing anything to serial
+                self.ser1 = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=10, exclusive=False)
+
+                self.readData()
 
             except Exception as e:
                 self.logging.warning(f"Failed to read from port: {port}")
@@ -54,6 +57,9 @@ class Transceiver(Node):
         self.wind_direction = None
         self.battery = None
 
+    def __del__(self):
+        self.ser1.close()
+
     def send(self, data):
         self.ser1.write(str(data).encode())
 
@@ -69,14 +75,14 @@ class Transceiver(Node):
 
     def read(self) -> str or None:
         """Reads incoming data from shore"""
-        message = self.ser1.readline().replace("\r\n'", "").replace("b'", "").replace("\\r\\n'", "")
+        message = str(self.ser1.readline().replace("\r\n'", "").replace("b'", "").replace("\\r\\n'", ""))
 
-        if message is None or message == "":
-            return
+        if message is None or message == "'":
+            return None
 
         self.logging.debug(f"Received message {message}")
 
-        return str(message)
+        return message
 
     def readData(self):
         """Reads rudder/sail position"""
@@ -84,10 +90,10 @@ class Transceiver(Node):
 
         msg = self.read()
 
-        if msg is None:
-            time.sleep(.1)
+        if msg is None or msg == "'":
+            time.sleep(5)
             msg = self.read()
-            if msg is None:
+            if msg is None or msg == "'":
                 raise RuntimeError("Failed to read from transceiver")
 
         splits = msg.split(" ")
@@ -146,8 +152,9 @@ def map(x, min1, max1, min2, max2):
 
 
 if __name__ == "__main__":
+    rclpy.init()
+
     transceiver = Transceiver()
 
-    time.sleep(1)
     while True:
         print(transceiver.readData())
