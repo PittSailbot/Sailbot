@@ -14,7 +14,7 @@ data_files.append(('share/' + package_name, glob('src/sailbot/launch/*.py')))
 
 data_files.append(('lib/python3.10/site-packages/sailbot/', glob(package_name + '/*.py')))
 data_files.append(('lib/python3.10/site-packages/sailbot/', glob('*.ini')))
-data_files.append(('lib/python3.10/site-packages/sailbot/CV/', glob(package_name + '/CV/*')))
+data_files.append(('lib/python3.10/site-packages/sailbot/CV/', glob(package_name + '/CV/*.py')))
 data_files.append(('lib/python3.10/site-packages/sailbot/events/', glob(package_name + '/events/*.py')))
 data_files.append(('lib/python3.10/site-packages/sailbot/peripherals/', glob(package_name + '/peripherals/*.py')))
 data_files.append(('lib/python3.10/site-packages/sailbot/utils/', glob(package_name + '/utils/*.py')))

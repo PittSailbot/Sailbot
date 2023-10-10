@@ -1,6 +1,9 @@
 name: update_docs
 on:
   push:
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
     branches:
       - main
 permissions:

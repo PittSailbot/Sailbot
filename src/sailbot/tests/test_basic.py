@@ -25,7 +25,7 @@ def test_main_init():
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_event_init():
-    boat = main.Boat(calibrateOdrive=False)
+    boat = main.Boat()
 
     _node = rclpy.Node()
     _node.create_publisher(String, "mode", 10)
