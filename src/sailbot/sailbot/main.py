@@ -65,7 +65,7 @@ class Boat(Node):
         The main control logic which runs each tick
         """
 
-        command = self.transceiver.read()
+        command = self.transceiver.readData()
         self.execute_command(command)
 
         if self.is_RC:
@@ -121,41 +121,41 @@ class Boat(Node):
         try:
             if args[0] == "rc":
                 if args[1] == "on":
-                    self.transceiver.send("Enabled RC")
+                    self.logging.info("Enabled RC")
                     self.is_RC = True
                 elif args[1] == "off":
-                    self.transceiver.send("Disabled RC")
+                    self.logging.info("Disabled RC")
                     self.is_RC = False
 
             elif args[0] == "sail" or args[0] == "s":
                 if self.is_RC:
-                    self.transceiver.send(f"Adjusting sail to {float(args[1])}")
+                    self.logging.info(f"Adjusting sail to {float(args[1])}")
                     self.sail.angle = float(args[1])
                 else:
-                    self.transceiver.send("Refuse to change sail, not in RC Mode")
+                    self.logging.info("Refuse to change sail, not in RC Mode")
 
             elif args[0] == "rudder" or args[0] == "r":
                 if self.is_RC:
-                    self.transceiver.send(f"Adjusting rudder to {float(args[1])}")
+                    self.logging.info(f"Adjusting rudder to {float(args[1])}")
                     self.rudder.angle = float(args[1])
                 else:
-                    self.transceiver.send("Refuse to change sail, not in RC Mode")
+                    self.logging.info("Refuse to change sail, not in RC Mode")
 
             elif args[0] == "sailoffset" or args[0] == "so":
                 dataStr = String()
                 dataStr.data = f"(driverOffset:sail:{float(args[1])})"
-                self.get_logger().info(dataStr.data)
+                self.logging.info(dataStr.data)
                 self.pub.publish(dataStr)
 
             elif args[0] == "rudderoffset" or args[0] == "ro":
                 dataStr = String()
                 dataStr.data = f"(driverOffset:rudder:{float(args[1])})"
-                self.get_logger().info(dataStr.data)
+                self.logging.info(dataStr.data)
                 self.pub.publish(dataStr)
 
             elif args[0] == "setevent":
                 if args[1] not in events:
-                    self.transceiver.send(f"Invalid event: {args[1]}")
+                    self.logging.info(f"Invalid event: {args[1]}")
                     return
 
                 self.event = init_event(args[1], args[2:])
@@ -164,16 +164,16 @@ class Boat(Node):
             elif args[0] == "goto":
                 if not self.is_RC:
                     target = Waypoint(float(args[1]), float(args[2]))
-                    self.transceiver.send(f"Going to: {target}")
+                    self.logging.info(f"Going to: {target}")
 
             else:
-                self.transceiver.send(f"Unknown command: {args[0]}")
+                self.logging.info(f"Unknown command: {args[0]}")
 
         except IndexError:
-            self.transceiver.send("Invalid length args for command")
+            self.logging.info("Invalid length args for command")
 
         except Exception as e:
-            self.transceiver.send(f"Error when parsing command: {e}")
+            self.logging.info(f"Error when parsing command: {e}")
 
 
 def init_event(name, event_data):
