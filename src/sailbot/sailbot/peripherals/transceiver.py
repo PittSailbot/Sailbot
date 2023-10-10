@@ -75,7 +75,7 @@ class Transceiver(Node):
 
     def read(self) -> str or None:
         """Reads incoming data from shore"""
-        message = str(self.ser1.readline().replace("\r\n'", "").replace("b'", "").replace("\\r\\n'", ""))
+        message = self.ser1.readline().decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
 
         if message is None or message == "'":
             return None
