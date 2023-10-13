@@ -28,9 +28,12 @@ class Compass(Node):
 
     def __init__(self):
         # Setup I2C connections
-        i2c = busio.I2C(board.SCL, board.SDA)
-        self.mag = adafruit_lsm303dlh_mag.LSM303DLH_Mag(i2c)
-        self.accel = adafruit_lsm303_accel.LSM303_Accel(i2c)
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA)
+            self.mag = adafruit_lsm303dlh_mag.LSM303DLH_Mag(i2c)
+            self.accel = adafruit_lsm303_accel.LSM303_Accel(i2c)
+        except ValueError as e:
+            raise ValueError(f"Failed to initialize compass! Is it plugged in?\n{e}")
         self.compassAngle = 0
         self.errcnt = 0
 

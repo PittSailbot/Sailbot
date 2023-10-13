@@ -9,6 +9,7 @@ import serial
 import smbus2 as smbus  # ,smbus2
 from rclpy.node import Node
 from std_msgs.msg import String
+from dataclasses import dataclass
 
 from sailbot import constants as c
 
@@ -18,12 +19,12 @@ I2C_SLAVE_ADDRESS = 0x10
 class Transceiver(Node):
     """Handles all communication between the boat and shore
     Functions:
-        send(): sends a string to the to shore
-        read(): checks for any commands received from shore
+        send(): sends a string to the to the transmitter
+        read(): reads the state of the RC controller
     """
 
     def __init__(self):
-        super().__init__("Transceiver")
+        super().__init__("transceiver")
         self.logging = self.get_logger()
 
         ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
@@ -31,7 +32,7 @@ class Transceiver(Node):
             try:
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency tho if not threaded and the transceiver arduino code isn't writing anything to serial
-                self.ser1 = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=10, exclusive=False)
+                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=10, exclusive=False)
 
                 self.readData()
 
@@ -48,36 +49,24 @@ class Transceiver(Node):
 
         self.I2Cbus = smbus.SMBus(1)
 
-        # TODO: subscribe to nodes
-        self.gps = None
-        self.rudder_angle = None
-        self.sail_angle = None
-        self.compass_angle = None
-        self.wind_speed = None
-        self.wind_direction = None
-        self.battery = None
+        self.sail_publisher = self.create_publisher(String, "transceiver", 10)
+        self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
+        self.create_timer(0.1, self.loop())
 
     def __del__(self):
-        self.ser1.close()
+        self.ser.close()
+
+    def loop(self):
+        self.readData()
 
     def send(self, data):
-        self.ser1.write(str(data).encode())
-
-    def send_heartbeat(self):
-        """Sends basic boat information in the format:
-        [latitude, longitude, rudder_angle, sail_angle, compass_angle, wind_speed, wind_direction, battery]
-        """
-        data_str = (
-            f"DATA: ({self.gps.latitude}, {self.gps.latitude}), {self.rudder_angle}, {self.sail_angle},"
-            f" {self.compass_angle}, {self.wind_speed}, {self.wind_direction}, {self.battery}"
-        )
-        self.send(data_str)
+        self.ser.write(str(data).encode())
 
     def read(self) -> str or None:
-        """Reads incoming data from shore"""
-        message = self.ser1.readline().decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
+        """Reads incoming data from the RC controller"""
+        message = self.ser.readline().decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
 
-        if message is None or message == "'":
+        if message is None or message == "'" or message == "":
             return None
 
         self.logging.debug(f"Received message {message}")
@@ -90,10 +79,10 @@ class Transceiver(Node):
 
         msg = self.read()
 
-        if msg is None or msg == "'":
+        if msg is None:
             time.sleep(5)
             msg = self.read()
-            if msg is None or msg == "'":
+            if msg is None:
                 raise RuntimeError("Failed to read from transceiver")
 
         splits = msg.split(" ")
@@ -151,10 +140,32 @@ def map(x, min1, max1, min2, max2):
     return min2 + (max2-min2)*((x-min1)/(max1-min1))
 
 
-if __name__ == "__main__":
+@dataclass
+class Controller:
+    """
+    Stores the current state of the RC controller as read from the transceiver
+        - Analog and potentiometers range from 0-100
+        - Switches can be 0 (down), 1 (center), or 2 (up)
+    """
+
+    left_analog_x: int
+    left_analog_y: int  # Sail
+    right_analog_x: int  # Rudder
+    right_analog_y: int
+    front_left_switch: int  # Offset mode (0 - Rudder, 2 - Sail)
+    left_potentiometer: int  # Offset
+    front_right_switch: int  # Autonomy (0 - Autonomous, 2 - RC)
+    top_left_switch: int
+    top_right_switch: int
+
+
+def main():
     rclpy.init()
 
     transceiver = Transceiver()
 
-    while True:
-        print(transceiver.readData())
+    rclpy.spin(transceiver)
+
+
+if __name__ == "__main__":
+    main()

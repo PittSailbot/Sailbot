@@ -1,17 +1,19 @@
 """
 Interface for reading wind angle
 """
-from threading import Lock
+from threading import Lock, Thread
 from time import sleep
 
 import board
 from adafruit_seesaw import digitalio, rotaryio, seesaw
 from RPi import GPIO
+from rclpy.node import Node
+from std_msgs.msg import String
 
 from sailbot import constants as c
 
 
-class WindVane:
+class WindVane(Node):
     """Measures the angle of the wind
 
     Attributes:

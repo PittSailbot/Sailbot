@@ -97,11 +97,11 @@ class Boat(Node):
                 self.is_RC = True
                 self.event = None
 
-    def execute_command(self, args):
-        """Executes commands given to the boat from the transceiver
+    def execute_command(self, cmds):
+        """Executes commands given to the boat from the RC controller
 
         Args:
-            - args (String): any of the following valid commands
+            - args (list): any of the following valid commands
 
         Valid Commands:
             - RC {on/off}: enable or disable RC
@@ -112,68 +112,74 @@ class Boat(Node):
             - setevent {str} {args}: set a new event with specified arguments (INCOMPLETE)
             - goto {lat} {lon}: autonomously move the boat to the determined waypoint
         """
-        if args is None:
+        if cmds is None or cmds == []:
             return
 
-        self.logging.debug(f"Received command: {args}")
-        args = args.lower().split()
+        # cmds formatted like ['R 43', 'S 0', 'sailOffset -0.3555555555555556']
+        # ['R 45', 'S 0', 'controlOff 0']
+        self.logging.debug(f"Received command: {cmds}")
 
-        try:
-            if args[0] == "rc":
-                if args[1] == "on":
-                    self.logging.info("Enabled RC")
-                    self.is_RC = True
-                elif args[1] == "off":
-                    self.logging.info("Disabled RC")
-                    self.is_RC = False
+        for cmd in cmds:
+            # Format "R 45" -> ['r', '45']
+            cmd = cmd.split()
+            cmd = [arg.lower() for arg in cmd]
 
-            elif args[0] == "sail" or args[0] == "s":
-                if self.is_RC:
-                    self.logging.info(f"Adjusting sail to {float(args[1])}")
-                    self.sail.angle = float(args[1])
+            try:
+                if cmd[0] == "rc" or cmd[0] == "sailoffset" or cmd[0] == "rudderoffset":
+                    if cmd[1] == "on":
+                        self.logging.info("Enabled RC")
+                        self.is_RC = True
+                    elif cmd[1] == "off" or cmd[0] == "controloff":
+                        self.logging.info("Disabled RC")
+                        self.is_RC = False
+
+                elif self.is_RC and cmd[0] == "s":
+                    if self.is_RC:
+                        self.logging.info(f"Adjusting sail to {float(cmd[1])}")
+                        self.sail.angle = float(cmd[1])
+                    else:
+                        self.logging.info("Refuse to change sail, not in RC Mode")
+
+                elif self.is_RC and cmd[0] == "r":
+                    if self.is_RC:
+                        self.logging.info(f"Adjusting rudder to {float(cmd[1])}")
+                        self.rudder.angle = float(cmd[1])
+                    else:
+                        self.logging.info("Refuse to change sail, not in RC Mode")
+
+                elif self.is_RC and cmd[0] == "sailoffset":
+                    dataStr = String()
+                    dataStr.data = f"(driverOffset:sail:{float(cmd[1])})"
+                    self.logging.info(dataStr.data)
+                    self.pub.publish(dataStr)
+
+                elif self.is_RC and cmd[0] == "rudderoffset":
+                    dataStr = String()
+                    dataStr.data = f"(driverOffset:rudder:{float(cmd[1])})"
+                    self.logging.info(dataStr.data)
+                    self.pub.publish(dataStr)
+
+                # elif cmd[0] == "setevent":
+                    # if cmd[1] not in events:
+                        # self.logging.info(f"Invalid event: {cmd[1]}")
+                        # return
+
+                    # self.event = init_event(cmds[1], cmds[2:])
+                    # self.is_RC = False
+
+                # elif cmd[0] == "goto":
+                    # if not self.is_RC:
+                        # target = Waypoint(float(cmd[1]), float(cmd[2]))
+                        # self.logging.info(f"Going to: {target}")
+
                 else:
-                    self.logging.info("Refuse to change sail, not in RC Mode")
+                    self.logging.info(f"Unknown command: {cmd}")
 
-            elif args[0] == "rudder" or args[0] == "r":
-                if self.is_RC:
-                    self.logging.info(f"Adjusting rudder to {float(args[1])}")
-                    self.rudder.angle = float(args[1])
-                else:
-                    self.logging.info("Refuse to change sail, not in RC Mode")
+            except IndexError as e:
+                self.logging.info(f"Invalid length args for command: {cmd}\n{e}")
 
-            elif args[0] == "sailoffset" or args[0] == "so":
-                dataStr = String()
-                dataStr.data = f"(driverOffset:sail:{float(args[1])})"
-                self.logging.info(dataStr.data)
-                self.pub.publish(dataStr)
-
-            elif args[0] == "rudderoffset" or args[0] == "ro":
-                dataStr = String()
-                dataStr.data = f"(driverOffset:rudder:{float(args[1])})"
-                self.logging.info(dataStr.data)
-                self.pub.publish(dataStr)
-
-            elif args[0] == "setevent":
-                if args[1] not in events:
-                    self.logging.info(f"Invalid event: {args[1]}")
-                    return
-
-                self.event = init_event(args[1], args[2:])
-                self.is_RC = False
-
-            elif args[0] == "goto":
-                if not self.is_RC:
-                    target = Waypoint(float(args[1]), float(args[2]))
-                    self.logging.info(f"Going to: {target}")
-
-            else:
-                self.logging.info(f"Unknown command: {args[0]}")
-
-        except IndexError:
-            self.logging.info("Invalid length args for command")
-
-        except Exception as e:
-            self.logging.info(f"Error when parsing command: {e}")
+            except Exception as e:
+                self.logging.info(f"Error when parsing command: {cmd}\n{e}")
 
 
 def init_event(name, event_data):
@@ -199,6 +205,7 @@ def main(args=None):
             boat.main_loop()
         except KeyboardInterrupt:
             print("Exiting gracefully.")
+            break
 
 
 if __name__ == "__main__":
