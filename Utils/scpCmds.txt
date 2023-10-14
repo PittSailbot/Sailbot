@@ -1,5 +1,0 @@
-copy to pi, run on local computer
-scp -r D:\Programming\sailbotPiClone\sailbot\sailbot\* pi@192.168.8.240:~/ros2_ws/src/sailbot/sailbot/
-
-copy to local computer, run on local computer
-scp -r pi@192.168.8.240:~/ros2_ws D:\Programming\sailbotPiClone

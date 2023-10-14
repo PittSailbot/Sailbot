@@ -3,6 +3,7 @@
 | ssh (ip)               | Used to remotely connect to a device with a known ip | ssh pi@192.168.1.1    |
 | cd (path)              | Changes the current directory                        | cd /home/pi/Downloads |
 | cd ../                 | Moves to the parent folder                           |                       |
+| cd -                   | Return to the last cd (helpful for switching between two paths) |            
 | ls                     | Lists all files in the current directory             |                       |
 | nano                   | Text editor for various files                        | nano main.py          |
 | clear                  | Clears all text from the shell                       |                       |
@@ -11,3 +12,10 @@
 | sudo -s                | Elevates the terminal with administrator privilege   |                       |
 | scp (file) (directory) | Copies files to another path or remote directory     |                       |
 |                        |                                                      |                       |
+
+| Shortcuts     | Description |
+|---------------| ----------- |
+| tab           | Autocompletes a path or filename |
+| Ctrl + C      | Interrupt a currently running program |
+| up/down arrow | Traverse through previously entered commands |
+

@@ -1,8 +1,12 @@
 name: update_docs
 on:
   push:
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/update_docs.yml'
     branches:
-      - main
+      - docs
 permissions:
   contents: write
 jobs:
