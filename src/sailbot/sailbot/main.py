@@ -125,13 +125,12 @@ class Boat(Node):
             cmd = [arg.lower() for arg in cmd]
 
             try:
-                if cmd[0] == "rc" or cmd[0] == "sailoffset" or cmd[0] == "rudderoffset":
-                    if cmd[1] == "on":
-                        self.logging.info("Enabled RC")
-                        self.is_RC = True
-                    elif cmd[1] == "off" or cmd[0] == "controloff":
-                        self.logging.info("Disabled RC")
-                        self.is_RC = False
+                if not self.is_RC and cmd[0] == "sailoffset" or cmd[0] == "rudderoffset":
+                    self.logging.info("Enabled RC")
+                    self.is_RC = True
+                elif self.is_RC and cmd[0] == "controloff":
+                    self.logging.info("Disabled RC")
+                    self.is_RC = False
 
                 elif self.is_RC and cmd[0] == "s":
                     if self.is_RC:
