@@ -231,16 +231,6 @@ def main(args=None):
     except Exception as e:
         logging.error(f"Exception raised in driver {e}")
 
-    rclpy.shutdown()
-
-
-if __name__ == "__main__":
-    # manually control motors with commands 'sail {value}' and 'rudder {value}'
-    sail = Sail()
-    rudder = Rudder()
-
-    main()
-
     while True:
         string = input("> Enter Input: ")
 
@@ -254,3 +244,12 @@ if __name__ == "__main__":
 
         elif arr[0] == "rudder" or arr[0] == "r":
             rudder.angle = int(arr[1])
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    # manually control motors with commands 'sail {value}' and 'rudder {value}'
+    main()
+
+
