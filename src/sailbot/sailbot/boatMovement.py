@@ -58,7 +58,8 @@ class Sail(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving sail to {angle} degrees")
-        rotations = self.odrive.rotations_per_degree * (angle - self.angle)
+        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
+        rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, 0, self.odrive.max_rotations)
         self.odrive.pos = rotations
         self._angle = angle
 
@@ -75,7 +76,7 @@ class Sail(Node):
     def set_home(self):
         # TODO: Offset odrive or set driver pos to 0?
         # self.odrive.offset = self.odrive.pos
-        self.angle = 0
+        self._angle = 0
 
 
 # TODO: Add ROS Callback
@@ -119,7 +120,8 @@ class Rudder(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving rudder to {angle} degrees")
-        rotations = self.odrive.rotations_per_degree * (angle - self.angle)
+        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
+        rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, -self.odrive.max_rotations / 2, self.odrive.max_rotations / 2)
         self.odrive.pos = rotations
         self._angle = angle
 
@@ -129,7 +131,7 @@ class Rudder(Node):
     def set_home(self):
         # TODO: Offset odrive or set driver pos to 0?
         # self.odrive.offset = self.odrive.pos
-        self.angle = 0
+        self._angle = 0
 
 
 class FailedTurn(RuntimeError):
@@ -208,6 +210,14 @@ def go_to_gps(waypoint, wait_until_finished=False):
     # TODO: create thread to wait until at point
 
 
+def map(x, min1, max1, min2, max2):
+    # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
+    # ex: map(0.3, 0, 1, 0, 100) returns 30
+    # ex: map(70, 0, 100, 0, 1) returns .7
+    x = min(max(x, min1), max1)
+    return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
+
+
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/drivers"
     rclpy.init(args=args)
@@ -232,7 +242,7 @@ if __name__ == "__main__":
     main()
 
     while True:
-        string = input("  > Enter Input:")
+        string = input("> Enter Input: ")
 
         if string == "quit":
             break
