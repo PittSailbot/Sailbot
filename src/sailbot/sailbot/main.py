@@ -125,38 +125,33 @@ class Boat(Node):
             cmd = [arg.lower() for arg in cmd]
 
             try:
-                if not self.is_RC and cmd[0] == "sailoffset" or cmd[0] == "rudderoffset":
+                if not self.is_RC and (cmd[0] == "sailoffset" or cmd[0] == "rudderoffset"):
                     self.logging.info("Enabled RC")
                     self.is_RC = True
+
                 elif self.is_RC and cmd[0] == "controloff":
                     self.logging.info("Disabled RC")
                     self.is_RC = False
 
                 elif self.is_RC and cmd[0] == "s":
-                    if self.is_RC:
-                        self.logging.info(f"Adjusting sail to {float(cmd[1])}")
-                        self.sail.angle = float(cmd[1])
-                    else:
-                        self.logging.info("Refuse to change sail, not in RC Mode")
+                    self.logging.info(f"Adjusting sail to {float(cmd[1])}")
+                    self.sail.angle = float(cmd[1])
 
                 elif self.is_RC and cmd[0] == "r":
-                    if self.is_RC:
-                        self.logging.info(f"Adjusting rudder to {float(cmd[1])}")
-                        self.rudder.angle = float(cmd[1])
-                    else:
-                        self.logging.info("Refuse to change sail, not in RC Mode")
+                    self.logging.info(f"Adjusting rudder to {float(cmd[1])}")
+                    self.rudder.angle = float(cmd[1])
 
                 elif self.is_RC and cmd[0] == "sailoffset":
                     dataStr = String()
                     dataStr.data = f"(driverOffset:sail:{float(cmd[1])})"
                     self.logging.info(dataStr.data)
-                    self.pub.publish(dataStr)
+                    # self.pub.publish(dataStr)
 
                 elif self.is_RC and cmd[0] == "rudderoffset":
                     dataStr = String()
                     dataStr.data = f"(driverOffset:rudder:{float(cmd[1])})"
                     self.logging.info(dataStr.data)
-                    self.pub.publish(dataStr)
+                    # self.pub.publish(dataStr)
 
                 # elif cmd[0] == "setevent":
                     # if cmd[1] not in events:
@@ -172,13 +167,14 @@ class Boat(Node):
                         # self.logging.info(f"Going to: {target}")
 
                 else:
-                    self.logging.info(f"Unknown command: {cmd}")
+                    pass
+                    # self.logging.info(f"Unknown command: {cmd}")
 
             except IndexError as e:
-                self.logging.info(f"Invalid length args for command: {cmd}\n{e}")
+                self.logging.warning(f"Invalid length args for command: {cmd}\n{e}")
 
             except Exception as e:
-                self.logging.info(f"Error when parsing command: {cmd}\n{e}")
+                self.logging.warning(f"Error when parsing command: {cmd}\n{e}")
 
 
 def init_event(name, event_data):
