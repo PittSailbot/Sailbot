@@ -145,6 +145,7 @@ def main():
     while True:
         sleep(0.1)
         print(f"Angle {wv.position}")
+        wv.update()
 
 
 if __name__ == "__main__":

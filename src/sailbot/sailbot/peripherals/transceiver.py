@@ -53,9 +53,6 @@ class Transceiver(Node):
         self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
         self.create_timer(0.1, self.loop())
 
-    def __del__(self):
-        self.ser.close()
-
     def loop(self):
         self.readData()
 
