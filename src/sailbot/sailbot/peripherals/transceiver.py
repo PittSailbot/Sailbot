@@ -32,7 +32,7 @@ class Transceiver(Node):
             try:
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency tho if not threaded and the transceiver arduino code isn't writing anything to serial
-                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=10, exclusive=False)
+                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
                 self.readData()
 
