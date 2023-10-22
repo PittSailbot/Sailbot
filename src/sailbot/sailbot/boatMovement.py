@@ -58,7 +58,6 @@ class Sail(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving sail to {angle} degrees")
-        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
         rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, 0, self.odrive.max_rotations)
         self.odrive.pos = rotations
         self._angle = angle
@@ -120,7 +119,6 @@ class Rudder(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving rudder to {angle} degrees")
-        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
         rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, -self.odrive.max_rotations / 2, self.odrive.max_rotations / 2)
         self.odrive.pos = rotations
         self._angle = angle
