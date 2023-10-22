@@ -9,6 +9,8 @@ import cv2
 import keyboard
 import numpy as np
 
+from sailbot.main import Boat
+from sailbot.boatMovement import turn_to_angle
 from sailbot.peripherals import camera
 from sailbot.utils.utils import Waypoint
 
@@ -88,8 +90,14 @@ def manual_test_cam_detect():
         cv2.waitKey(1)
 
 
+def manual_test_turn_to_angle():
+    angle = 300
+    print(f"pointing boat to {angle} degrees")
+    turn_to_angle(angle)
+
+
 def manual_test_go_to_gps():
-    boat = boatMain.boat()
+    boat = Boat()
 
     destination = Waypoint(boat.gps.latitude, boat.gps.longitude)
     destination.add_meters(10, 10)
@@ -98,10 +106,12 @@ def manual_test_go_to_gps():
 
 
 if __name__ == "__main__":
-    choice = int(input("1: camera 2: go to gps 3: cam detect"))
+    choice = int(input("1: camera 2: go to gps 3: cam detect 4: turn to angle"))
     if choice == 1:
         manual_test_camera()
     elif choice == 2:
         manual_test_go_to_gps()
     elif choice == 3:
         manual_test_cam_detect()
+    elif choice == 4:
+        manual_test_turn_to_angle()
