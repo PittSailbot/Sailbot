@@ -28,7 +28,7 @@ if not DOCKER:
 
 @pytest.mark.skipif(DOCKER, reason="only works on raspberry pi")
 def test_gps():
-    gps = GPS.gps()
+    gps = GPS.GPS()
 
     for i in range(0, 3):
         results = (gps.latitude, gps.longitude)

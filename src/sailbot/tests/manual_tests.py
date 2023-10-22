@@ -9,10 +9,11 @@ import cv2
 import keyboard
 import numpy as np
 
+import utils.utils
 from sailbot.main import Boat
-from sailbot.boatMovement import turn_to_angle
+from sailbot.boatMovement import turn_to_angle, go_to_gps
 from sailbot.peripherals import camera
-from sailbot.utils.utils import Waypoint
+from sailbot.utils.utils import Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -91,9 +92,12 @@ def manual_test_cam_detect():
 
 
 def manual_test_turn_to_angle():
-    angle = 300
-    print(f"pointing boat to {angle} degrees")
-    turn_to_angle(angle)
+    angle = 180
+    # TODO read compass angle, always true
+    while angle - 1 < angle < angle + 1:
+        print(f"pointing boat to {angle} degrees")
+        turn_to_angle(angle, wait_until_finished=True)
+    print(f"Reached {angle}")
 
 
 def manual_test_go_to_gps():
@@ -101,8 +105,10 @@ def manual_test_go_to_gps():
 
     destination = Waypoint(boat.gps.latitude, boat.gps.longitude)
     destination.add_meters(10, 10)
-    print(f"Going to {destination}")
-    boat.goToGPS(destination)
+    while not has_reached_waypoint(destination, distance=3):
+        print(f"Going to {destination}, at ({boat.gps.latitude}, {boat.gps.longitude})")
+        go_to_gps(destination)
+    print(f"Reached {destination}")
 
 
 if __name__ == "__main__":

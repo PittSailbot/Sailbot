@@ -160,8 +160,8 @@ def turn_to_angle(angle, wait_until_finished=False, allow_tacking=True):
     acceptable_error = float(c.config["RUDDER"]["acceptable_error"])
     smoothing_constant = float(c.config["RUDDER"]["smooth_const"])
 
-    logging.info(f"Turning boat from {compass.angle} degrees to {angle} degrees")
-
+    # logging.info(f"Turning boat from {compass.angle} degrees to {angle} degrees")
+    # TODO only works if wait_until_finished
     while abs(compass.angle - angle) > acceptable_error and wait_until_finished:
         if ((compass.angle - angle) % 360) < 180:
             # Turn right
@@ -185,10 +185,9 @@ def go_to_gps(waypoint, wait_until_finished=False):
 
     """
 
-    gps = GPS.GPS()
+    gps = GPS()
     compass = Compass()
     windvane = WindVane()
-    no_go_zone = NoGoZone()
     # rudder = Rudder()
 
     # acceptable_error = float(c.config['CONSTANTS']['reachedGPSThreshhold'])
@@ -198,10 +197,10 @@ def go_to_gps(waypoint, wait_until_finished=False):
     target_angle = (compass.angle + deltaAngle) % 360
     windAngle = windvane.angle
 
-    if (deltaAngle + windAngle) % 360 < no_go_zone.left_bound:
-        target_angle = no_go_zone.left_bound
-    elif (deltaAngle + windAngle) % 360 < no_go_zone.right_bound:
-        target_angle = no_go_zone.right_bound
+    if (deltaAngle + windAngle) % 360 < windvane.no_go_zone.left_bound:
+        target_angle = windvane.no_go_zone.left_bound
+    elif (deltaAngle + windAngle) % 360 < windvane.no_go_zone.right_bound:
+        target_angle = windvane.no_go_zone.right_bound
 
     turn_to_angle(target_angle)
 
