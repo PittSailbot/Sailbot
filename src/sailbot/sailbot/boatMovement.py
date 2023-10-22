@@ -223,25 +223,19 @@ def main(args=None):
     sail = Sail()
     rudder = Rudder()
 
-    try:
-        rclpy.spin(sail)
-        rclpy.spin(rudder)
-    except Exception as e:
-        logging.error(f"Exception raised in driver {e}")
-
     while True:
-        string = input("> Enter Input: ")
+        try:
+            string = input("> Enter Input: ")
 
-        if string == "quit":
+            arr = string.split(" ")
+
+            if arr[0] == "sail" or arr[0] == "s":
+                sail.angle = int(arr[1])
+
+            elif arr[0] == "rudder" or arr[0] == "r":
+                rudder.angle = int(arr[1])
+        except KeyboardInterrupt:
             break
-
-        arr = string.split(" ")
-
-        if arr[0] == "sail" or arr[0] == "s":
-            sail.angle = int(arr[1])
-
-        elif arr[0] == "rudder" or arr[0] == "r":
-            rudder.angle = int(arr[1])
 
     rclpy.shutdown()
 

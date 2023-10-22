@@ -69,9 +69,7 @@ class Boat(Node):
         self.execute_command(command)
 
         if self.is_RC:
-            # TODO: read from controller
-            self.sail.angle = 0
-            self.rudder.angle = 0
+            pass
 
         else:
             try:
@@ -118,6 +116,7 @@ class Boat(Node):
         # cmds formatted like ['R 43', 'S 0', 'sailOffset -0.3555555555555556']
         # ['R 45', 'S 0', 'controlOff 0']
         self.logging.debug(f"Received command: {cmds}")
+        logging_results = []
 
         for cmd in cmds:
             # Format "R 45" -> ['r', '45']
@@ -126,31 +125,27 @@ class Boat(Node):
 
             try:
                 if not self.is_RC and (cmd[0] == "sailoffset" or cmd[0] == "rudderoffset"):
-                    self.logging.info("Enabled RC")
+                    logging_results.append("Enabled RC")
                     self.is_RC = True
 
                 elif self.is_RC and cmd[0] == "controloff":
-                    self.logging.info("Disabled RC")
+                    logging_results.append("Disabled RC")
                     self.is_RC = False
 
                 elif self.is_RC and cmd[0] == "s":
-                    self.logging.info(f"Adjusting sail to {float(cmd[1])}")
-                    self.sail.angle = float(cmd[1])
+                    logging_results.append(f"S -> {int(cmd[1])}")
+                    self.sail.angle = int(cmd[1])
 
                 elif self.is_RC and cmd[0] == "r":
-                    self.logging.info(f"Adjusting rudder to {float(cmd[1])}")
-                    self.rudder.angle = float(cmd[1])
+                    logging_results.append(f"R -> {int(cmd[1]) - 45}")
+                    self.rudder.angle = int(cmd[1]) - 45
 
                 elif self.is_RC and cmd[0] == "sailoffset":
-                    dataStr = String()
-                    dataStr.data = f"(driverOffset:sail:{float(cmd[1])})"
-                    self.logging.info(dataStr.data)
+                    logging_results.append(f"(driverOffset:sail:{float(cmd[1])})")
                     # self.pub.publish(dataStr)
 
                 elif self.is_RC and cmd[0] == "rudderoffset":
-                    dataStr = String()
-                    dataStr.data = f"(driverOffset:rudder:{float(cmd[1])})"
-                    self.logging.info(dataStr.data)
+                    logging_results.append(f"(driverOffset:rudder:{float(cmd[1])})")
                     # self.pub.publish(dataStr)
 
                 # elif cmd[0] == "setevent":
@@ -175,6 +170,8 @@ class Boat(Node):
 
             except Exception as e:
                 self.logging.warning(f"Error when parsing command: {cmd}\n{e}")
+
+        self.logging.info(str(logging_results))
 
 
 def init_event(name, event_data):
