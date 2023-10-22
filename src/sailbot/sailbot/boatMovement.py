@@ -58,7 +58,6 @@ class Sail(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving sail to {angle} degrees")
-        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
         rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, 0, self.odrive.max_rotations)
         self.odrive.pos = rotations
         self._angle = angle
@@ -120,7 +119,6 @@ class Rudder(Node):
             angle = self.MAX_ANGLE
 
         self.logging.debug(f"Moving rudder to {angle} degrees")
-        # rotations = self.odrive.rotations_per_degree * (angle - self.angle)
         rotations = map(angle, self.MIN_ANGLE, self.MAX_ANGLE, -self.odrive.max_rotations / 2, self.odrive.max_rotations / 2)
         self.odrive.pos = rotations
         self._angle = angle
@@ -225,25 +223,19 @@ def main(args=None):
     sail = Sail()
     rudder = Rudder()
 
-    try:
-        rclpy.spin(sail)
-        rclpy.spin(rudder)
-    except Exception as e:
-        logging.error(f"Exception raised in driver {e}")
-
     while True:
-        string = input("> Enter Input: ")
+        try:
+            string = input("> Enter Input: ")
 
-        if string == "quit":
+            arr = string.split(" ")
+
+            if arr[0] == "sail" or arr[0] == "s":
+                sail.angle = int(arr[1])
+
+            elif arr[0] == "rudder" or arr[0] == "r":
+                rudder.angle = int(arr[1])
+        except KeyboardInterrupt:
             break
-
-        arr = string.split(" ")
-
-        if arr[0] == "sail" or arr[0] == "s":
-            sail.angle = int(arr[1])
-
-        elif arr[0] == "rudder" or arr[0] == "r":
-            rudder.angle = int(arr[1])
 
     rclpy.shutdown()
 

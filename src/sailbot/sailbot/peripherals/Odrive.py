@@ -1,5 +1,8 @@
 """
-calibrates and default values for Odrive and handles interfacing between Odrive and python code
+Interface for the rudder and sail ODrive motors.
+Run as a script to calibrate the presets. Running 'odrivetool' in cmd is also helpful for debugging.
+
+Documentation: https://docs.odriverobotics.com/v/latest/index.html
 """
 import sys
 import traceback
@@ -8,6 +11,7 @@ from time import sleep
 import odrive
 import odrive.utils as ut
 from rclpy.node import Node
+import rclpy
 from std_msgs.msg import String
 import threading
 
@@ -18,7 +22,7 @@ class Odrive:
     """
     Controls the Odrive motors which move the sails and rudder
     Attributes:
-        - pos (float?): the position of the motor shaft
+        - pos (float): the position of the motor shaft (in rotations: 1 = 360 deg)
         - vel (float?): the speed at which the motor shaft rotates
         - torque (float?): The force applied to the motor shaft
     Functions:
@@ -26,32 +30,24 @@ class Odrive:
         - calibrate(): used to tune the odrive's settings
     """
 
-    def __init__(self, preset=None, calibrate=False):
+    def __init__(self, preset, calibrate=False):
         """
         Args:
             preset (str): pre-defined odrive configurations
                 - Supports either 'sail' or 'rudder'
             calibrate (bool): whether to start the odrive in calibration mode
         """
-        self._node = Node("odrive")
+        self._node = Node(f"odrive_{preset}")
         self.logging = self._node.get_logger()
         self.logging.debug(f"Initializing ODrive with preset: {preset}")
-
-        self.od = odrive.find_any()
         self.preset = preset
 
-        # Switch if sail and rudder are reversed
-        if self.preset == "sail":
-            self.axis = self.od.axis0
-        elif self.preset == "rudder":
-            self.axis = self.od.axis1
-
-        self.mo = self.axis.motor
-        self.enc = self.axis.encoder
+        self.od = odrive.find_any()
+        self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
 
         self.offset = 0
 
-        self.enc.config.cpr = c.config["ODRIVE"]["odriveEncoderCPR"]
+        self.axis.encoder.config.cpr = c.config["ODRIVE"]["odriveEncoderCPR"]
         self.axis.motor.config.pole_pairs = c.config["ODRIVE"]["odrivepolepairs"]
 
         self.axis.motor.config.torque_constant = 1  # read the getting started guide on this, to be changed later
@@ -59,6 +55,7 @@ class Odrive:
 
         self.KVRating = int(c.config["ODRIVE"]["motorKV"])
         self.current_limit = int(c.config["ODRIVE"]["currentLimit"])
+        # self.axis.motor.config.current_lim = 10  # [A] current lim not being set to motor?
 
         self.axis.controller.config.enable_overspeed_error = False
         self.od.config.brake_resistance = float(c.config["ODRIVE"]["odrivebreakresistor"])
@@ -81,12 +78,8 @@ class Odrive:
 
             self.max_rotations = float(c.config["ODRIVE_RUDDER"]["max_rotations"])
 
-        elif preset is not None:
-            raise ValueError("Trying to load an undefined preset!")
-
         else:
-            # Default fallback values when no preset is defined
-            raise NotImplementedError("Non-preset fallback values haven't been coded yet")
+            raise ValueError(f"Trying to load an undefined preset: {preset}")
 
         if calibrate:
             self.calibrate()
@@ -96,6 +89,7 @@ class Odrive:
         sleep(0.1)
 
     def reboot(self):
+        """Reboots both sail and rudder"""
         try:
             self.od.reboot()
         except Exception:
@@ -119,6 +113,7 @@ class Odrive:
     def pos(self, value):
         if value < -self.max_rotations or value > self.max_rotations:
             raise ValueError(f"Tried setting odrive position above max limit {value}")
+        # self.axis.controller.input_pos = value
         self.axis.controller.input_pos = value
 
     @property
@@ -144,7 +139,7 @@ class Odrive:
 
     @property
     def current_limit(self):
-        return self.mo.config.current_lim
+        return self.axis.motor.config.current_lim
 
     @current_limit.setter
     def current_limit(self, value):
@@ -153,7 +148,7 @@ class Odrive:
         if value > 65:
             raise ValueError("Motor current limit should not be raised this high without verifying the motor can handle it")
         else:
-            self.mo.config.current_lim = value
+            self.axis.motor.config.current_lim = value
 
     def getDemandedCurrent(self):
         return self.axis.motor.current_control.Iq_setpoint
@@ -161,25 +156,26 @@ class Odrive:
 
 if __name__ == "__main__":
     print("Run as sudo if on rasp pi, will otherwise not work")
-    if len(sys.argv) < 2 or sys.argv[1] != "0":
-        rudder = Odrive(preset="rudder", calibrate=True)
-        sail = Odrive(preset="sail", calibrate=True)
-    else:
-        rudder = Odrive(preset="rudder", calibrate=False)
-        sail = Odrive(preset="sail", calibrate=False)
+    rclpy.init()
+
+    rudder = Odrive(preset="rudder", calibrate=False)
+    sail = Odrive(preset="sail", calibrate=False)
 
     last_rudder_move_val = 0
     motor = None
 
     while True:
         try:
-            string = input("  > Enter Input:").lower()
+            string = input("  > Enter Input: ").lower()
             args = string.split(" ")
 
             if args[0] == "r" or args[0] == "rudder":
                 motor = rudder
             elif args[0] == "s" or args[0] == "sail":
                 motor = sail
+            elif args[0] == "calibrate":
+                rudder.calibrate()
+                sail.calibrate()
             else:
                 raise ValueError(f"Invalid argument for motor, expected rudder or sail, got {args[0]}")
 
@@ -206,14 +202,14 @@ if __name__ == "__main__":
                 if len(args) == 2:
                     print(motor.pos + motor.offset)
                 else:
-                    val = float(string.split(" ")[1])
+                    val = float(args[2])
                     print(motor.pos + motor.offset, "->", val, "(resetting to 0 in 1 sec)")
                     motor.pos = val + motor.offset
                     last_rudder_move_val = val
 
                     def rudderReset(*args):
                         sleep(1)
-                        motor.pos0 = motor.offset
+                        motor.pos = motor.offset
 
                     threading.Thread(target=rudderReset).start()
 
@@ -281,9 +277,8 @@ if __name__ == "__main__":
                 ut.dump_errors(motor.od)
 
             else:
-                val = float(string)
+                val = float(args[1])
                 motor.pos = val
-                motor.pos1 = val
         except KeyboardInterrupt as e:
             ut.dump_errors(motor.od)
             break
