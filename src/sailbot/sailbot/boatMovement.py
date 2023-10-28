@@ -138,39 +138,49 @@ class FailedTurn(RuntimeError):
 
 
 # TODO: Update logic
-def turn_to_angle(angle, wait_until_finished=False, allow_tacking=True):
+def turn_to_angle(target_angle, allow_tacking=True, wait_until_finished=False):
     # TODO: ROS Integration
     """
     Turns the boat using the rudder until it is facing the specified compass angle
 
     Args:
-        angle (float): the angle to turn to
+        target_angle (float): the angle to turn to
+        allow_tacking (bool): whether the boat is allowed to turn through the 'no go zone'
         wait_until_finished (bool): whether to wait until the boat has reached the angle
             # TODO: when false, the rudder won't be reset after the angle is reached, NEEDS TO SPAWN A THREAD
                 that thread must also be deleted if another turn_to_angle is called before angle is reached
-        allow_tacking (bool): whether the boat is allowed to turn through the 'no go zone'
 
     Raises:
         - FailedTurn (Exception): the boat failed to turn to the specified angle for whatever reason
     """
     rudder = Rudder()
     compass = Compass()
-    windvane = WindVane()
 
     acceptable_error = float(c.config["RUDDER"]["acceptable_error"])
     smoothing_constant = float(c.config["RUDDER"]["smooth_const"])
 
     # logging.info(f"Turning boat from {compass.angle} degrees to {angle} degrees")
-    # TODO only works if wait_until_finished
-    while abs(compass.angle - angle) > acceptable_error and wait_until_finished:
-        if ((compass.angle - angle) % 360) < 180:
-            # Turn right
-            rudder.angle = smoothing_constant * abs(compass.angle - angle)
-        else:
-            # Turn left
-            rudder.angle = -smoothing_constant * abs(compass.angle - angle)
+    while True:
+        boat_angle = compass.angle
 
-    logging.info(f"Finished turning boat to {angle} degrees")
+        if abs(boat_angle - target_angle) > acceptable_error:
+            logging.info(f"Finished turning boat to {target_angle} degrees")
+            break
+
+        if allow_tacking:
+            if (boat_angle - target_angle) % 360 < 180:
+                rudder.angle = smoothing_constant * abs(boat_angle - target_angle)  # Turn right
+            else:
+                rudder.angle = -smoothing_constant * abs(boat_angle - target_angle)  # Turn left
+        else:
+            wind_angle = WindVane().angle
+            if ((boat_angle < target_angle) and boat_angle <= wind_angle <= target_angle) or (target_angle < boat_angle and (target_angle >= wind_angle and wind_angle <= boat_angle)):
+                rudder.angle = -smoothing_constant * abs(boat_angle - target_angle)  # Turn left
+            else:
+                rudder.angle = smoothing_constant * abs(boat_angle - target_angle)  # Turn right
+
+        if not wait_until_finished:
+            break
 
 
 # TODO: Update logic
