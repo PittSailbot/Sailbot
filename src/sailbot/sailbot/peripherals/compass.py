@@ -3,6 +3,7 @@ Handles interfacing with the I2C compass and accelerometer sensor
 """
 import math
 from time import sleep
+import os
 
 import adafruit_lis2mdl
 import adafruit_lsm303_accel
@@ -27,6 +28,12 @@ class Compass(Node):
     """
 
     def __init__(self):
+        super().__init__("Compass")
+        self.logging = self.get_logger()
+
+        self.pub = self.create_publisher(String, "compass", 10)
+        self.timer = self.create_timer(0.5, self.timer_callback)
+
         # Setup I2C connections
         try:
             i2c = busio.I2C(board.SCL, board.SDA)
@@ -34,16 +41,10 @@ class Compass(Node):
             self.accel = adafruit_lsm303_accel.LSM303_Accel(i2c)
         except ValueError as e:
             raise ValueError(f"Failed to initialize compass! Is it plugged in?\n{e}")
+
         self.compassAngle = 0
         self.errcnt = 0
-
         self.averagedAngle = 0
-
-        super().__init__("Compass")
-        self.logging = self.get_logger()
-        self.pub = self.create_publisher(String, "compass", 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         msg = String()
@@ -117,14 +118,10 @@ class Compass(Node):
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"
     rclpy.init(args=args)
-    comp = Compass()
-    rclpy.spin(comp)
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    comp.destroy_node()
-    rclpy.shutdown()
+    comp = Compass()
+
+    rclpy.spin(comp)
 
 
 if __name__ == "__main__":
