@@ -48,10 +48,9 @@ class Boat(Node):
         self.next_gps = None
 
         # SENSORS
-        self.transceiver = transceiver.Transceiver()
+        self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
         self.gps = GPS.GPS()
         self.compass = compass.Compass()
-        self.windvane = windvane.WindVane()
 
         # Controls
         self.sail = boatMovement.Sail()
@@ -65,8 +64,8 @@ class Boat(Node):
         The main control logic which runs each tick
         """
 
-        command = self.transceiver.readData()
-        self.execute_command(command)
+        # command = self.transceiver.readData()
+        # self.execute_command(command)
 
         if self.is_RC:
             pass
@@ -172,6 +171,9 @@ class Boat(Node):
                 self.logging.warning(f"Error when parsing command: {cmd}\n{e}")
 
         self.logging.info(str(logging_results))
+
+    def transceiver_callback(self, msg: String):
+        self.execute_command(msg.data)
 
 
 def init_event(name, event_data):

@@ -2,6 +2,7 @@
 Reads and sends data from the connected USB transceiver
 """
 import time
+import os
 
 # from messages_pb2 import *
 import rclpy
@@ -27,6 +28,9 @@ class Transceiver(Node):
         super().__init__("transceiver")
         self.logging = self.get_logger()
 
+        self.pub = self.create_publisher(String, "transceiver", 10)
+        self.timer = self.create_timer(0.1, self.timer_callback)
+
         ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
         for i, port in enumerate(ports):
             try:
@@ -49,12 +53,14 @@ class Transceiver(Node):
 
         self.I2Cbus = smbus.SMBus(1)
 
-        self.sail_publisher = self.create_publisher(String, "transceiver", 10)
-        self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
-        self.create_timer(0.1, self.loop())
+        # self.sail_publisher = self.create_publisher(String, "transceiver", 10)
+        # self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
 
-    def loop(self):
-        self.readData()
+    def timer_callback(self):
+        msg = String()
+        msg.data = self.readData()
+        self.logging.info('Publishing: "%s"' % msg.data)
+        self.pub.publish(msg)
 
     def send(self, data):
         self.ser.write(str(data).encode())
@@ -91,7 +97,7 @@ class Transceiver(Node):
 
             returnList.append(F"{mode} {offset}")
 
-            return returnList
+            return str(returnList)
         else:
             return msg
 
@@ -156,8 +162,9 @@ class Controller:
     top_right_switch: int
 
 
-def main():
-    rclpy.init()
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/transceiver"
+    rclpy.init(args=args)
 
     transceiver = Transceiver()
 
