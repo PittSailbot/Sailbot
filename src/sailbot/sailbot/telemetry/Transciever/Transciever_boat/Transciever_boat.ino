@@ -8,6 +8,10 @@
  
 #include <SPI.h>
 #include <RH_RF95.h>
+#include "pb.h"
+#include "pb_encode.h"
+#include "pb_decode.h"
+#include "controlsData.pb.h"
  
 // for feather32u4 
 #define RFM95_CS 8
@@ -214,18 +218,34 @@ int map(int x, int min1, int max1, int min2, int max2){
 }
 
 void returnData(){
-  int readRudderVal = map(pulseIn(PWM_PIN_1, HIGH), 990, 1965, 0, 90);
-  int readSailVal = map(pulseIn(PWM_PIN_2, HIGH), 980, 1910, 0, 90); 
-  int readOffsetVal = map(pulseIn(PWM_PIN_3, HIGH), 970, 1960, 0, 90);
-  int readControlSwitchVal = map(pulseIn(PWM_PIN_4, HIGH), 970, 1960, 0, 90); 
-  Serial.print("R "); Serial.print(readRudderVal);
-  Serial.print(" S "); Serial.print(readSailVal);
-  Serial.print(" C "); Serial.print(readControlSwitchVal);
-  Serial.print(" O "); Serial.println(readOffsetVal);
+  // int readRudderVal = map(pulseIn(PWM_PIN_1, HIGH), 990, 1965, 0, 90);
+  // int readSailVal = map(pulseIn(PWM_PIN_2, HIGH), 980, 1910, 0, 90); 
+  // int readOffsetVal = map(pulseIn(PWM_PIN_3, HIGH), 970, 1960, 0, 90);
+  // int readControlSwitchVal = map(pulseIn(PWM_PIN_4, HIGH), 970, 1960, 0, 90); 
+  // Serial.print("R "); Serial.print(readRudderVal);
+  // Serial.print(" S "); Serial.print(readSailVal);
+  // Serial.print(" C "); Serial.print(readControlSwitchVal);
+  // Serial.print(" O "); Serial.println(readOffsetVal);
 
 
-  // Serial.print("R "); Serial.print(rudderVal);
-  // Serial.print(" S "); Serial.println(sailVal);
-  Serial.flush();
+  // // Serial.print("R "); Serial.print(rudderVal);
+  // // Serial.print(" S "); Serial.println(sailVal);
+  // Serial.flush();
+
+  ControlData myData;
+  myData.right_analog_x = pulseIn(PWM_PIN_1, HIGH);
+  myData.left_analog_y = pulseIn(PWM_PIN_2, HIGH);
+  myData.left_potentiometer = pulseIn(PWM_PIN_3, HIGH);
+  myData.front_right_switch = pulseIn(PWM_PIN_4, HIGH);
+
+  uint8_t buffer[ControlData_size];
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  bool status = pb_encode(&stream, ControlData_fields, &myData);
+
+  if (status) {
+    Serial.write(buffer, stream.bytes_written);
+  } else {
+    Serial.println("Encoding failed!");
+  }
   
 }

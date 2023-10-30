@@ -3,7 +3,7 @@ Reads and sends data from the connected USB transceiver
 """
 import time
 
-# from messages_pb2 import *
+import sailbot.telemetry.protobuf.controlsData_pb2  as controlsData_pb2
 import rclpy
 import serial
 import smbus2 as smbus  # ,smbus2
@@ -77,13 +77,19 @@ class Transceiver(Node):
         """Reads rudder/sail position"""
         self.send("?")  # transceiver is programmed to respond to '?' with its data
 
-        msg = self.read()
+        msg = self.ser.read(128)
 
         if msg is None:
-            time.sleep(5)
-            msg = self.read()
+            time.sleep(1)
+            msg = self.ser.read(128)
             if msg is None:
                 raise RuntimeError("Failed to read from transceiver")
+            
+        controlData = controlsData_pb2.ControlData()
+        controlData.ParseFromString(msg)
+
+        print("Left Analog X:", controlData.left_analog_y)
+        return
 
         splits = msg.split(" ")
         if len(splits) >= 7:
