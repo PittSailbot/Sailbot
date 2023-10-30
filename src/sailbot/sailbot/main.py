@@ -50,7 +50,10 @@ class Boat(Node):
         # SENSORS
         self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
         self.gps = GPS.GPS()
-        self.compass = compass.Compass()
+        try:
+            self.compass = compass.Compass()
+        except ValueError as e:
+            self.logging.error(f"Failed to initialize compass\n{e}")
 
         # Controls
         self.sail = boatMovement.Sail()
@@ -88,7 +91,7 @@ class Boat(Node):
                 self.event = None
 
             except Exception as e:
-                self.logging.critical(f"""Unhandled exception occured: {e}
+                self.logging.error(f"""Unhandled exception occured: {e}
                         Returning to RC!""")
 
                 self.is_RC = True
