@@ -46,6 +46,7 @@ setup(
             "compass = sailbot.peripherals.compass:main",
             "gps = sailbot.peripherals.GPS:main",
             "windvane = sailbot.peripherals.windvane:main",
+            "transceiver = sailbot.peripherals.transceiver:main",
             "main = sailbot.main:main",
             "drivers = sailbot.boatMovement:main",
             "offset = sailbot.deprecated.motorOffset:main",
