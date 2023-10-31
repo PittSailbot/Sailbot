@@ -1,5 +1,6 @@
 import importlib
 import os
+import threading
 
 import rclpy
 from rclpy.node import Node
@@ -197,12 +198,14 @@ def main(args=None):
 
     boat = Boat()
 
-    while True:
-        try:
-            boat.main_loop()
-        except KeyboardInterrupt:
-            print("Exiting gracefully.")
-            break
+    try:
+        threading.Thread(target=boat.main_loop).start()
+        rclpy.spin(boat)
+
+    except KeyboardInterrupt:
+        print("Exiting gracefully.")
+
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
