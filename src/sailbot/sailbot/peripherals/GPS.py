@@ -31,27 +31,26 @@ class GPS(Node):
         # Prev GPS version w/ adafruit: https://github.com/SailBotPitt/SailBot/blob/a56a18b06cbca78aace1990a4a3ce4dfd8c7a847/GPS.py
         # GPSD doesn't have gps track angle degree
         gpsd.connect()
-        packet = gpsd.get_current()
-        if packet.mode >= 2:
-            self.latitude = packet.position()[0]
-            self.longitude = packet.position()[1]
-            self.logging.debug(f"GPS: {self.latitude} {self.longitude}")
-        else:
+        if gpsd.get_current().mode < 2:
             self.logging.warning(f"No GPS fix")
 
         super().__init__("GPS")
         self.pub = self.create_publisher(String, "GPS", 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.timer = self.create_timer(0.5, self.timer_callback)
 
     def timer_callback(self):
         msg = String()
-        packet = gpsd.get_current().position()
-        self.latitude = packet[0]
-        self.longitude = packet[1]
-        msg.data = f"{self.latitude},{self.longitude}"
-        self.pub.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        packet = gpsd.get_current()
+
+        if packet.mode >= 2:
+            self.latitude = packet.position()[0]
+            self.longitude = packet.position()[1]
+
+            msg.data = f"{self.latitude},{self.longitude}"
+            self.pub.publish(msg)
+            self.logging.info('Publishing: "%s"' % msg.data)
+        else:
+            self.logging.warning(f"No GPS fix")
 
     def __getattribute__(self, name):
         """
@@ -67,20 +66,9 @@ class GPS(Node):
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
     rclpy.init(args=args)
-    gps = gps()
+    gps = GPS()
     rclpy.spin(gps)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    gps.destroy_node()
-    rclpy.shutdown()
 
 
 if __name__ == "__main__":
-    rclpy.init()
-    gps = GPS()
-    rclpy.spin(gps)
-    while True:
-        # GPS.updategps() Deprecated function
-        sleep(1)
+    main()

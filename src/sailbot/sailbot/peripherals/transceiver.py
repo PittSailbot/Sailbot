@@ -165,9 +165,7 @@ class Controller:
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/transceiver"
     rclpy.init(args=args)
-
     transceiver = Transceiver()
-
     rclpy.spin(transceiver)
 
 
