@@ -118,14 +118,9 @@ class Compass(Node):
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"
     rclpy.init(args=args)
-
     comp = Compass()
-
     rclpy.spin(comp)
 
 
 if __name__ == "__main__":
-    comp = Compass()
-    while True:
-        comp.printMag()
-        sleep(0.2)
+    main()
