@@ -10,7 +10,8 @@ repo_name: Pitt Sailbot
 nav:
   - Home: "index.md"
   - Getting Started: "Getting Started.md"
-  - Tips:
+  - Resources:
+    - ROS2: "ROS2.md"
     - Pi Cheat Sheet: "Pi Cheat Sheet.md"
     - Shell Commands: "Shell Commands.md"
   - Starting the Boat: "Starting the Boat.md"
