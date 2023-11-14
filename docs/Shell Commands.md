@@ -11,11 +11,12 @@
 | rm -r                  | Removes a folder with everything inside of it        | rm home/pi/delete_me  |
 | sudo -s                | Elevates the terminal with administrator privilege   |                       |
 | scp (file) (directory) | Copies files to another path or remote directory     |                       |
-|                        |                                                      |                       |
+| nohup (command) (args) | Continues the command/executable even if ssh connection is lost|              |
 
 | Shortcuts     | Description |
 |---------------| ----------- |
 | tab           | Autocompletes a path or filename |
+| tab (x2)      | Shows all available autocompletions for a command |
 | Ctrl + C      | Interrupt a currently running program |
 | up/down arrow | Traverse through previously entered commands |
 
