@@ -26,6 +26,7 @@ data_files.append(('lib//python3.10/site-packages/sailbot/website/static/js/', g
 data_files.append(('lib//python3.10/site-packages/sailbot/website/static/images/', glob(package_name + '/website/static/images/*')))
 data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet/images/', glob(package_name + '/website/static/leaflet/images/*')))
 data_files.append(('lib//python3.10/site-packages/sailbot/website/static/leaflet/', glob(package_name + '/website/static/leaflet/*.*')))
+data_files.append(('lib//python3.10/site-packages/sailbot/telemetry/protobuf/', glob(package_name + '/telemetry/protobuf/*.py')))
 
 setup(
     name=package_name,
