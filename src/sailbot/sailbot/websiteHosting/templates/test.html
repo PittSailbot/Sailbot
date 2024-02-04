@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html style="height:100%;margin:0;padding:0;">
     <title>Sailbot Map</title>
@@ -10,10 +9,63 @@
     
     <style type="text/css">
     .leaflet-tile-container { pointer-events: auto; }
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        #map-container {
+            flex: 1;
+            height: 95%;
+        }
+
+        #sidebar {
+            width: 0;
+            height: 100%;
+            background-color: #f1f1f1;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 20px;
+        }
+
+        #sidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        #sidebar a:hover {
+            color: #f1f1f1;
+        }
+
+        #sidebar .close-btn {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            font-size: 30px;
+            margin-left: 50px;
+        }
+
     </style>
 
     <body style="height:100%;margin:0;padding:0;">
-        <div id="map" style="height:95%"></div>
+        
+        <div id="sidebar">
+            <p>This is some text in the sidebar.</p>
+            <button onclick="fetchAndAddWaypoints()">Update Waypoints</button>
+            <button onclick="fetchAndAddCircles()">Update Circles</button>
+            <button onclick="window.location='/';">Home Screen</button>
+        </div>
+
+        <div id="map-container">
+            <div id="map" style="height: 100%"></div>
+        </div>
+        
         <script>
             var map = L.map('map',{
                 preferCanvas : true
@@ -42,19 +94,19 @@
             });
 
             // set tile server
-            var testURL = 'http://localhost/tile/0/0/0.png'
-            var tileSource = 'http://localhost/tile/{z}/{x}/{y}.png'
+            var testURL = 'http://localhost:8080/tile/0/0/0.png'
+            var tileSource = '{{ tileServer }}'
             var tileSourceAlt = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
             const setTileSource = async() => {
                 validSource = tileSource
-                try{
-                    const response = await fetch(testURL);
-                    if (!response.ok) {validSource = tileSourceAlt}
-                }
-                catch (error){
-                    validSource = tileSourceAlt
-                }
+                // try{
+                //     const response = await fetch(testURL);
+                //     if (!response.ok) {validSource = tileSourceAlt}
+                // }
+                // catch (error){
+                //     validSource = tileSourceAlt
+                // }
                 
 
                 L.tileLayer(validSource, {
@@ -74,11 +126,26 @@
                 for (index in json.waypoints){
                     waypoint = json.waypoints[index]
                     var marker = L.marker([waypoint.lat, waypoint.lon]).addTo(map);
-                    marker.bindPopup(marker.name);
+                    marker.bindPopup(waypoint.name);
+                }
+            }
+
+            fetchAndAddWaypoints()
+
+            const fetchAndAddBreadcrumbs = async() => {
+                const response = await  fetch('/breadcrumbs');
+                if (!response.ok) {throw Error(response.statusText);}
+                var json = await response.json();
+                for (index in json.breadcrumbs){
+                    breadcrumb = json.breadcrumbs[index]
+                    console.log(json)
+                    var circleMarker = L.circleMarker([breadcrumb.lat, breadcrumb.lon], {
+                                color: '#00F',
+                                radius: 0.5
+                            }).addTo(map);
                 }
             }
             
-            fetchAndAddWaypoints()
 
             const fetchAndAddCircles = async() => {
                 const response = await  fetch('/circles');
@@ -97,6 +164,8 @@
             
             fetchAndAddCircles()
 
+            
+
             // update boat location in loop
             var showBreadcrumbs = true
             var breadcrumbs = []
@@ -107,10 +176,7 @@
                         found = true
                         oldLayer = marker
                         if (showBreadcrumbs){
-                            var circleMarker = L.circleMarker([lat, lon], {
-                                color: '#f03',
-                                radius: 0.5
-                            }).addTo(map);
+                            fetchAndAddBreadcrumbs()
                         }
                     }
                     const response = await  fetch('/gpsJSON');
@@ -143,9 +209,22 @@
             var hash = L.hash(map)
         </script>
 
+        <script>
+            function toggleNav() {
+                var sidebar = document.getElementById("sidebar");
+                if (sidebar.style.width === "250px") {
+                    sidebar.style.width = "0";
+                } else {
+                    sidebar.style.width = "250px";
+                }
+            }
+        </script>
+<!-- 
         <button onclick="fetchAndAddWaypoints()">Update Waypoints</button>
         <button onclick="fetchAndAddCircles()">Update Circles</button>
-        <button onclick="window.location='/'";>Home Screen</button>
+        <button onclick="window.location='/'";>Home Screen</button> -->
+        <button onclick="toggleNav()">Toggle Sidebar</button>
+        
 
     </body>
 </html>

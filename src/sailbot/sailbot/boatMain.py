@@ -12,7 +12,7 @@ from std_msgs.msg import String
 
 import sailbot.utils.boatMath as boatMath
 import sailbot.constants as c
-import sailbot.utils as utils
+import sailbot.utils.utils as utils
 from sailbot.utils.eventUtils import EventFinished, Waypoint, getDefaultEventParams, getEventDict
 
 DOCKER = os.environ.get("IS_DOCKER", False)
@@ -25,7 +25,6 @@ gps = importlib.import_module(folder + "GPS").GPS
 compass = importlib.import_module(folder + "compass").Compass
 drivers = importlib.import_module(folder + "drivers").driver
 arduino = importlib.import_module(folder + "transceiver").Transceiver
-
 
 class boat(Node):
 
@@ -156,13 +155,13 @@ class boat(Node):
             self.logging.warning(f"Unknown command in ROS_modeCallback: {string}")
 
     def createSensorWrappers(self):
-        self.gps = utils.dummyObject()
+        self.gps = utils.DummyObject()
         self.gps.latitude = 0.0
         self.gps.longitude = 0.0
         self.gps.track_angle_deg = 0.0
         self.gps.waypoint = Waypoint(0.0, 0.0)
 
-        self.compass = utils.dummyObject()  # compass()
+        self.compass = utils.DummyObject()  # compass()
         self.compass.angle = 0.0
 
     def adjustSail(self, angle=None):

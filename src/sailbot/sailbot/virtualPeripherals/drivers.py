@@ -81,7 +81,7 @@ class driver(Node):
         self.logging = self.get_logger()
         global DRV
         if USE_ODRIVE_SAIL or USE_ODRIVE_RUDDER:
-            DRV = Odrive(self, calibrate=calibrateOdrive)
+            DRV = Odrive('virtual', calibrate=calibrateOdrive)
             pass
         self.sail = obj_sail(self)
         self.rudder = obj_rudder(self)

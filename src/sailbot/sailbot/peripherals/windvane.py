@@ -3,10 +3,16 @@ Interface for reading wind angle
 """
 from threading import Lock, Thread
 from time import sleep
+import os 
 
-import board
-from adafruit_seesaw import digitalio, rotaryio, seesaw
-from RPi import GPIO
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
+
+if not DOCKER:
+    import board
+    from adafruit_seesaw import digitalio, rotaryio, seesaw
+    from RPi import GPIO
+    
 from rclpy.node import Node
 from std_msgs.msg import String
 
@@ -22,6 +28,7 @@ class WindVane(Node):
     """
 
     def __init__(self):
+
         self.stepsPerRev = 256
 
         self._position = 0

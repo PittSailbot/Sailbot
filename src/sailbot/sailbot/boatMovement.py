@@ -3,15 +3,22 @@ Controls the boat's sails and rudder. Also includes functions to autonomously dr
 """
 import logging
 import os
+import importlib
 
 import rclpy
 from rclpy.node import Node
 
-from sailbot.peripherals.GPS import GPS
-from sailbot.peripherals.windvane import WindVane, NoGoZone
-from sailbot.peripherals.compass import Compass
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
+
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
+WindVane = importlib.import_module(folder + "windvane").WindVane
+NoGoZone = importlib.import_module("sailbot.peripherals.windvane").NoGoZone
+GPS = importlib.import_module(folder + "GPS")
+Compass = importlib.import_module(folder + "compass").Compass
+Odrive = importlib.import_module(folder + "Odrive").Odrive
+
 from sailbot import constants as c
-from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
 from sailbot.utils.utils import singleton
 

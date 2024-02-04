@@ -12,13 +12,12 @@ def ConvertStringsToBytes(src):
     return converted
 
 
-class arduino:
-    def __init__(self, port_num):
-        # connect to device on 'port_num'
+class Transceiver:
+    def __init__(self):
         pass
 
     def send(self, data):
-        # print(data)
+        print(data)
         pass
 
     def readData(self):

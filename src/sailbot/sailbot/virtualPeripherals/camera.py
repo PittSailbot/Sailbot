@@ -9,7 +9,7 @@ import cv2
 from rclpy.node import Node
 
 import sailbot.constants as c
-from sailbot.utils import distance_between
+from sailbot.utils.boatMath import distance_between
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
 from sailbot.utils.utils import singleton, Waypoint
 

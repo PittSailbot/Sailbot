@@ -2,10 +2,10 @@
 Handles interfacing with the I2C compass and accelerometer sensor
 """
 
-import sailbot.boatMath
+import sailbot.utils.boatMath
 
 
-class compass:
+class Compass:
     def __init__(self):
         pass
 

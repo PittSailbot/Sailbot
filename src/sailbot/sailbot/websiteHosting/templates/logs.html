@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+
+<script src="{{ url_for('static', filename='js/htmx.js') }}"></script>
+
+<div class="home">
+    <h1>Log Messages</h1>
+    <a href="{{ url_for('log_search') }}"><button>Search Logs</button></a>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Level</th>
+                <th>Message</th>
+                <th>Name</th>
+                <th>Timestamp</th>
+                <th>Line</th>
+                <th>Function</th>
+                <th>File</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log_message in logMessages %}
+                <tr>
+                    <td>{{ log_message.id }}</td>
+                    <td>{{ log_message.level }}</td>
+                    <td>{{ log_message.msg }}</td>
+                    <td>{{ log_message.name }}</td>
+                    <td>{{ log_message.timestamp }}</td>
+                    <td>{{ log_message.line }}</td>
+                    <td>{{ log_message.function }}</td>
+                    <td>{{ log_message.file }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

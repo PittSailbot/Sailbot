@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+
+<script src="{{ url_for('static', filename='js/htmx.js') }}"></script>
+
+<div class="home">
+    <div class="Sensors">
+        <div style = "padding-top: 20px; padding-bottom: 10px"><h2>{{header}}</h2></div>
+        <h1 id="GPS">GPS: <label hx-get="/gps" hx-trigger="every 1.0s"></label></h1> 
+        <br>
+        <h1 id="Compass">Compass: <label hx-get="/compass" hx-trigger="every 1.0s"></label></h1>
+        <br>
+        <h1 id="Odrive">Odrive</h1>
+        <br>
+        <h3 id="Odrive">Axis0: <label hx-get="/axis0" hx-trigger="every 1.0s"></h3>
+        <br>
+        <h3 id="Odrive">Axis1: <label hx-get="/axis1" hx-trigger="every 1.0s"></h3>
+
+        <button onclick="window.location='/map'";>View Map</button>
+        <button onclick="fetch('/mode/Manual')";>Set Mode: Manual</button>
+        <button onclick="fetch('/mode/avoid')";>Set Mode: Collision Avoidance</button>
+        <button onclick="fetch('/mode/nav')";>Set Mode: Precision Nav</button>
+        <button onclick="fetch('/mode/endurance')";>Set Mode: Endurance</button>
+        <button onclick="fetch('/mode/keeping')";>Set Mode: Station Keeping</button>
+        <button onclick="fetch('/mode/search')";>Set Mode: Search</button>
+        
+    </div>
+</div>
+{% endblock %}
