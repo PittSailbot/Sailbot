@@ -1,5 +1,6 @@
 import importlib
 import os
+import threading
 
 import rclpy
 from rclpy.node import Node
@@ -46,10 +47,12 @@ class Boat(Node):
         self.next_gps = None
 
         # SENSORS
-        self.transceiver = transceiver.Transceiver()
+        self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
         self.gps = GPS.GPS()
-        self.compass = compass.Compass()
-        self.windvane = windvane.WindVane()
+        try:
+            self.compass = compass.Compass()
+        except ValueError as e:
+            self.logging.error(f"Failed to initialize compass\n{e}")
 
         # Controls
         self.sail = boatMovement.Sail()
@@ -63,35 +66,35 @@ class Boat(Node):
         The main control logic which runs each tick
         """
 
-        command = self.transceiver.readData()
-        self.execute_command(command)
+        # command = self.transceiver.readData()
+        # self.execute_command(command)
+        while True:
+            if self.is_RC:
+                pass
 
-        if self.is_RC:
-            pass
+            else:
+                try:
+                    if self.event is not None:
+                        self.next_gps = self.event.next_gps()
 
-        else:
-            try:
-                if self.event is not None:
-                    self.next_gps = self.event.next_gps()
+                    if self.next_gps is not None:
+                        boatMovement.go_to_gps(self.next_gps)
 
-                if self.next_gps is not None:
-                    boatMovement.go_to_gps(self.next_gps)
+                    else:
+                        self.sail.angle = 0
 
-                else:
-                    self.sail.angle = 0
+                except EventFinished:
+                    self.logging.info("Event finished. Returning to RC")
 
-            except EventFinished:
-                self.logging.info("Event finished. Returning to RC")
+                    self.is_RC = True
+                    self.event = None
 
-                self.is_RC = True
-                self.event = None
+                except Exception as e:
+                    self.logging.error(f"""Unhandled exception occured: {e}
+                            Returning to RC!""")
 
-            except Exception as e:
-                self.logging.critical(f"""Unhandled exception occured: {e}
-                        Returning to RC!""")
-
-                self.is_RC = True
-                self.event = None
+                    self.is_RC = True
+                    self.event = None
 
     def execute_command(self, cmds):
         """Executes commands given to the boat from the RC controller
@@ -171,6 +174,10 @@ class Boat(Node):
 
         self.logging.info(str(logging_results))
 
+    def transceiver_callback(self, msg: String):
+        self.execute_command(msg.data)
+
+
 def init_event(name, event_data):
     """Returns an initialized event using the event_data"""
     event = events[name]
@@ -189,12 +196,14 @@ def main(args=None):
 
     boat = Boat()
 
-    while True:
-        try:
-            boat.main_loop()
-        except KeyboardInterrupt:
-            print("Exiting gracefully.")
-            break
+    try:
+        threading.Thread(target=boat.main_loop).start()
+        rclpy.spin(boat)
+
+    except KeyboardInterrupt:
+        print("Exiting gracefully.")
+
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":

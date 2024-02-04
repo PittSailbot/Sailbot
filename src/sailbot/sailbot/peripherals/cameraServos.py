@@ -10,7 +10,7 @@ from sailbot.utils.utils import singleton
 
 
 @singleton
-class CameraServos:
+class CameraServos(Node):
     """
     Drivers and interface for camera servos
 
@@ -35,12 +35,12 @@ class CameraServos:
     # IS_FLIPPED_PITCH = bool(c.config["CAMERA"]["reverse_pitch"])
 
     def __init__(self):
+        super().__init__("camera_servos")
+        self.logging = self.get_logger()
+
         self._kit = adafruit_servokit.ServoKit(channels=16)
         self._pitch = self.DEFAULT_ANGLE
         self._yaw = self.DEFAULT_ANGLE
-
-        self._node = Node("cameraServos")
-        self.logging = self._node.get_logger()
 
         self.logging.debug("Initializing camera servos")
         self.reset()

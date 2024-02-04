@@ -8,12 +8,8 @@ import os
 
 
 def generate_launch_description():
-    os.environ[
-        "ROS_LOG_DIR"
-    ] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
-    os.environ[
-        "ROS_LOG_DIR_BASE"
-    ] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
+    os.environ["ROS_LOG_DIR"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
+    os.environ["ROS_LOG_DIR_BASE"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
 
     return LaunchDescription(
         [

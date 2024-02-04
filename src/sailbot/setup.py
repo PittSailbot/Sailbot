@@ -26,7 +26,7 @@ data_files.append(('lib/sailbot/websiteHosting/static/js/', glob(package_name + 
 data_files.append(('lib/sailbot/websiteHosting/static/images/', glob(package_name + '/websiteHosting/static/images/*')))
 data_files.append(('lib/sailbot/websiteHosting/static/leaflet/images/', glob(package_name + '/websiteHosting/static/leaflet/images/*')))
 data_files.append(('lib/sailbot/websiteHosting/static/leaflet/', glob(package_name + '/websiteHosting/static/leaflet/*.*')))
-
+data_files.append(('lib//python3.10/site-packages/sailbot/telemetry/protobuf/', glob(package_name + '/telemetry/protobuf/*.py')))
 setup(
     name=package_name,
     version="0.0.0",
@@ -46,6 +46,7 @@ setup(
             "compass = sailbot.peripherals.compass:main",
             "gps = sailbot.peripherals.GPS:main",
             "windvane = sailbot.peripherals.windvane:main",
+            "transceiver = sailbot.peripherals.transceiver:main",
             "main = sailbot.main:main",
             "drivers = sailbot.boatMovement:main",
             "offset = sailbot.deprecated.motorOffset:main",

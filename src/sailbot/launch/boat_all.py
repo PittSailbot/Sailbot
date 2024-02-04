@@ -8,12 +8,8 @@ import os
 
 
 def generate_launch_description():
-    os.environ[
-        "ROS_LOG_DIR"
-    ] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
-    os.environ[
-        "ROS_LOG_DIR_BASE"
-    ] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
+    os.environ["ROS_LOG_DIR"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
+    os.environ["ROS_LOG_DIR_BASE"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
 
     return LaunchDescription(
         [
@@ -58,6 +54,17 @@ def generate_launch_description():
                 namespace="boat", 
                 executable="gps", 
                 name="gps",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot", 
+                namespace="boat", 
+                executable="transceiver", 
+                name="transceiver",
                 arguments=[
                     "--ros-args",
                     "--log-level",

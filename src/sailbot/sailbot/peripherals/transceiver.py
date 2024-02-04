@@ -2,8 +2,9 @@
 Reads and sends data from the connected USB transceiver
 """
 import time
+import os
 
-# from messages_pb2 import *
+from sailbot.telemetry.protobuf import controlsData_pb2
 import rclpy
 import serial
 import smbus2 as smbus  # ,smbus2
@@ -27,6 +28,9 @@ class Transceiver(Node):
         super().__init__("transceiver")
         self.logging = self.get_logger()
 
+        self.pub = self.create_publisher(String, "transceiver", 10)
+        self.timer = self.create_timer(0.1, self.timer_callback)
+
         ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
         for i, port in enumerate(ports):
             try:
@@ -34,11 +38,10 @@ class Transceiver(Node):
                 # May cause runtime latency tho if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
-                self.readData()
+                assert self.readData() is not None
 
             except Exception as e:
-                self.logging.warning(f"Failed to read from port: {port}")
-                # self.logging.warning(f"Raised {e}")
+                self.logging.warning(f"Failed to read from port: {port}\nRaised: {e}")
 
                 if i == len(ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports!")
@@ -49,22 +52,22 @@ class Transceiver(Node):
 
         self.I2Cbus = smbus.SMBus(1)
 
-        self.sail_publisher = self.create_publisher(String, "transceiver", 10)
-        self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
-        self.create_timer(0.1, self.loop())
+        # self.sail_publisher = self.create_publisher(String, "transceiver", 10)
+        # self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
 
-    def __del__(self):
-        self.ser.close()
-
-    def loop(self):
-        self.readData()
+    def timer_callback(self):
+        msg = String()
+        msg.data = self.readData()
+        self.logging.info('Publishing: "%s"' % msg.data)
+        self.pub.publish(msg)
 
     def send(self, data):
         self.ser.write(str(data).encode())
 
     def read(self) -> str or None:
         """Reads incoming data from the RC controller"""
-        message = self.ser.readline().decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
+        message = self.ser.readline()
+        message = message.decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
 
         if message is None or message == "'" or message == "":
             return None
@@ -73,30 +76,24 @@ class Transceiver(Node):
 
         return message
 
-    def readData(self):
+    def readData(self) -> str:
         """Reads rudder/sail position"""
         self.send("?")  # transceiver is programmed to respond to '?' with its data
 
         msg = self.read()
 
         if msg is None:
-            time.sleep(5)
+            time.sleep(1)
             msg = self.read()
             if msg is None:
-                raise RuntimeError("Failed to read from transceiver")
+                raise RuntimeError("Lost serial connection to transceiver")
+            
+        controlData = controlsData_pb2.ControlData()
+        controlData.ParseFromString(msg)
 
-        splits = msg.split(" ")
-        if len(splits) >= 7:
-            returnList = [F"{splits[0]} {splits[1]}",
-                          F"{splits[2]} {splits[3]}"]  # rudderOffset (val), sailOffset (val)
-
-            mode, offset = GetModeAndOffset(float(splits[5]), float(splits[7]))
-
-            returnList.append(F"{mode} {offset}")
-
-            return returnList
-        else:
-            return msg
+        print(f"Left Analog Y: {controlData.left_analog_y}")
+        print(f"Left Potentiometer: {controlData.left_potentiometer}")
+        return str(msg)
 
 
 def ConvertStringsToBytes(src) -> list[int]:
@@ -159,11 +156,10 @@ class Controller:
     top_right_switch: int
 
 
-def main():
-    rclpy.init()
-
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/transceiver"
+    rclpy.init(args=args)
     transceiver = Transceiver()
-
     rclpy.spin(transceiver)
 
 

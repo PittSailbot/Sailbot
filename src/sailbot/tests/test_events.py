@@ -13,9 +13,8 @@ DOCKER = True if DOCKER == "True" else False
 
 if not DOCKER:
     import rclpy
-    from std_msgs.msg import String
 
-    from sailbot.peripherals import compass, GPS, transceiver, windvane
+    # from sailbot.peripherals import compass, GPS, transceiver, windvane
 
     rclpy.init()
 
