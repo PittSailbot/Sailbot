@@ -5,7 +5,7 @@ reads value from I2C rotery encoder sensor
 import sailbot.constants as c
 
 
-class windVane:
+class WindVane:
     def __init__(self):
         pass
 

@@ -4,6 +4,8 @@ calibrates and default values for Odrive and handles interfacing between Odrive 
 
 from time import sleep
 
+from rclpy.node import Node
+import rclpy
 from std_msgs.msg import String
 
 import sailbot.constants as c
@@ -11,10 +13,11 @@ from sailbot.utils.utils import DummyObject
 
 
 class Odrive:
-    def __init__(self, parent, calibrate=False):
-        self._node = parent
+    def __init__(self, preset, calibrate=False):
+        self._node = Node(f"odrive_{preset}")
         self.logging = self._node.get_logger()
-        self.logging.debug("virtual Odrive Starting")
+        self.logging.debug(f"Initializing ODrive with preset: {preset}")
+        self.preset = preset
 
         self.od = self
 
@@ -46,7 +49,7 @@ class Odrive:
         self.axis1.controller.config = DummyObject()
         self.axis1.controller.input_pos = 1
 
-        self.setConstants()
+        # self.setConstants()
 
         self.pub = self._node.create_publisher(String, "odriveStatus", 10)
         timer_period = 0.5  # seconds

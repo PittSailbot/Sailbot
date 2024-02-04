@@ -10,16 +10,14 @@ from sailbot.events import precisionNavigation, endurance, search, stationKeepin
 from sailbot.utils.eventUtils import EventFinished
 from sailbot.utils.utils import Waypoint
 
-from sailbot.peripherals import windvane, GPS, compass, transceiver
-
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 
-# folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
-# windVane = importlib.import_module(folder + "windvane").WindVane
-# gps = importlib.import_module(folder + "GPS").GPS
-# compass = importlib.import_module(folder + "compass").Compass
-# transceiver = importlib.import_module(folder + "transceiver").Transceiver
+folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
+windvane = importlib.import_module(folder + "windvane")
+GPS = importlib.import_module(folder + "GPS")
+compass = importlib.import_module(folder + "compass")
+transceiver = importlib.import_module(folder + "transceiver")
 
 
 events = {

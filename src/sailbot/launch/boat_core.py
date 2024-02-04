@@ -1,10 +1,10 @@
-import os
-from datetime import datetime
-
-from src import LaunchDescription
-from src import DeclareLaunchArgument
-from src import TextSubstitution
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import TextSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from datetime import datetime
+import os
 
 
 def generate_launch_description():
@@ -13,8 +13,50 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("INFO"))),
-            Node(package="sailbot", namespace="boat", executable="drivers", name="drivers"),
-            Node(package="sailbot", namespace="boat", executable="main", name="main"),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="navigation",
+                name="navigation",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="transceiver",
+                name="transceiver",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="sail",
+                name="sail",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="rudder",
+                name="rudder",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
         ]
     )
