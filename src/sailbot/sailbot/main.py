@@ -9,7 +9,7 @@ from std_msgs.msg import String
 from sailbot import boatMovement
 from sailbot.events import precisionNavigation, endurance, search, stationKeeping
 from sailbot.utils.eventUtils import EventFinished
-from sailbot.utils.utils import singleton, Waypoint
+from sailbot.utils.utils import Waypoint
 
 from sailbot.peripherals import windvane, GPS, compass, transceiver
 
@@ -31,7 +31,6 @@ events = {
 }
 
 
-@singleton
 class Boat(Node):
     """The mf'in boat.
     - Communicates with shore and listens for run-time commands

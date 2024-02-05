@@ -13,7 +13,7 @@ from sailbot.peripherals.compass import Compass
 from sailbot import constants as c
 from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
-from sailbot.utils.utils import singleton
+
 
 # TODO: Add ROS Callback
 @singleton

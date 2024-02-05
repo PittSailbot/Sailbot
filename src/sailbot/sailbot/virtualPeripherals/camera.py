@@ -11,7 +11,7 @@ from rclpy.node import Node
 import sailbot.constants as c
 from sailbot.utils import distance_between
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
-from sailbot.utils.utils import singleton, Waypoint
+from sailbot.utils.utils import Waypoint
 
 
 class Frame:
@@ -45,7 +45,6 @@ class Frame:
         return f"Frame({self.img, self.time, self.gps, self.heading, self.pitch, self.detections})"
 
 
-@singleton
 class Camera:
     """
     Drivers and interface for camera
