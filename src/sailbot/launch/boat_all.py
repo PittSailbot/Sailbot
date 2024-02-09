@@ -18,8 +18,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("INFO"))),
-            Node(package="sailbot", namespace="boat", executable="drivers", name="drivers"),
-            Node(package="sailbot", namespace="boat", executable="main", name="main"),
+            Node(package="sailbot", namespace="boat", executable="navigation", name="navigation"),
             Node(package="sailbot", namespace="boat", executable="compass", name="compass"),
             Node(package="sailbot", namespace="boat", executable="gps", name="gps"),
             Node(package="sailbot", namespace="boat", executable="transceiver", name="transceiver"),
