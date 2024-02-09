@@ -11,7 +11,10 @@ from std_msgs.msg import String
 from sailbot.utils.utils import DummyObject
 import random
 
+from sailbot.utils.utils import singleton
 
+
+@singleton
 class GPS(Node):
     """
     Attributes:
@@ -22,7 +25,7 @@ class GPS(Node):
     def __init__(self):
         self.gps = DummyObject()
         self.gps.latitude = 42.84963
-        self.gps.longitude = 70.986314
+        self.gps.longitude = -70.986314
         self.gps.track_angle_deg = -1
 
         super().__init__("GPS")
@@ -32,7 +35,6 @@ class GPS(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.logging.info("GPS Started")
-
 
     def timer_callback(self):
 

@@ -1,6 +1,7 @@
 import importlib
 import os
 import threading
+import json
 
 import rclpy
 from rclpy.node import Node
@@ -46,9 +47,13 @@ class Boat(Node):
         self.event = init_event(event, event_data) if not self.is_RC else None
         self.next_gps = None
 
+        self.publisher = self.create_publisher(String, 'boat_state', 10)
+        self.state_publish_timer = self.create_timer(5.0, self.publish_boat_state)
+
         # SENSORS
         self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
-        self.gps = GPS.GPS()
+        self.create_subscription(String, "next_GPS", self.target_callback, 10)
+
         try:
             self.compass = compass.Compass()
         except ValueError as e:
@@ -60,6 +65,16 @@ class Boat(Node):
 
     def __del__(self):
         self.logging.info("Shutting down")
+
+    def publish_boat_state(self):
+        boatState = {}
+        boatState['is_RC'] = True
+        boatState['next_lat'] = self.next_gps.lat if self.next_gps != None else None
+        boatState['next_lon'] = self.next_gps.lon if self.next_gps != None else None
+
+        msg = String()
+        msg.data = json.dumps(boatState)
+        self.publisher.publish(msg)
 
     def main_loop(self):
         """
@@ -74,9 +89,6 @@ class Boat(Node):
 
             else:
                 try:
-                    if self.event is not None:
-                        self.next_gps = self.event.next_gps()
-
                     if self.next_gps is not None:
                         boatMovement.go_to_gps(self.next_gps)
 
@@ -176,6 +188,19 @@ class Boat(Node):
 
     def transceiver_callback(self, msg: String):
         self.execute_command(msg.data)
+
+    def target_callback(self, msg: String):
+        target = Waypoint.fromJson(msg.data)
+
+        if target == None:
+            self.logging.info("next_gps set to None, returning to Manual Control")
+            self.next_gps = None
+            return
+        
+        if self.next_gps == None or target.lat != self.next_gps.lat or target.lon != self.next_gps.lon:
+            self.logging.info(F"next_gps updated to: {msg.data}")
+
+        self.next_gps = target
 
 
 def init_event(name, event_data):

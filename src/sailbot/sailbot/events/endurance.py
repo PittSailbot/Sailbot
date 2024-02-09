@@ -51,7 +51,7 @@ class Endurance(Event):
         # TODO: ADD ROUNDING BUFFER to waypoints
         rounding_buffer = c.config["ENDURANCE"]["rounding_buffer"]
 
-        self.gps_subscription = self._node.create_subscription(
+        self.gps_subscription = self.create_subscription(
             String, "GPS", self.ROS_GPSCallback, 10
         )
 

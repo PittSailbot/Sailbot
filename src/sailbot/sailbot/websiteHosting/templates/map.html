@@ -51,12 +51,108 @@
             color: #f1f1f1;
         }
 
+        .sailboat-container {
+            width: 0;
+            height: 100%;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 20px;
+            color: gold;
+            overflow: hidden;
+        }
+
+        #sailboat-container a {
+            width: 100%; /* Make the buttons fill the width */
+            padding: 15px 15px 15px 32px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+            box-sizing: border-box; /* Include padding in the total width */
+        }
+
+        #sailboat-container a:hover {
+            color: #f1f1f1;
+        }
+
+        #sailboat-container a:hover {
+            color: #f1f1f1;
+        }
+
+        #boat-mode-text {
+            color: gold;
+            position: absolute;
+            left: 25%;
+            transform: translate(-50%, 0%);
+        }
+
+        #error-warning-text {
+            color: gold;
+            position: absolute;
+            left: 75%;
+            transform: translate(-50%, 0%);
+        }
+
         #toggle-btn {
             position: absolute;
             left: 50%;
-            transform: translate(-50%, 50%);
+            transform: translate(-0%, 50%);
         }
 
+        #toggle-btn2 {
+            position: absolute;
+            left: 50%;
+            transform: translate(-100%, 50%);
+        }
+
+        .sailboat {
+            width: 100px;
+            height: 200px;
+            position: relative;
+            left: 50%;
+            top: 50%;
+            overflow: visible;
+            transform: translate(-50%, -50%);
+        }
+
+        .wind-arrow {
+            position: relative;
+            top: -50%;
+            left: 50%;
+            transform: translate(-50%, 0%) rotate(180deg) scale(0.8);
+            opacity: 0.5;
+        }
+
+        .compass {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            left: 50%;
+            top: 50%;
+            overflow: visible;
+            transform: translate(-50%, -50%);
+        }
+
+        .compass-needle {
+            position: relative;
+            top: -50%;
+            left: 50%;
+            transform: translate(-50%, 0%) rotate(180deg) scale(0.75);
+            opacity: 1;
+        }
+
+        
+    </style>
+
+    <style>
+        .target-tracker{
+            position: relative;
+            top: -170%;
+            left: 50%;
+            transform: translate(-50%, 0%) rotate(180deg) scale(0.2);
+            opacity: 0.5;
+        }
     </style>
 
     <body style="height:100%;margin:0;padding:0;">
@@ -107,10 +203,22 @@
                 <br><span id="boatLatitude"></span>
                 <br><span id="boatLongitude"></span>
             </div>
+
+            <br><br>
+            <div id="BoatTargetGPS">
+                Boat GPS:
+                <br><span id="boatTargetLatitude"></span>
+                <br><span id="boatTargetLongitude"></span>
+            </div>
+
+            <br><br>
+            <div id="boatTargetDistanceInfo">
+                Distance between boat and boat target:
+            </div>
             
             <br><br>
             <div id="targetDistanceInfo">
-                Distance between target and selected waypoint:
+                Distance between click location and selected waypoint:
             </div>
 
             <br><br>
@@ -119,15 +227,55 @@
             </div>
 
         </div>
+
+        <div id="sailboat-container" class="sailboat-container">
+            <div class="sailboat">
+                
+                <img src="{{ url_for('static', filename='images/boat-top-down.png') }}" alt="Boat" class="sailboat">
+
+                <div class="wind-arrow" id="windArrow">
+                    <img src="{{ url_for('static', filename='images/wind-arrow.png') }}" alt="Wind Arrow" class="wind-arrow">
+                </div>
+                <div class="target-tracker" id="targetPointer">
+                    <img src="{{ url_for('static', filename='images/pointer.png') }}" alt="target-tracker" class="target-tracker">
+                </div>
+                
+            </div>
+
+            <br><br>
+            
+            <div class="compass">
+                <img src="{{ url_for('static', filename='images/compass-2.png') }}" alt="Compass" class="compass" style="opacity: 0.5;">
+                <div class="compass-needle" id="compassNeedle">
+                    <img src="{{ url_for('static', filename='images/compass-needle2.png') }}" alt="compass-needle" class="compass-needle">
+                </div>
+            </div>
+        </div>
     
         <div id="map-container">
             <div id="map" style="height: 95%"></div>
             <button id="toggle-btn" onclick="toggleNav()">Toggle Sidebar</button>
+            <button id="toggle-btn2" onclick="toggleSensorReadings()">Toggle Sensor Readings</button>
+            <div id="error-warning-text">
+                <p><span id="error-count" style="color: red;">X</span> errors generated, <span id="warning-count" style="color: yellow;">Y</span> warnings generated</p>
+            </div>
+            <div id="boat-mode-text">
+                <p>Boat mode: <span id="boat-mode-indicator"></span></p>
+            </div>
+            
         </div>
 
         <script>
             function toggleNav() {
                 var sidebar = document.getElementById("sidebar");
+                if (sidebar.style.width === "250px") {
+                    sidebar.style.width = "0";
+                } else {
+                    sidebar.style.width = "250px";
+                }
+            }
+            function toggleSensorReadings() {
+                var sidebar = document.getElementById("sailboat-container");
                 if (sidebar.style.width === "250px") {
                     sidebar.style.width = "0";
                 } else {
@@ -225,7 +373,7 @@
                         .then(data => {
                             const distanceInfoElement = document.getElementById("targetDistanceInfo");
                             if (data.status === 'success') {
-                                distanceInfoElement.innerHTML = `Distance between target and selected waypoint: ${data.distance.toFixed(2)} meters`;
+                                distanceInfoElement.innerHTML = `Distance between click location and selected waypoint: ${data.distance.toFixed(2)} meters`;
                             } else {
                                 distanceInfoElement.innerHTML = 'Failed to calculate distance';
                             }
@@ -258,6 +406,38 @@
                             const distanceInfoElement = document.getElementById("boatDistanceInfo");
                             if (data.status === 'success') {
                                 distanceInfoElement.innerHTML = `Distance between boat and selected waypoint: ${data.distance.toFixed(2)} meters`;
+                            } else {
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+
+            function fetchAndCalculateBoatTargetDistance() {
+                const targetLatText = document.getElementById("boatTargetLatitude").innerText.trim();
+                const targetLonText = document.getElementById("boatTargetLongitude").innerText.trim();
+                const boatLatText = document.getElementById("boatLatitude").innerText.trim();
+                const boatLonText = document.getElementById("boatLongitude").innerText.trim();
+
+                if (boatLatText === '' || boatLonText === '' || targetLatText === '' || targetLonText === '') {
+                    return;
+                }
+
+                const boatLat = parseFloat(boatLatText);
+                const boatLon = parseFloat(boatLonText);
+                const targetLat = parseFloat(targetLatText);
+                const targetLon = parseFloat(targetLonText);
+
+                if (!isNaN(boatLat) && !isNaN(boatLon) && !isNaN(targetLat) && !isNaN(targetLon)) {
+                    fetch(`/calculateDistance?selectedLat=${boatLat}&selectedLon=${boatLon}&targetLat=${targetLat}&targetLon=${targetLon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const distanceInfoElement = document.getElementById("boatTargetDistanceInfo");
+                            if (data.status === 'success') {
+                                distanceInfoElement.innerHTML = `Distance between boat and boat target: ${data.distance.toFixed(2)} meters`;
                             } else {
                                 distanceInfoElement.innerHTML = 'Failed to calculate distance';
                             }
@@ -375,7 +555,7 @@
                 if (!response.ok) {throw Error(response.statusText);}
                 var json = await response.json();
                 for (index in json.breadcrumbs){
-                    breadcrumb = json.breadcrumbs[index]
+                    breadcrumb = JSON.parse(json.breadcrumbs[index])
                     var circleMarker = L.circleMarker([breadcrumb.lat, breadcrumb.lon], {
                                 color: '#00F',
                                 radius: 1
@@ -425,11 +605,12 @@
                     if (showBreadcrumbs){
                         fetchAndAddBreadcrumbs()
                     }
-                    const response = await  fetch('/gpsJSON');
+                    const response = await  fetch('/dataJSON');
                     if (!response.ok) {throw Error(response.statusText);}
                     var json = await response.json();
                     var lat = json.lat
                     var lon = json.lon
+                    
 
                     document.getElementById("BoatGPS").innerHTML = `
                         Boat GPS:
@@ -448,6 +629,98 @@
                     // var marker = L.imageOverlay(imageUrl, imageBounds);
                     
                     map.addLayer(boatMarker)
+
+
+                    var target_lat = json.target_lat
+                    var target_lon = json.target_lon
+                    var queuedWaypoints = json.queuedWaypoints
+
+                    if (typeof polylinesArray !== 'undefined') {
+                        for (var i = 0; i < polylinesArray.length; i++) {
+                            map.removeLayer(polylinesArray[i]);
+                        }
+                    }
+                    polylinesArray = [];
+                    if (target_lat !== null && target_lon !== null) {
+
+                        document.getElementById("BoatTargetGPS").innerHTML = `
+                            Boat GPS:
+                            <br><span id="boatTargetLatitude">${target_lat}</span>
+                            <br><span id="boatTargetLongitude">${target_lon}</span>
+                        `;
+
+                        fetchAndCalculateBoatTargetDistance()
+
+                        // Create a polyline between boat and target
+                        polyline = L.polyline([
+                            [lat, lon],
+                            [target_lat, target_lon]
+                        ]).addTo(map);
+                        polylinesArray.push(polyline);
+
+                        polyline.setStyle({
+                            color: 'red',
+                            weight: 2,
+                            opacity: 0.8
+                        });
+                        
+                    } 
+
+                    if (queuedWaypoints !== undefined && queuedWaypoints !== null) {
+                        // Draw lines between each queued waypoint
+                        for (var i = 0; i < queuedWaypoints.length - 1; i++) {
+                            var startPoint = [queuedWaypoints[i].lat, queuedWaypoints[i].lon];
+                            var endPoint = [queuedWaypoints[i + 1].lat, queuedWaypoints[i + 1].lon];
+
+                            polyline = L.polyline([startPoint, endPoint]).addTo(map);
+                            polylinesArray.push(polyline);
+                            polyline.setStyle({
+                                color: 'red',
+                                weight: 2,
+                                opacity: 0.3
+                            });
+                        }
+                    }
+
+                   boatMode = json.is_RC
+                    var boatModeText = document.getElementById('boat-mode-indicator');
+                    if (boatMode.toUpperCase() === "TRUE") {
+                        boatModeText.textContent = 'Remote Control';
+                        boatModeText.style.color = 'green';
+                    } else if (boatMode.toUpperCase() === "FALSE") {
+                        boatModeText.textContent = 'Autonomus';
+                        boatModeText.style.color = 'red';
+                    } else {
+                        // Handle other cases or set default values
+                        boatModeText.textContent = boatMode.toUpperCase();
+                        boatModeText.style.color = 'gold';
+                    }
+
+                    var errorCount = json.error_count;
+                    var warningCount = json.warning_count;
+
+                    // Update error and warning text and color
+                    var errorCountText = document.getElementById('error-count');
+                    var warningCountText = document.getElementById('warning-count');
+
+                    errorCountText.textContent = errorCount;
+                    warningCountText.textContent = warningCount;
+
+                    // Update the wind arrow direction
+                    windDirection = json.relative_wind;
+                    windArrow = document.getElementById('windArrow');
+                    windArrow.style.transform = `translate(-50%, -50%) rotate(${windDirection}deg)`;
+
+                    targetDirection = json.relative_target;
+                    if (typeof targetDirection !== undefined && targetDirection !== null){
+                        targetPointer = document.getElementById('targetPointer');
+                        targetPointer.style.transform = `translate(-50%, -50%) rotate(${targetDirection}deg)`;
+                    }
+
+                    // Update the compass arrow direction
+                    compassDirection = json.compass_dir
+                    compassNeedle = document.getElementById('compassNeedle');
+                    compassNeedle.style.transform = `translate(-50%, -50%) rotate(${compassDirection}deg)`;
                     
                     // set the time below to how frequently you wanna update 
                     setTimeout(() => fetchData(), 1000); // update every 1 seconds

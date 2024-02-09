@@ -4,6 +4,7 @@ Interface for reading wind angle
 from threading import Lock, Thread
 from time import sleep
 import os 
+import json
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -12,7 +13,8 @@ if not DOCKER:
     import board
     from adafruit_seesaw import digitalio, rotaryio, seesaw
     from RPi import GPIO
-    
+
+import rclpy    
 from rclpy.node import Node
 from std_msgs.msg import String
 
@@ -28,6 +30,12 @@ class WindVane(Node):
     """
 
     def __init__(self):
+        super().__init__("WindVane")
+        self.logging = self.get_logger()
+
+        self.pub = self.create_publisher(String, "windvane", 10)
+        timer_period = 1.0  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.stepsPerRev = 256
 
@@ -60,6 +68,15 @@ class WindVane(Node):
         pump_thread3.start()
 
         self.no_go_zone = NoGoZone(wind_direction=self.angle)
+
+    def timer_callback(self):
+
+        msg = String()
+        msg.data = (
+            json.dumps({'angle': self.angle})
+        )
+        self.pub.publish(msg)
+        self.logging.debug(F'Windvane Publishing: "{msg.data}"')
 
     def map(self, x, min1, max1, min2, max2):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
@@ -147,12 +164,11 @@ class NoGoZone:
         return False
 
 
-def main():
-    wv = WindVane()
-    while True:
-        sleep(0.1)
-        print(f"Angle {wv.position}")
-        wv.update()
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/windvane"
+    rclpy.init(args=args)
+    windvane = WindVane()
+    rclpy.spin(windvane)
 
 
 if __name__ == "__main__":

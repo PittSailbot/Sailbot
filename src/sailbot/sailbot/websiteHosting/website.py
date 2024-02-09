@@ -12,6 +12,8 @@ import re
 from datetime import datetime, timedelta
 import logging
 import pytz
+import json
+import math
 
 import rclpy
 from flask import Flask, render_template, request, jsonify
@@ -24,7 +26,7 @@ import sqlite3
 from dateutil import parser
 
 import sailbot.constants as c
-from sailbot.utils.utils import DummyObject
+from sailbot.utils.utils import DummyObject, Waypoint
 
 
 import os
@@ -37,28 +39,15 @@ DOCKER = True if DOCKER == "True" else False
 if DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
+    TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
 else:
-    raise Exception("configure ports for pi")
+    raise Exception("configure ports and tile server for pi")
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 
-TILE_SERVER = 'http://' + 'localhost' + ':8080/tile/{z}/{x}/{y}.png'
+
 TIMEZONE = 'America/New_York'
-
-class Coordinate:
-    def __init__(self, lat, lon):
-        self.lat = float(lat)
-        self.lon = float(lon)
-
-    def initFromGPS(gpsObj):
-        return Coordinate(gpsObj.latitude, gpsObj.longitude)
-    
-    def __repr__(self) -> str:
-        return F"Coordinate: ({self.lat},{self.lon})"
-    
-    def toJson(self):
-        return {"lat": self.lat, "lon": self.lon}
 
 class LogDatabase:
     def __init__(self, parent, db_path='log_database.db'):
@@ -120,10 +109,7 @@ class LogDatabase:
                 else:
                     raise
 
-        timer = self.parent.create_timer(0.1, retry_callback)
-        
-        
-
+        timer = self.parent.create_timer(0.5, retry_callback)
         
     def get_connection(self):
         return sqlite3.connect(self.db_path, check_same_thread=False)
@@ -185,8 +171,6 @@ class Website(Node):
         
         self.createDummyObjs()
 
-        self.modePub = self.create_publisher(String, "mode", 10)
-
         self.dataDict = {
             "gps": f"{self.gps.latitude},{self.gps.longitude}",
             "compass": f"{self.compass.angle}",
@@ -204,6 +188,13 @@ class Website(Node):
 
         self.circles = [{"lat": "42.849135", "lon": "-70.976314", "radius": 50}]
 
+        self.boat_isRC = "UNKNOWN"
+        self.boat_target = Waypoint(None, None)
+        self.boat_event_coords = []
+        self.warning_count = 0
+        self.error_count = 0
+        self.relative_wind = None
+
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(
             String, "/boat/GPS", self.ROS_GPSCallback, 10
@@ -211,12 +202,20 @@ class Website(Node):
         self.compass_subscription = self.create_subscription(
             String, "/boat/compass", self.ROS_compassCallback, 10
         )
+        self.windvane_subscription = self.create_subscription(
+            String, "/boat/windvane", self.ROS_windvaneCallback, 10
+        )
         self.odrive_subscription = self.create_subscription(
             String, "/boat/odriveStatus", self.ROS_odriveCallback, 10
         )
-
         self.logMessages = self.create_subscription(
             Log, "/rosout", self.ROS_LogCallback, 10 # all log messages are published to this topic
+        )
+        self.boat_state_subscription = self.create_subscription(
+            String, "/boat/boat_state", self.ROS_boatStateCallback, 10
+        )
+        self.queued_waypoints_subscription = self.create_subscription(
+            String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10
         )
 
     def createDummyObjs(self):
@@ -256,11 +255,16 @@ class Website(Node):
             'file': filename,
         }
 
+        if message.level >= 40:
+            self.error_count += 1
+        elif message.level >= 30:
+            self.warning_count += 1
+
         self.logDB.insert_log(messageDict)
 
     def ROS_GPSCallback(self, string):
         string = string.data
-        print(F"gps string: {string}")
+
         if string == "None,None,None":
             self.gps.latitude = None
             self.gps.longitude = None
@@ -273,18 +277,23 @@ class Website(Node):
         self.gps.track_angle_deg = float(trackangle)
 
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
-        self.displayedBreadcrumbs.append(Coordinate(self.gps.latitude, self.gps.longitude))
+        self.displayedBreadcrumbs.append(Waypoint(self.gps.latitude, self.gps.longitude))
 
     def ROS_compassCallback(self, string):
         string = string.data
         if string == "None,None":
-            self.compass.angle = None
+            self.compass.angle = -1
             return
 
         angle = string.replace("(", "").replace(")", "")
         self.compass.angle = float(angle)
 
         self.dataDict["compass"] = f"{self.compass.angle}"
+
+    def ROS_windvaneCallback(self, string):
+        string = string.data
+        angle = json.loads(string)['angle']
+        self.relative_wind = angle
 
     def ROS_odriveCallback(self, string):
         string = string.data
@@ -311,11 +320,20 @@ class Website(Node):
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
 
-    def publishModeChange(self, modeString):
-        msg = String()
-        msg.data = f"Set Mode:{modeString}"
-        self.modePub.publish(msg)
-        self.logging.debug('Publishing: "%s"' % msg.data)
+    def ROS_boatStateCallback(self, string):
+        string = string.data
+        boatState = json.loads(string)
+
+        self.boat_isRC = str(boatState['is_RC'])
+        self.boat_target = Waypoint(boatState['next_lat'], boatState['next_lon'])
+  
+    def ROS_queuedWaypointsCallback(self, string):
+        string = string.data
+        coords = json.loads(string)
+
+        self.boat_event_coords = []
+        for waypoint in coords['Waypoints']:
+            self.boat_event_coords.append(Waypoint.fromJson(waypoint))
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -325,9 +343,21 @@ def home():
 def gps():
     return f"{DATA.gps.latitude}, {DATA.gps.longitude}"
 
-@app.route("/gpsJSON")
-def gpsJSON():
-    jsonDict = {"lat": DATA.gps.latitude, "lon": DATA.gps.longitude}
+@app.route("/dataJSON")
+def dataJSON():
+    target = DATA.boat_target
+    jsonDict = {"lat": DATA.gps.latitude, 
+                "lon": DATA.gps.longitude, 
+                "target_lat": target.lat, 
+                "target_lon": target.lon,
+                'warning_count': DATA.warning_count,
+                "error_count": DATA.error_count,
+                "is_RC": str(DATA.boat_isRC),
+                "queuedWaypoints": DATA.boat_event_coords,
+                'relative_wind': DATA.relative_wind,
+                "compass_dir": DATA.compass.angle,
+                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon)
+                }
     return jsonDict
 
 @app.route("/logs")
@@ -460,33 +490,12 @@ def axis0():
 def axis1():
     return DATA.dataDict["odrive_axis1"]
 
-@app.route("/mode/<mode>")
-def setMode(mode):
-    mappingDict = {
-        "manual": c.config["MODES"]["MOD_RC"],
-        "avoid": c.config["MODES"]["MOD_COLLISION_AVOID"],
-        "nav": c.config["MODES"]["MOD_PRECISION_NAVIGATE"],
-        "endurance": c.config["MODES"]["MOD_ENDURANCE"],
-        "keeping": c.config["MODES"]["MOD_STATION_KEEPING"],
-        "search": c.config["MODES"]["MOD_SEARCH"],
-    }
-
-    if mode.lower() in mappingDict:
-        DATA.publishModeChange(mappingDict[mode.lower()])
-        DATA.notification = f"Mode set: {mode}"
-
-    else:
-        DATA.notification = f"ignoring attempt to set mode to unknown value"
-
-    return {}
-
 @app.route("/map")
 def websiteMap():
     return render_template("map.html", tileServer=TILE_SERVER)
 
 @app.route('/calculateDistance', methods=['GET'])
 def calculate_distance():
-    print(request.args)
     try:
         # Get latitude and longitude of the selected waypoint
         selected_lat = float(request.args.get('selectedLat'))
@@ -555,9 +564,27 @@ def ros_main():
     rclpy.init()
     DATA = Website()
 
-    app.run(debug=True, host="0.0.0.0", port=PORT)
-    # rclpy.spin(DATA)
+    app.run(debug=False, host="0.0.0.0", port=PORT) # debug true causes the process to fork which causes problems
 
+def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
+    # Convert latitude and longitude from degrees to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+    
+    # Calculate the difference in longitude
+    delta_lon = lon2_rad - lon1_rad
+    
+    # Calculate the y and x components of the directional vector
+    y = math.sin(delta_lon) * math.cos(lat2_rad)
+    x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(delta_lon)
+    
+    # Calculate the angle in radians
+    angle_rad = math.atan2(y, x)
+    
+    # Convert the angle from radians to degrees
+    return math.degrees(angle_rad)
 
 if __name__ == "__main__":
     # main()

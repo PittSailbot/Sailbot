@@ -10,7 +10,8 @@ package_name = "sailbot"
 data_files=[]
 data_files.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
 data_files.append(('share/' + package_name, ['package.xml']))
-data_files.append(('share/' + package_name, glob('launch/*.py')))
+data_files.append(('share/' + package_name + '/launch', glob('launch/*.launch.py')))
+data_files.append(('share/' + package_name + '/config', glob('config/*.yaml')))
 
 data_files.append(('lib/sailbot/', glob(package_name + '/*.py')))
 data_files.append(('lib/sailbot/', glob('*.ini')))
@@ -53,8 +54,11 @@ setup(
             "website = sailbot.websiteHosting.website:ros_main",
             "virtualDrivers = sailbot.virtualPeripherals.drivers:main",
             "virtualGPS = sailbot.virtualPeripherals.GPS:main",
+            "virtualCompass = sailbot.virtualPeripherals.compass:main",
+            "virtualWindvane = sailbot.virtualPeripherals.windvane:main",
             "rosTest = sailbot.rosTest:main",
-            'networkLogger = sailbot.utils.NetworkLogger:main'
+            'networkLogger = sailbot.utils.NetworkLogger:main',
+            'dummyEvent = sailbot.events.DummyEvent:main'
         ],
     },
 )

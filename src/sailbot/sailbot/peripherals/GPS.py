@@ -24,8 +24,8 @@ class GPS(Node):
     def __init__(self):
         self.latitude = None
         self.longitude = None
-        self._node = Node("GPS")
-        self.logging = self._node.get_logger()
+        super().__init__("GPS")
+        self.logging = self.get_logger()
 
         # Can also use adafruit_gps module (but didn't work at competition?)
         # Prev GPS version w/ adafruit: https://github.com/SailBotPitt/SailBot/blob/a56a18b06cbca78aace1990a4a3ce4dfd8c7a847/GPS.py

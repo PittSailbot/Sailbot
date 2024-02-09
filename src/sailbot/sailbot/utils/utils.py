@@ -2,6 +2,7 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
+import json
 
 import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
@@ -46,6 +47,16 @@ class Waypoint:
 
         self.lat += (dy / EARTH_RADIUS) * (180 / math.pi)
         self.lon += (dx / EARTH_RADIUS) * (180 / math.pi) / math.cos(self.lat * math.pi / 180)
+
+    def toJson(self):
+        return json.dumps({"lat": self.lat, "lon": self.lon})
+    
+    def fromJson(json_data):
+        if str(json_data).upper() == 'NONE':
+            return None
+        
+        data = json.loads(json_data)
+        return Waypoint(data['lat'], data['lon'])
 
 
 class DummyObject:

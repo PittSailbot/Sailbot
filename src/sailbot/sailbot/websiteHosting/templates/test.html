@@ -179,7 +179,7 @@
                             fetchAndAddBreadcrumbs()
                         }
                     }
-                    const response = await  fetch('/gpsJSON');
+                    const response = await  fetch('/dataJSON');
                     if (!response.ok) {throw Error(response.statusText);}
                     var json = await response.json();
                     var lat = json.lat
