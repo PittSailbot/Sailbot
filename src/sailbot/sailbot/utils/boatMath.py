@@ -67,3 +67,13 @@ def convertDegMinToDecDeg(degMin):
     decDeg = degMin + (min / 60)
 
     return decDeg
+
+
+def remap(x, min1, max1, min2, max2):
+    """Converts x from the range min1 <= x <= max1 to the proportional y from min2 <= y <= max2
+    - Identical to arduino's map() function
+    - ex: rescale(0.3, 0, 1, 0, 100) returns 30
+    - ex: rescale(70, 0, 100, 0, 1) returns .7
+    """
+    x = min(max(x, min1), max1)
+    return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
