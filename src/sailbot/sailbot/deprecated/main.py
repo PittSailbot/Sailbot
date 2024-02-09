@@ -6,7 +6,6 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from sailbot import boatMovement
 from sailbot.events import precisionNavigation, endurance, search, stationKeeping
 from sailbot.utils.eventUtils import EventFinished
 from sailbot.utils.utils import Waypoint
@@ -31,6 +30,8 @@ events = {
 }
 
 
+# TODO: candidate for deletion (most functionality replaced by transceiver.py)
+# Runtime args functionality moved to new script?
 class Boat(Node):
     """The mf'in boat.
     - Communicates with shore and listens for run-time commands
@@ -48,23 +49,15 @@ class Boat(Node):
         self.next_gps = None
 
         # SENSORS
-        self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
-        self.gps = GPS.GPS()
-        try:
-            self.compass = compass.Compass()
-        except ValueError as e:
-            self.logging.error(f"Failed to initialize compass\n{e}")
-
-        # Controls
-        self.sail = boatMovement.Sail()
-        self.rudder = boatMovement.Rudder()
+        self.transceiver = self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
+        self.gps = self.create_subscription(String, "gps", self.gps_callback, 10)  # Assign to self.gps or use self.gps for callback result?
 
     def __del__(self):
         self.logging.info("Shutting down")
 
     def main_loop(self):
         """
-        The main control logic which runs each tick
+        The main control logic which runs each tick. Obsolete?
         """
 
         # command = self.transceiver.readData()
@@ -97,6 +90,7 @@ class Boat(Node):
                     self.is_RC = True
                     self.event = None
 
+    # TODO: Update with ROS or delete (salvagable for SSH over cellular or website?)
     def execute_command(self, cmds):
         """Executes commands given to the boat from the RC controller
 
@@ -177,6 +171,9 @@ class Boat(Node):
 
     def transceiver_callback(self, msg: String):
         self.execute_command(msg.data)
+
+    def gps_callback(self, msg: String):
+        self.gps = msg.data
 
 
 def init_event(name, event_data):
