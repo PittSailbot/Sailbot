@@ -1,16 +1,19 @@
 """
 Interface for reading wind angle
 """
+import os
 from threading import Lock, Thread
-from time import sleep
 
 import board
 from adafruit_seesaw import digitalio, rotaryio, seesaw
 from RPi import GPIO
+
+import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
 from sailbot import constants as c
+from sailbot.utils import boatMath
 
 
 class WindVane(Node):
@@ -22,6 +25,12 @@ class WindVane(Node):
     """
 
     def __init__(self):
+        super().__init__("WindVane")
+        self.logging = self.get_logger()
+
+        self.pub = self.create_publisher(String, "windvane")
+        self.timer = self.create_timer(0.1, self.timer_callback)
+
         self.stepsPerRev = 256
 
         self._position = 0
@@ -54,12 +63,10 @@ class WindVane(Node):
 
         self.no_go_zone = NoGoZone(wind_direction=self.angle)
 
-    def map(self, x, min1, max1, min2, max2):
-        # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
-        # ex: map(0.3, 0, 1, 0, 100) returns 30
-        # ex: map(70, 0, 100, 0, 1) returns .7
-        x = min(max(x, min1), max1)
-        return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
+    def timer_callback(self):
+        wind_angle = self.angle
+        self.pub.publish(String(wind_angle))
+        self.logging.info(f"Publishing {wind_angle}")
 
     @property
     def angle(self):
@@ -68,7 +75,7 @@ class WindVane(Node):
             counter += self.stepsPerRev
 
         counter = counter % self.stepsPerRev
-        return self.map(counter, 0, self.stepsPerRev - 1, 0, 359)
+        return boatMath.remap(counter, 0, self.stepsPerRev - 1, 0, 359)
 
     @property
     def position(self):
@@ -140,12 +147,11 @@ class NoGoZone:
         return False
 
 
-def main():
-    wv = WindVane()
-    while True:
-        sleep(0.1)
-        print(f"Angle {wv.position}")
-        wv.update()
+def main(args=None):
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/windvane"
+    rclpy.init(args=args)
+    windvane = WindVane()
+    rclpy.spin(windvane)
 
 
 if __name__ == "__main__":

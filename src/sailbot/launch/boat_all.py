@@ -1,3 +1,7 @@
+"""
+Handles running multiple nodes instead of running 'ros2 run sailbot <module>' for every node.
+Run using ros2 launch sailbot boat_all.
+"""
 import os
 from datetime import datetime
 
@@ -18,6 +22,9 @@ def generate_launch_description():
             Node(package="sailbot", namespace="boat", executable="main", name="main"),
             Node(package="sailbot", namespace="boat", executable="compass", name="compass"),
             Node(package="sailbot", namespace="boat", executable="gps", name="gps"),
-            Node(package="sailbot", namespace="boat", executable="transceiver", name="transceiver")
+            Node(package="sailbot", namespace="boat", executable="transceiver", name="transceiver"),
+            Node(package="sailbot", namespace="boat", executable="windvane", name="windvane"),
+            Node(package="sailbot", namespace="boat", executable="sail", name="sail"),
+            Node(package="sailbot", namespace="boat", executable="rudder", name="rudder")
         ]
     )
