@@ -19,23 +19,25 @@ void setup() {
   /* Begin the SBUS communication */
   sbus_rx.Begin();
   sbus_tx.Begin();
-  Serial.println("Started...");
 }
 
 void loop () {
   if (sbus_rx.Read()) {
     /* Grab the received data */
     data = sbus_rx.data();
-    /* Display the received data */
+    /*if (Serial.read() == "?") {
+      printControllerState(data);
+    }*/
     printControllerState(data);
     /* Display lost frames and failsafe data */
-    Serial.print(data.lost_frame);
-    Serial.print("\t");
-    Serial.println(data.failsafe);
+    // Serial.print(data.lost_frame);
+    // Serial.print("\t");
+    // Serial.println(data.failsafe);
     /* Set the SBUS TX data to the received data */
     sbus_tx.data(data);
     /* Write the data to the servos */
     sbus_tx.Write();
+    delay(100);
   }
 }
 
@@ -85,5 +87,5 @@ void printControllerState(bfs::SbusData data) {
   Serial.print(map(data.ch[8], RC_LOW, RC_HIGH, 0, 1));
   Serial.print("\t");
   Serial.print(map(data.ch[9], RC_LOW, RC_HIGH, 0, 100));
-  Serial.print("\t");
+  Serial.println("\t");
 }

@@ -59,21 +59,22 @@ class Transceiver(Node):
 
         # self.controller_pub = self.create_publisher(String, "controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.sail_pub = self.create_publisher(String, "cmd_sail", 10)
-        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 10)
-        self.rudder_pub = self.create_publisher(String, "cmd_rudder", 10)
-        self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 10)
+        self.sail_pub = self.create_publisher(String, "cmd_sail", 1)
+        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
+        self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
+        self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
 
     def timer_callback(self):
         """Publishes a binary representation of the RC controller's state.
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
-        msg = String()
         controller_state = self.read()
+
+        msg = String(data=str(controller_state.msg))
+        self.logging.info(f"Publishing: {msg.data}")
+
         self.publish_control_signals(controller_state)
 
-        msg.data = str(controller_state)
-        self.logging.info(f"Publishing: {msg.data}")
-        self.pub.publish(msg)
+        # self.controller_pub.publish(msg)
 
     def send(self, data):
         self.ser.write(str(data).encode())
@@ -95,8 +96,8 @@ class Transceiver(Node):
 
         if RESET_SWITCH:
             # TODO: wait 5s, zero out rudder & sail, then reboot
-            self.sail_pub.publish(0)
-            self.rudder_pub.publish(50)
+            self.sail_pub.publish(String(0))
+            self.rudder_pub.publish(String(50))
             return
 
         if RC_ENABLED:
@@ -119,17 +120,18 @@ def parse_serial(bytes):
     values = bytes.split(b'\t')
 
     control_data = DummyObject()
+    control_data.msg = values
 
-    control_data.left_analog_y = int(values[0])       # Sail
-    control_data.right_analog_x = int(values[1])      # Rudder
-    control_data.right_analog_y = int(values[2])
-    control_data.left_analog_x = int(values[3])
-    control_data.front_left_switch1 = int(values[4])  # Up (0):         | Mid (1):             | Down (2):
-    control_data.front_left_switch2 = int(values[5])  # Up (0):         | Mid (1):             | Down (2):
-    control_data.front_right_switch = int(values[6])  # Up (0): default | Mid (1): sail offset | Down (2): rudder offset
-    control_data.top_left_switch = int(values[7])     # Down (0): RC                           | Up (1): Autonomy
-    control_data.top_right_switch = int(values[8])    # Software reset (hold up 5s)
-    control_data.potentiometer = int(values[9])       # Sail/Rudder offsets
+    control_data.left_analog_y = str(values[0])       # Sail
+    control_data.right_analog_x = str(values[1])      # Rudder
+    control_data.right_analog_y = str(values[2])
+    control_data.left_analog_x = str(values[3])
+    control_data.front_left_switch1 = str(values[4])  # Up (0): N/A     | Mid (1): None        | Down (2): Auto-set sail (RC)
+    control_data.front_left_switch2 = str(values[5])  # Up (0):         | Mid (1):             | Down (2):
+    control_data.front_right_switch = str(values[6])  # Up (0): default | Mid (1): sail offset | Down (2): rudder offset
+    control_data.top_left_switch = str(values[7])     # Down (0): RC                           | Up (1): Autonomy
+    control_data.top_right_switch = str(values[8])    # Software reset (hold up 5s)
+    control_data.potentiometer = str(values[9])       # Sail/Rudder offsets
 
     return control_data
 
