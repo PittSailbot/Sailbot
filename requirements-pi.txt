@@ -11,3 +11,4 @@ ultralytics==8.0.90
 matplotlib
 pytest~=7.3.1
 rclpy
+protobuf

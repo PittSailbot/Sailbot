@@ -1,14 +1,14 @@
 import importlib
 import os
+import threading
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from sailbot import boatMovement
 from sailbot.events import precisionNavigation, endurance, search, stationKeeping
 from sailbot.utils.eventUtils import EventFinished
-from sailbot.utils.utils import singleton, Waypoint
+from sailbot.utils.utils import Waypoint
 
 from sailbot.peripherals import windvane, GPS, compass, transceiver
 
@@ -30,7 +30,8 @@ events = {
 }
 
 
-@singleton
+# TODO: candidate for deletion (most functionality replaced by transceiver.py)
+# Runtime args functionality moved to new script?
 class Boat(Node):
     """The mf'in boat.
     - Communicates with shore and listens for run-time commands
@@ -48,53 +49,48 @@ class Boat(Node):
         self.next_gps = None
 
         # SENSORS
-        self.transceiver = transceiver.Transceiver()
-        self.gps = GPS.GPS()
-        self.compass = compass.Compass()
-        self.windvane = windvane.WindVane()
-
-        # Controls
-        self.sail = boatMovement.Sail()
-        self.rudder = boatMovement.Rudder()
+        self.transceiver = self.create_subscription(String, "transceiver", self.transceiver_callback, 10)
+        self.gps = self.create_subscription(String, "gps", self.gps_callback, 10)  # Assign to self.gps or use self.gps for callback result?
 
     def __del__(self):
         self.logging.info("Shutting down")
 
     def main_loop(self):
         """
-        The main control logic which runs each tick
+        The main control logic which runs each tick. Obsolete?
         """
 
-        command = self.transceiver.readData()
-        self.execute_command(command)
+        # command = self.transceiver.readData()
+        # self.execute_command(command)
+        while True:
+            if self.is_RC:
+                pass
 
-        if self.is_RC:
-            pass
+            else:
+                try:
+                    if self.event is not None:
+                        self.next_gps = self.event.next_gps()
 
-        else:
-            try:
-                if self.event is not None:
-                    self.next_gps = self.event.next_gps()
+                    if self.next_gps is not None:
+                        boatMovement.go_to_gps(self.next_gps)
 
-                if self.next_gps is not None:
-                    boatMovement.go_to_gps(self.next_gps)
+                    else:
+                        self.sail.angle = 0
 
-                else:
-                    self.sail.angle = 0
+                except EventFinished:
+                    self.logging.info("Event finished. Returning to RC")
 
-            except EventFinished:
-                self.logging.info("Event finished. Returning to RC")
+                    self.is_RC = True
+                    self.event = None
 
-                self.is_RC = True
-                self.event = None
+                except Exception as e:
+                    self.logging.error(f"""Unhandled exception occured: {e}
+                            Returning to RC!""")
 
-            except Exception as e:
-                self.logging.critical(f"""Unhandled exception occured: {e}
-                        Returning to RC!""")
+                    self.is_RC = True
+                    self.event = None
 
-                self.is_RC = True
-                self.event = None
-
+    # TODO: Update with ROS or delete (salvagable for SSH over cellular or website?)
     def execute_command(self, cmds):
         """Executes commands given to the boat from the RC controller
 
@@ -173,6 +169,12 @@ class Boat(Node):
 
         self.logging.info(str(logging_results))
 
+    def transceiver_callback(self, msg: String):
+        self.execute_command(msg.data)
+
+    def gps_callback(self, msg: String):
+        self.gps = msg.data
+
 
 def init_event(name, event_data):
     """Returns an initialized event using the event_data"""
@@ -192,12 +194,14 @@ def main(args=None):
 
     boat = Boat()
 
-    while True:
-        try:
-            boat.main_loop()
-        except KeyboardInterrupt:
-            print("Exiting gracefully.")
-            break
+    try:
+        threading.Thread(target=boat.main_loop).start()
+        rclpy.spin(boat)
+
+    except KeyboardInterrupt:
+        print("Exiting gracefully.")
+
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":

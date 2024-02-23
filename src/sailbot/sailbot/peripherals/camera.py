@@ -20,7 +20,7 @@ compass = importlib.import_module(folder + "compass").Compass
 from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
 from sailbot.utils.boatMath import distance_between
-from sailbot.utils.utils import Waypoint, singleton
+from sailbot.utils.utils import Waypoint
 
 
 class Frame:
@@ -52,7 +52,6 @@ class Frame:
         return f"Frame({self.img, self.time, self.gps, self.heading, self.pitch, self.detections})"
 
 
-@singleton
 class Camera:
     """
     Drivers and interface for camera
