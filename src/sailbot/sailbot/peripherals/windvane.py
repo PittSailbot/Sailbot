@@ -4,11 +4,15 @@ Interface for reading wind angle
 import os
 from threading import Lock, Thread
 
-import board
-from adafruit_seesaw import digitalio, rotaryio, seesaw
-from RPi import GPIO
-
 import rclpy
+DOCKER = os.environ.get("IS_DOCKER", False)
+DOCKER = True if DOCKER == "True" else False
+
+if not DOCKER:
+    import board
+    from adafruit_seesaw import digitalio, rotaryio, seesaw
+    from RPi import GPIO
+
 from rclpy.node import Node
 from std_msgs.msg import String
 

@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+
+{% block body %}
+    <h1>Log Search</h1>
+    <form method="post" action="{{ url_for('search_results') }}">
+        <label for="log_level">Select Log Level:</label>
+        <select id="log_level" name="log_level">
+            <option value="10">DEBUG</option>
+            <option value="20">INFO</option>
+            <option value="30">WARNING</option>
+            <option value="40">ERROR</option>
+            <option value="50">FATAL</option>
+        </select>
+
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message">
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name">
+
+        <br>
+
+        <label for="start_time">Start Time:</label>
+        <input type="datetime-local" id="start_time" name="start_time">
+
+        <label for="end_time">End Time:</label>
+        <input type="datetime-local" id="end_time" name="end_time">
+
+        <label for="function">Function:</label>
+        <input type="text" id="function" name="function">
+
+        <label for="file">File:</label>
+        <input type="text" id="file" name="file">
+
+        
+
+        <input type="submit" value="Search">
+    </form>
+{% endblock %}
