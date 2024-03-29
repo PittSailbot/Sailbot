@@ -2,6 +2,8 @@ import math
 import os
 import time
 
+from std_msgs.msg import String
+
 from sailbot.utils.eventUtils import Event, EventFinished
 from sailbot.utils.utils import Waypoint
 

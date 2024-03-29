@@ -2,6 +2,7 @@ import importlib
 import math
 import os
 import time
+from std_msgs.msg import String
 
 from sailbot.utils.eventUtils import Event
 from sailbot.utils.utils import Waypoint
@@ -42,6 +43,7 @@ windVane = importlib.import_module(folder + "windvane").WindVane
 """
 
 
+# TODO: Update with ROS
 class StationKeeping(Event):
     """
     Attributes:

@@ -77,3 +77,19 @@ def remap(x, min1, max1, min2, max2):
     """
     x = min(max(x, min1), max1)
     return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
+
+
+def is_within_angle(b, a, c):
+    """Checks if the angle b, is contained within angle AC. Used to check if boat is pointed within no-go-zone"""
+    if a > c:
+        b = b % 360
+
+        # Check if the heading is within the wrapped bounds
+        if b >= a or b <= c:
+            return True
+    else:
+        # Bounds don't wrap around
+        if a <= b <= c:
+            return True
+
+    return False

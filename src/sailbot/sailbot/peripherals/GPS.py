@@ -9,6 +9,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
+from sailbot.utils.utils import Waypoint
+
 
 class GPS(Node):
     """
@@ -34,13 +36,10 @@ class GPS(Node):
         packet = gpsd.get_current()
 
         if packet.mode >= 2:
-            latitude = packet.position()[0]
-            longitude = packet.position()[1]
+            position = Waypoint(lat=packet.position()[0], lon=packet.position()[1])
 
-            msg = f"{latitude},{longitude}"
-            self.logging.info(f"Publishing: '{msg}'")
-            self.pub.publish(String(msg))
-
+            self.logging.info(f"Publishing: '{position}'")
+            self.pub.publish(position.to_string())
         else:
             self.logging.warning(f"No GPS fix")
 

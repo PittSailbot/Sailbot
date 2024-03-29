@@ -59,6 +59,7 @@ class Transceiver(Node):
 
         # self.controller_pub = self.create_publisher(String, "controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
+        self.rc_enabled_pub = self.create_publisher(String, "rc_enabled", 1)
         self.sail_pub = self.create_publisher(String, "cmd_sail", 1)
         self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
         self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
@@ -91,18 +92,25 @@ class Transceiver(Node):
     def publish_control_signals(self, controller_state):
         """Publishes the individual controls to each relevant topic"""
         RC_ENABLED = True if controller_state.top_left_switch == 0 else False
-        OFFSET_MODE = controller_state.front_right_switch
-        RESET_SWITCH = True if controller_state.top_right_switch == 1 else False
+        RESET_ENABLED = True if controller_state.top_right_switch == 1 else False
 
-        if RESET_SWITCH:
+        if RESET_ENABLED:
             # TODO: wait 5s, zero out rudder & sail, then reboot
             self.sail_pub.publish(String(0))
             self.rudder_pub.publish(String(50))
             return
 
         if RC_ENABLED:
-            self.sail_pub.publish(String(controller_state.left_analog_y))
-            self.rudder_pub.publish(String(controller_state.right_analog_x))
+            self.rc_enabled_pub.publish(String("1"))
+            OFFSET_MODE = controller_state.front_right_switch
+            AUTO_SET_SAIL = True if controller_state.front_left_switch1 == 2 else False
+
+            if AUTO_SET_SAIL:
+                pass
+                # TODO: auto set sail navigation.auto_adjust_sail()
+            else:
+                self.sail_pub.publish(String(data=controller_state.left_analog_y))
+            self.rudder_pub.publish(String(data=controller_state.right_analog_x))
 
             if OFFSET_MODE != 0:
                 # TODO: set offsets as relative position of potentiometer
@@ -111,6 +119,8 @@ class Transceiver(Node):
                     self.sail_offset_pub.publish(String(offset))
                 elif OFFSET_MODE == 2:
                     self.rudder_offset_pub.publish(String(offset))
+        else:
+            self.rc_enabled_pub.publish(String(""))
 
 
 def parse_serial(bytes):

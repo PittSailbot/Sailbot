@@ -3,6 +3,8 @@ import math
 import os
 import time
 
+from std_msgs.msg import String
+
 from sailbot.peripherals.GPS import GPS
 from sailbot.peripherals.windvane import WindVane
 from sailbot.utils.eventUtils import Event
@@ -64,8 +66,16 @@ class StationKeeping(Event):
         self.waypoint_queue = []
 
         # SENSORS
-        self.gps = GPS.gps
-        self.windvane = WindVane()
+        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 2)
+        self.position = Waypoint(0, 0)
+        self.windvane_sub = self.create_subscription(String, "windvane", self.windvane_callback, 10)
+        self.wind_angle = 0
+
+    def gps_callback(self, msg):
+        self.position = Waypoint.from_string(msg)
+
+    def windvane_callback(self, msg):
+        self.wind_angle = int(msg)
 
     def next_gps(self):
         """
@@ -79,7 +89,7 @@ class StationKeeping(Event):
 
         # Move to bounds of event
         if not self.event_started:
-            if Waypoint(self.gps.GPS.latitude, self.gps.GPS.longitude) in self.bounds:
+            if Waypoint(self.position.latitude, self.position.longitude) in self.bounds:
                 self.logging.info("Boat has entered the station keeping bounds!")
                 self.event_started = True
                 self.start_time = time.time()
@@ -93,7 +103,7 @@ class StationKeeping(Event):
 
         # Turn to downwind and gtfo
         self.logging.debug("Leaving event bounds")
-        downwind_angle = math.radians(abs(self.windvane.angle + 180) % 360)
+        downwind_angle = math.radians(abs(self.wind_angle + 180) % 360)
 
         escape_point = self.gps.GPS
         escape_point.add_meters(30 * math.cos(downwind_angle), 30 * math.sin(downwind_angle))
