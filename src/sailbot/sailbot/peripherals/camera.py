@@ -1,26 +1,19 @@
 """
 Interface for camera
 """
-import importlib
 import math
 import os
 import time
 
 import cv2
 from rclpy.node import Node
-
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
-folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
-
-gps = importlib.import_module(folder + "GPS").GPS
-CameraServos = importlib.import_module(folder + "cameraServos").CameraServos
-compass = importlib.import_module(folder + "compass").Compass
+from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
 from sailbot.utils.boatMath import distance_between
 from sailbot.utils.utils import Waypoint
+from sailbot.peripherals.cameraServos import CameraServos
 
 
 class Frame:
@@ -52,7 +45,7 @@ class Frame:
         return f"Frame({self.img, self.time, self.gps, self.heading, self.pitch, self.detections})"
 
 
-class Camera:
+class Camera(Node):
     """
     Drivers and interface for camera
 
@@ -67,20 +60,29 @@ class Camera:
     """
 
     def __init__(self):
+        super().__init__("camera")
+        self.logging = self._node.get_logger()
+
         self.path = os.getcwd()
         if c.config["MAIN"]["device"] == "pi":
             self.servos = CameraServos()
-            self.gps = gps()
-            self.compass = compass()
+            self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 2)
+            self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 2)
+
+            self.position = None
+            self.compass_angle = None
         else:
             self._cap = cv2.VideoCapture(int(c.config["CAMERA"]["source"]))
-
-        self._node = Node("camera")
-        self.logging = self._node.get_logger()
 
     def __del__(self):
         if c.config["MAIN"]["device"] != "pi":
             self._cap.release()
+
+    def compass_callback(self, msg):
+        self.compass_angle = int(msg.data())
+
+    def gps_callback(self, msg):
+        self.position = Waypoint.from_string(msg)
 
     def capture(self, context=True, detect=False, annotate=False, save=False) -> Frame:
         """Takes a single picture from camera
@@ -107,9 +109,9 @@ class Camera:
 
         if context:
             frame.time = time.time()
-            frame.gps = Waypoint(gps.longitude, gps.latitude)
+            frame.gps = Waypoint(self.position.longitude, self.position.latitude)
             frame.pitch = self.servos.pitch
-            frame.heading = (self.compass.angle + (self.servos.yaw - 90)) % 360
+            frame.heading = (self.compass_angle + (self.servos.yaw - 90)) % 360
 
         if detect:
             object_detection = ObjectDetection()
@@ -200,7 +202,7 @@ class Camera:
             self.logging.info(f"Focusing on GPS position: {detection}")
             # TODO
             distance = distance_between(self.gps, detection.GPS)
-            boat_angle = compass.angle
+            boat_angle = self.compass_angle
 
             self.servos.yaw = 0
             self.servos.pitch = 70
