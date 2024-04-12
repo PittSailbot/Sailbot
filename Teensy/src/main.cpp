@@ -1,9 +1,14 @@
-#include "sbus.h"
+// Main program running on the Teensy
+// Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
+#include <Arduino.h>
+#include <sbus.h>
+#include <pb.h>
 
-// Replace with data.NUM_CH for dynamic
-#define USED_CHANNELS 9
+#define USED_CHANNELS 9 // Replace with data.NUM_CH for dynamic
 #define RC_LOW 172
 #define RC_HIGH 1811
+
+void printControllerState(bfs::SbusData);
 
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial2);
