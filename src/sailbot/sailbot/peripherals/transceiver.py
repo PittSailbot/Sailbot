@@ -10,7 +10,9 @@ from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.utils.utils import DummyObject
-from sailbot.telemetry.protobuf import controlsData_pb2
+# https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
+# Compile .proto with `protoc teensy.proto --python_out=./`
+from sailbot.telemety.protobuf import teensy_pb2
 
 
 class Transceiver(Node):
@@ -20,7 +22,6 @@ class Transceiver(Node):
         read(): reads the state of the RC controller
 
     Publishes to:
-        - /controller_state TODO: Deprecate (transceiver.py become monolith) or move functionality to main
         - /cmd_sail
         - /offset_sail
         - /cmd_rudder
@@ -81,18 +82,30 @@ class Transceiver(Node):
         self.ser.write(str(data).encode())
 
     def read(self):
-        """Reads incoming data from the RC controller"""
+        """Reads incoming data from the Teensy"""
         self.send("?")  # transceiver is programmed to respond to '?' with its data
 
-        message = self.ser.readline()
-        control_data = parse_serial(message)
+        message = teensy_pb2.Data(self.ser.readline())
 
-        return control_data
+        return message
 
-    def publish_control_signals(self, controller_state):
-        """Publishes the individual controls to each relevant topic"""
-        RC_ENABLED = True if controller_state.top_left_switch == 0 else False
-        RESET_ENABLED = True if controller_state.top_right_switch == 1 else False
+    def publish_control_signals(self, controller: teensy_pb2.Controller):
+        """Publishes the keybind/meaning of each controller input to the relevant topic.
+        Editing this function will 'rebind' what an input does.
+
+        left_analog_y       - Sail
+        right_analog_x      - Rudder
+        right_analog_y      -
+        left_analog_x       -
+        front_left_switch1  - Up (0): N/A     | Mid (1): None        | Down (2): Auto-set sail (RC)
+        front_left_switch2  - Up (0):         | Mid (1):             | Down (2):
+        front_right_switch  - Up (0): default | Mid (1): sail offset | Down (2): rudder offset
+        top_left_switch     - Down (0): RC                           | Up (1): Autonomy
+        top_right_switch    - TODO: Software reset (hold up 5s)
+        potentiometer       - TODO: Sail/Rudder offsets
+        """
+        RC_ENABLED = True if controller.top_left_switch == 0 else False
+        RESET_ENABLED = True if controller.top_right_switch == 1 else False
 
         if RESET_ENABLED:
             # TODO: wait 5s, zero out rudder & sail, then reboot
@@ -102,48 +115,25 @@ class Transceiver(Node):
 
         if RC_ENABLED:
             self.rc_enabled_pub.publish(String("1"))
-            OFFSET_MODE = controller_state.front_right_switch
-            AUTO_SET_SAIL = True if controller_state.front_left_switch1 == 2 else False
+            OFFSET_MODE = controller.front_right_switch
+            AUTO_SET_SAIL = True if controller.front_left_switch1 == 2 else False
 
             if AUTO_SET_SAIL:
                 pass
                 # TODO: auto set sail navigation.auto_adjust_sail()
             else:
-                self.sail_pub.publish(String(data=controller_state.left_analog_y))
-            self.rudder_pub.publish(String(data=controller_state.right_analog_x))
+                self.sail_pub.publish(String(data=controller.left_analog_y))
+            self.rudder_pub.publish(String(data=controller.right_analog_x))
 
             if OFFSET_MODE != 0:
                 # TODO: set offsets as relative position of potentiometer
-                offset = controller_state.potentiometer - 50
+                offset = controller.potentiometer - 50
                 if OFFSET_MODE == 1:
                     self.sail_offset_pub.publish(String(offset))
                 elif OFFSET_MODE == 2:
                     self.rudder_offset_pub.publish(String(offset))
         else:
             self.rc_enabled_pub.publish(String(""))
-
-
-def parse_serial(bytes):
-    """Parses and unpacks RC controller state"""
-    # Byte string is formatted as: b'50\t50\t65\t0\t0\t100\t100...\r\n'
-    # TODO: Deprecate when Teensy is changed to protobuf
-    values = bytes.split(b'\t')
-
-    control_data = DummyObject()
-    control_data.msg = values
-
-    control_data.left_analog_y = str(values[0])       # Sail
-    control_data.right_analog_x = str(values[1])      # Rudder
-    control_data.right_analog_y = str(values[2])
-    control_data.left_analog_x = str(values[3])
-    control_data.front_left_switch1 = str(values[4])  # Up (0): N/A     | Mid (1): None        | Down (2): Auto-set sail (RC)
-    control_data.front_left_switch2 = str(values[5])  # Up (0):         | Mid (1):             | Down (2):
-    control_data.front_right_switch = str(values[6])  # Up (0): default | Mid (1): sail offset | Down (2): rudder offset
-    control_data.top_left_switch = str(values[7])     # Down (0): RC                           | Up (1): Autonomy
-    control_data.top_right_switch = str(values[8])    # Software reset (hold up 5s)
-    control_data.potentiometer = str(values[9])       # Sail/Rudder offsets
-
-    return control_data
 
 
 def main(args=None):
