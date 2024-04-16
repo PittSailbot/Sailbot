@@ -9,17 +9,16 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from sailbot import constants as c
-from sailbot.utils.utils import DummyObject
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
 from sailbot.telemety.protobuf import teensy_pb2
 
 
 class Transceiver(Node):
-    """Handles all communication between the boat and shore
+    """Handles all communication between the boat and shore. Also publishes all sensors on the Teensy.
     Functions:
         send(): sends a string to the to the transmitter
-        read(): reads the state of the RC controller
+        read(): reads the state of the Teensy
 
     Publishes to:
         - /cmd_sail
@@ -27,6 +26,7 @@ class Transceiver(Node):
         - /cmd_rudder
         - /offset_rudder
         - /navigation TODO: Autonomy ON/OFF
+        - /wind_angle
     """
 
     def __init__(self):
@@ -65,18 +65,17 @@ class Transceiver(Node):
         self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
         self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
         self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
+        self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
     def timer_callback(self):
-        """Publishes a binary representation of the RC controller's state.
+        """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
-        controller_state = self.read()
+        teensy_data = teensy_pb2.ParseFromString(self.read())
 
-        msg = String(data=str(controller_state.msg))
-        self.logging.info(f"Publishing: {msg.data}")
+        self.logging.info(f"Received {teensy_data}")
 
-        self.publish_control_signals(controller_state)
-
-        # self.controller_pub.publish(msg)
+        self.publish_controller(teensy_data.controller)
+        self.wind_angle_pub.publish(String(data=teensy_data.windvane.wind_angle))
 
     def send(self, data):
         self.ser.write(str(data).encode())
@@ -89,7 +88,7 @@ class Transceiver(Node):
 
         return message
 
-    def publish_control_signals(self, controller: teensy_pb2.Controller):
+    def publish_controller(self, controller: teensy_pb2.Controller):
         """Publishes the keybind/meaning of each controller input to the relevant topic.
         Editing this function will 'rebind' what an input does.
 

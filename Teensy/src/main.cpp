@@ -2,76 +2,33 @@
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
 #include <sbus.h>
+#include <pb_encode.h>
 #include "teensy.pb.h"
+#include "transceiver.h"
+#include "windvane.h"
 
-#define RC_LOW 172
-#define RC_HIGH 1811
-
-
-void readControllerState(Controller*);
-
-bfs::SbusRx sbus_rx(&Serial2);  // FrSky controller -> Sailboat receiver
-bfs::SbusTx sbus_tx(&Serial2); // Sailboat receiver -> FrSky receiver?
-bfs::SbusData data;
 
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}
-  sbus_rx.Begin();
-  sbus_tx.Begin();
+  setupTransceiver();
+  setupWindvane();
 }
 
 void loop () {
-  Data* pi_data = new Data();
+  Data pi_data = Data_init_default;
 
-  if (sbus_rx.Read()) {
-    data = sbus_rx.data();
-    /*if (Serial.read() == "?") {
-      printControllerState(data);
-    }*/
-    readControllerState(&(pi_data->controller));
-    /* Display lost frames and failsafe data */
-    // Serial.print(data.lost_frame);
-    // Serial.print("\t");
-    // Serial.println(data.failsafe);
-    sbus_tx.data(data);
-    sbus_tx.Write();
+  readControllerState(&pi_data.controller);
+  pi_data.windvane.wind_angle = readWindvane();
 
-    delay(100);
+  uint8_t buffer[TEENSY_PB_H_MAX_SIZE];
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  bool status = pb_encode(&stream, Data_fields, &pi_data);
+
+  for (uint8_t byte : buffer) {
+    Serial.print(byte);
   }
-}
+  Serial.println();
 
-void readControllerState(Controller* controller) {
-  /* EXPECTED RC CONTROLLER FORMAT
-  Max and min trim thresholds are within +-10. They do not effect the max/min value. They only offset the "center" value.
-  - Down/Left reads ~172-180 (Converted to 0)
-    - Front-facing switches are reversed and read 0 on up
-  - Center reads ~980-1000 (Converted to 50)
-  - Up/Right reads ~1795-1811 (Converted to 100)
-  RC receiver still repeats the last controller state when it is off/connection lost. Could cause issues.
-
-  Channels:
-  0 - left_analog_y
-  1 - right_analog_x
-  2 - right_analog_y
-  3 - left_analog_x
-  4 - front_left_switch1
-  5 - front_left_switch2
-  6 - front_right_switch
-  7 - top_left_switch
-  8 - top_right_switch
-  9 - potentiometer
-  10-16 - UNUSED
-  */
-
-  controller->left_analog_y = map(data.ch[0], RC_LOW, RC_HIGH, 0, 100);
-  controller->right_analog_x = map(data.ch[1], RC_LOW, RC_HIGH, 0, 100);
-  controller->right_analog_y = map(data.ch[2], RC_LOW, RC_HIGH, 0, 100);
-  controller->left_analog_x = map(data.ch[3], RC_LOW, RC_HIGH, 0, 100);
-  controller->front_left_switch1 = map(data.ch[4], RC_LOW, RC_HIGH, 0, 2);
-  controller->front_left_switch2 = map(data.ch[5], RC_LOW, RC_HIGH, 0, 2);
-  controller->front_right_switch = map(data.ch[6], RC_LOW, RC_HIGH, 0, 2);
-  controller->top_left_switch = map(data.ch[7], RC_LOW, RC_HIGH, 0, 1);
-  controller->top_right_switch = map(data.ch[8], RC_LOW, RC_HIGH, 0, 1);
-  controller->potentiometer = map(data.ch[9], RC_LOW, RC_HIGH, 0, 100);
+  delay(100);
 }
