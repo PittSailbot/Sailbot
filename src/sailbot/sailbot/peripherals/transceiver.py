@@ -61,10 +61,14 @@ class Transceiver(Node):
         # self.controller_pub = self.create_publisher(String, "controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.rc_enabled_pub = self.create_publisher(String, "rc_enabled", 1)
+
         self.sail_pub = self.create_publisher(String, "cmd_sail", 1)
-        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
         self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
+
+        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
         self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
+        self.prev_offset = 50
+
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
     def timer_callback(self):
@@ -125,12 +129,13 @@ class Transceiver(Node):
             self.rudder_pub.publish(String(data=controller.right_analog_x))
 
             if OFFSET_MODE != 0:
-                # TODO: set offsets as relative position of potentiometer
-                offset = controller.potentiometer - 50
+                relative_offset = controller.potentiometer - self.prev_offset
                 if OFFSET_MODE == 1:
-                    self.sail_offset_pub.publish(String(offset))
+                    self.sail_offset_pub.publish(String(relative_offset))
                 elif OFFSET_MODE == 2:
-                    self.rudder_offset_pub.publish(String(offset))
+                    self.rudder_offset_pub.publish(String(relative_offset))
+            else:
+                self.prev_offset = controller.potentiometer
         else:
             self.rc_enabled_pub.publish(String(""))
 
