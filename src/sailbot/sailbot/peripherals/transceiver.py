@@ -100,13 +100,13 @@ class Transceiver(Node):
         front_left_switch2  - Up (0):         | Mid (1):             | Down (2):
         front_right_switch  - Up (0): default | Mid (1): sail offset | Down (2): rudder offset
         top_left_switch     - Down (0): RC                           | Up (1): Autonomy
-        top_right_switch    - TODO: Software reset (hold up 5s)
+        top_right_switch    - TODO: Software reset (hold up 5s)  # Reset switch broken so disabled ;(
         potentiometer       - TODO: Sail/Rudder offsets
         """
         RC_ENABLED = True if controller.top_left_switch == 0 else False
         RESET_ENABLED = True if controller.top_right_switch == 1 else False
 
-        if RESET_ENABLED:
+        if False and RESET_ENABLED:
             # TODO: wait 5s, zero out rudder & sail, then reboot
             self.sail_pub.publish(String(0))
             self.rudder_pub.publish(String(50))
