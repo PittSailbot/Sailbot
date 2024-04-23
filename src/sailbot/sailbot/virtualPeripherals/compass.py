@@ -27,7 +27,8 @@ class Compass(Node):
         self.logging = self.get_logger()
 
         self.pub = self.create_publisher(String, "compass", 10)
-        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.timer = self.create_timer(1.0, self.timer_callback)
+        self.timer2 = self.create_timer(15, self.angle_increment)
 
         self.compassAngle = 0
 
@@ -40,8 +41,10 @@ class Compass(Node):
     @property
     def angle(self):
         # returns smoothed angle measurement
-        self.compassAngle += 10
         return self.compassAngle
+    
+    def angle_increment(self):
+        self.compassAngle += 45
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"

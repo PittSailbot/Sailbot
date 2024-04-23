@@ -356,7 +356,7 @@ def dataJSON():
                 "queuedWaypoints": DATA.boat_event_coords,
                 'relative_wind': DATA.relative_wind,
                 "compass_dir": DATA.compass.angle,
-                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon)
+                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle
                 }
     return jsonDict
 
@@ -584,6 +584,7 @@ def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     angle_rad = math.atan2(y, x)
     
     # Convert the angle from radians to degrees
+    print(math.degrees(angle_rad))
     return math.degrees(angle_rad)
 
 if __name__ == "__main__":
