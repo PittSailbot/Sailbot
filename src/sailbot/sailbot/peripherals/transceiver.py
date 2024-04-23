@@ -7,21 +7,29 @@ import os
 from sailbot.telemetry.protobuf import controlsData_pb2
 import rclpy
 import serial
-import smbus2 as smbus  # ,smbus2
+import smbus2 as smbus
 from rclpy.node import Node
 from std_msgs.msg import String
-from dataclasses import dataclass
 
 from sailbot import constants as c
-
-I2C_SLAVE_ADDRESS = 0x10
+# https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
+# Compile .proto with `protoc teensy.proto --python_out=./`
+from sailbot.telemety.protobuf import teensy_pb2
 
 
 class Transceiver(Node):
-    """Handles all communication between the boat and shore
+    """Handles all communication between the boat and shore. Also publishes all sensors on the Teensy.
     Functions:
         send(): sends a string to the to the transmitter
-        read(): reads the state of the RC controller
+        read(): reads the state of the Teensy
+
+    Publishes to:
+        - /cmd_sail
+        - /offset_sail
+        - /cmd_rudder
+        - /offset_rudder
+        - /navigation TODO: Autonomy ON/OFF
+        - /wind_angle
     """
 
     def __init__(self):
@@ -35,125 +43,107 @@ class Transceiver(Node):
         for i, port in enumerate(ports):
             try:
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
-                # May cause runtime latency tho if not threaded and the transceiver arduino code isn't writing anything to serial
+                # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
-                assert self.readData() is not None
+                assert self.read() is not None
+
+            except OSError:
+                self.logging.warning(f"No transceiver detected on port: {port}")
+                if i == len(ports) - 1:
+                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                    raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
 
             except Exception as e:
-                self.logging.warning(f"Failed to read from port: {port}\nRaised: {e}")
+                self.logging.error(f"Failed to read from port: {port}\nRaised: {e}")
+                raise e
 
-                if i == len(ports) - 1:
-                    self.logging.fatal("Failed to read from all transceiver ports!")
-                    raise RuntimeError("Failed to read from all transceiver ports")
             else:
                 self.logging.info(f"Transceiver initialized with port: {port}")
                 break
 
         self.I2Cbus = smbus.SMBus(1)
 
-        # self.sail_publisher = self.create_publisher(String, "transceiver", 10)
-        # self.rudder_publisher = self.create_publisher(String, "transceiver", 10)
+        # self.controller_pub = self.create_publisher(String, "controller_state", 10)
+        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.rc_enabled_pub = self.create_publisher(String, "rc_enabled", 1)
+
+        self.sail_pub = self.create_publisher(String, "cmd_sail", 1)
+        self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
+
+        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
+        self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
+        self.prev_offset = 50
+
+        self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
     def timer_callback(self):
-        msg = String()
-        msg.data = self.readData()
-        self.logging.info('Publishing: "%s"' % msg.data)
-        self.pub.publish(msg)
+        """Publishes all data received from the teensy onto the relevant topics
+        Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
+        teensy_data = teensy_pb2.ParseFromString(self.read())
+
+        self.logging.info(f"Received {teensy_data}")
+
+        self.publish_controller(teensy_data.controller)
+        self.wind_angle_pub.publish(String(data=teensy_data.windvane.wind_angle))
 
     def send(self, data):
         self.ser.write(str(data).encode())
 
-    def read(self) -> str or None:
-        """Reads incoming data from the RC controller"""
-        message = self.ser.readline()
-        message = message.decode().replace("\r\n", "").replace("b'", "").replace("\\r\\n'", "")
+    def read(self):
+        """Reads incoming data from the Teensy"""
+        self.send("?")  # transceiver is programmed to respond to '?' with its data
 
-        if message is None or message == "'" or message == "":
-            return None
-
-        self.logging.debug(f"Received message {message}")
+        message = teensy_pb2.Data(self.ser.readline())
 
         return message
 
-    def readData(self) -> str:
-        """Reads rudder/sail position"""
-        self.send("?")  # transceiver is programmed to respond to '?' with its data
+    def publish_controller(self, controller: teensy_pb2.Controller):
+        """Publishes the keybind/meaning of each controller input to the relevant topic.
+        Editing this function will 'rebind' what an input does.
 
-        msg = self.read()
+        left_analog_y       - Sail
+        right_analog_x      - Rudder
+        right_analog_y      -
+        left_analog_x       -
+        front_left_switch1  - Up (0): N/A     | Mid (1): None        | Down (2): Auto-set sail (RC)
+        front_left_switch2  - Up (0):         | Mid (1):             | Down (2):
+        front_right_switch  - Up (0): default | Mid (1): sail offset | Down (2): rudder offset
+        top_left_switch     - Down (0): RC                           | Up (1): Autonomy
+        top_right_switch    - TODO: Software reset (hold up 5s)  # Reset switch broken so disabled ;(
+        potentiometer       - TODO: Sail/Rudder offsets
+        """
+        RC_ENABLED = True if controller.top_left_switch == 0 else False
+        RESET_ENABLED = True if controller.top_right_switch == 1 else False
 
-        if msg is None:
-            time.sleep(1)
-            msg = self.read()
-            if msg is None:
-                raise RuntimeError("Lost serial connection to transceiver")
-            
-        controlData = controlsData_pb2.ControlData()
-        controlData.ParseFromString(msg)
+        if False and RESET_ENABLED:
+            # TODO: wait 5s, zero out rudder & sail, then reboot
+            self.sail_pub.publish(String(0))
+            self.rudder_pub.publish(String(50))
+            return
 
-        print(f"Left Analog Y: {controlData.left_analog_y}")
-        print(f"Left Potentiometer: {controlData.left_potentiometer}")
-        return str(msg)
+        if RC_ENABLED:
+            self.rc_enabled_pub.publish(String("1"))
+            OFFSET_MODE = controller.front_right_switch
+            AUTO_SET_SAIL = True if controller.front_left_switch1 == 2 else False
 
+            if AUTO_SET_SAIL:
+                pass
+                # TODO: auto set sail navigation.auto_adjust_sail()
+            else:
+                self.sail_pub.publish(String(data=controller.left_analog_y))
+            self.rudder_pub.publish(String(data=controller.right_analog_x))
 
-def ConvertStringsToBytes(src) -> list[int]:
-    converted = []
-    for b in src:
-        converted.append(ord(b))
-    return converted
-
-
-def GetModeAndOffset(readModeVal, readOffsetVal):
-    modes = { # mappings of the read mode integer to the function that should be used with the offsetValue
-        "controlOff": 0,
-        "sailOffset": 45,
-        "rudderOffset": 90
-    }
-
-    bestMode = None
-    bestVal = None
-    for key, value in modes.items():
-        if bestVal is None or abs(readModeVal - value) < bestVal:
-            bestMode = key
-            bestVal = abs(readModeVal - value)
-
-    if bestMode == "sailOffset":
-        offset = map(readOffsetVal, 0, 90, -2, 2)
-
-    elif bestMode == "rudderOffset":
-        offset = map(readOffsetVal, 0, 90, -0.2, 0.2)
-
-    else:
-        offset = 0
-
-    return bestMode, offset
-
-
-def map(x, min1, max1, min2, max2):
-    # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
-    # ex: map(0.3, 0, 1, 0, 100) returns 30
-    # ex: map(70, 0, 100, 0, 1) returns .7
-    x = min(max(x, min1), max1)
-    return min2 + (max2-min2)*((x-min1)/(max1-min1))
-
-
-@dataclass
-class Controller:
-    """
-    Stores the current state of the RC controller as read from the transceiver
-        - Analog and potentiometers range from 0-100
-        - Switches can be 0 (down), 1 (center), or 2 (up)
-    """
-
-    left_analog_x: int
-    left_analog_y: int  # Sail
-    right_analog_x: int  # Rudder
-    right_analog_y: int
-    front_left_switch: int  # Offset mode (0 - Rudder, 2 - Sail)
-    left_potentiometer: int  # Offset
-    front_right_switch: int  # Autonomy (0 - Autonomous, 2 - RC)
-    top_left_switch: int
-    top_right_switch: int
+            if OFFSET_MODE != 0:
+                relative_offset = controller.potentiometer - self.prev_offset
+                if OFFSET_MODE == 1:
+                    self.sail_offset_pub.publish(String(relative_offset))
+                elif OFFSET_MODE == 2:
+                    self.rudder_offset_pub.publish(String(relative_offset))
+            else:
+                self.prev_offset = controller.potentiometer
+        else:
+            self.rc_enabled_pub.publish(String(""))
 
 
 def main(args=None):

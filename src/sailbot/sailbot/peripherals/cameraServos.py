@@ -6,10 +6,8 @@ import adafruit_servokit
 from rclpy.node import Node
 
 from sailbot import constants as c
-from sailbot.utils.utils import singleton
 
 
-@singleton
 class CameraServos(Node):
     """
     Drivers and interface for camera servos

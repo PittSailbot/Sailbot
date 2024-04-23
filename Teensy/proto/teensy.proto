@@ -1,0 +1,38 @@
+// Return data from all the sensors on the teensy to be read by the pi
+
+// RECOMPILE src/sailbot/sailbot/telemetry/protobuf/teensy_pb2.py IF THIS FILE IS CHANGED!
+// https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
+// Compile .proto with `protoc teensy.proto --python_out=./`
+
+syntax = "proto3";
+
+// package sailbot;
+
+message Data {
+    optional Controller controller = 1;
+    optional Command command = 2;
+    optional WindVane windvane = 3;
+}
+
+// RC Controller State
+message Controller {
+    int32 left_analog_y = 1;
+    int32 right_analog_x = 3;
+    int32 right_analog_y = 2;
+    int32 left_analog_x = 4;
+    int32 front_left_switch1 = 5;
+    int32 front_left_switch2 = 6;
+    int32 front_right_switch = 7;
+    int32 top_left_switch = 8;
+    int32 top_right_switch = 9;
+    int32 potentiometer = 10;
+}
+
+// String commands from laptop LoRa transceiver
+message Command {
+    string msg = 1;
+}
+
+message WindVane {
+    int32 wind_angle = 1;
+}

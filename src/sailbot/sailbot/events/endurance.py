@@ -47,28 +47,15 @@ class Endurance(Event):
             event_info["waypoint2"],
             event_info["waypoint3"],
             event_info["waypoint4"],
-        ]
+        ] * 10
         # TODO: ADD ROUNDING BUFFER to waypoints
         rounding_buffer = c.config["ENDURANCE"]["rounding_buffer"]
 
-        self.gps_subscription = self.create_subscription(
-            String, "GPS", self.ROS_GPSCallback, 10
-        )
+        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 10)
+        self.position = Waypoint(0, 0)
 
-    def ROS_GPSCallback(self, data):
-        string = data.data
-
-        lat, lon, trackangle = string.replace("(", "").replace(")", "").split(",")
-        currentPos = Waypoint(float(lat), float(lon))
-
-        if distance_between(currentPos, self.waypoint_queue[0]) < float(
-            c.config["CONSTANTS"]["reached_waypoint_distance"]
-        ):
-            self.logging.info(
-                f"reached: {self.waypoint_queue[0]}, moving to: {self.waypoint_queue[1]}"
-            )
-            self.waypoint_queue.append(self.waypoint_queue[0])
-            self.waypoint_queue.pop(0)
+    def gps_callback(self, msg):
+        self.position = Waypoint.from_string(msg)
 
     def next_gps(self):
         """
@@ -80,7 +67,7 @@ class Endurance(Event):
             - OR EventFinished exception to signal that the event has been completed
         """
 
-        if has_reached_waypoint(self.waypoint_queue[0], distance=10):
+        if distance_between(self.position, self.waypoint_queue[0]) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info("Rounded buoy")
             self.waypoint_queue.pop()
 

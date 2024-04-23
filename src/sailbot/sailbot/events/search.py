@@ -4,6 +4,7 @@ import os
 import time
 
 import matplotlib.pyplot as plt
+from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between
@@ -109,8 +110,11 @@ class Search(Event):
 
         # SENSORS
         self.camera = Camera()
-        self.gps = gps()
-        self.transceiver = arduino(c.config["MAIN"]["ardu_port"])  # TODO: fix transceiver ref
+        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 2)
+        self.position = Waypoint(0, 0)
+
+    def gps_callback(self, msg):
+        self.position = Waypoint.from_string(msg)
 
     def next_gps(self):
         """
@@ -223,13 +227,11 @@ class Search(Event):
 
             if distance_to_buoy < self.collision_sensitivity:
                 self.logging.info(f"Sailbot touched the buoy! Search event finished!")
-                self.transceiver.send("Sailbot touched the buoy!")
                 raise EventFinished
 
         # Times up... fuck it and assume that we touched the buoy
         if time.time() - self.start_time > self.event_duration:
             self.logging.info(f"Sailbot totally touched the buoy... Search event finished!")
-            self.transceiver.send("Sailbot touched the buoy!")
             raise EventFinished
 
     def create_search_pattern(self, num_points=None):

@@ -6,23 +6,10 @@ import json
 
 import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
+from std_msgs.msg import String, Bool
 
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between
-
-
-def singleton(cls):
-    """A decorator which prevents duplicate classes from being created.
-    Useful for physical objects where only one exists.
-        - Import, then invoke use @singleton before class definition"""
-    instances = {}
-
-    def get_instance(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return get_instance
 
 
 @dataclass(slots=True)
@@ -40,6 +27,14 @@ class Waypoint:
 
     def __repr__(self):
         return f"Waypoint({self.lat, self.lon})"
+
+    def to_string(self) -> String():
+        return String(f"{self.lat},{self.lon}")
+
+    @staticmethod
+    def from_string(string: String()):
+        vals = str(string.data()).split(',')
+        return Waypoint(float(vals[0]), float(vals[1]))
 
     def add_meters(self, dx, dy):
         """Updates the waypoint gps by adding meters to the latitude and longitude"""

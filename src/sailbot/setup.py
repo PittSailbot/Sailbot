@@ -10,8 +10,6 @@ package_name = "sailbot"
 data_files=[]
 data_files.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
 data_files.append(('share/' + package_name, ['package.xml']))
-data_files.append(('share/' + package_name + '/launch', glob('launch/*.launch.py')))
-data_files.append(('share/' + package_name + '/config', glob('config/*.yaml')))
 
 data_files.append(('lib/sailbot/', glob(package_name + '/*.py')))
 data_files.append(('lib/sailbot/', glob('*.ini')))
@@ -19,6 +17,7 @@ data_files.append(('lib/sailbot/CV/', glob(package_name + '/CV/*.py')))
 data_files.append(('lib/sailbot/events/', glob(package_name + '/events/*.py')))
 data_files.append(('lib/sailbot/peripherals/', glob(package_name + '/peripherals/*.py')))
 data_files.append(('lib/sailbot/utils/', glob(package_name + '/utils/*.py')))
+data_files.append(('lib/sailbot/telemetry/protobuf/', glob(package_name + '/telemetry/protobuf/*.py')))
 data_files.append(('lib/sailbot/virtualPeripherals/', glob(package_name + '/virtualPeripherals/*.py')))
 data_files.append(('lib/sailbot/websiteHosting/', glob(package_name + '/websiteHosting/*.py')))
 data_files.append(('lib/sailbot/websiteHosting/templates/', glob(package_name + '/websiteHosting/templates/*')))
@@ -27,7 +26,11 @@ data_files.append(('lib/sailbot/websiteHosting/static/js/', glob(package_name + 
 data_files.append(('lib/sailbot/websiteHosting/static/images/', glob(package_name + '/websiteHosting/static/images/*')))
 data_files.append(('lib/sailbot/websiteHosting/static/leaflet/images/', glob(package_name + '/websiteHosting/static/leaflet/images/*')))
 data_files.append(('lib/sailbot/websiteHosting/static/leaflet/', glob(package_name + '/websiteHosting/static/leaflet/*.*')))
-data_files.append(('lib//python3.10/site-packages/sailbot/telemetry/protobuf/', glob(package_name + '/telemetry/protobuf/*.py')))
+
+data_files.append(('share/' + package_name + '/launch', glob('launch/*.launch.py')))
+data_files.append(('share/' + package_name + '/config', glob('config/*.yaml')))
+
+
 setup(
     name=package_name,
     version="0.0.0",
