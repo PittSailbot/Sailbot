@@ -19,37 +19,30 @@ def generate_launch_description():
         [
             DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
             Node(package="sailbot",
-                namespace="boat",
-                executable="navigation",
-                name="navigation",
-                arguments=["--ros-args","--log-level",LaunchConfiguration("log_level")],
-            ),
+                 namespace="boat",
+                 executable="navigation",
+                 name="navigation",
+                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                 ),
             Node(
                 package="sailbot",
                 namespace="boat",
                 executable="compass",
                 name="compass",
-                arguments=["--ros-args","--log-level",LaunchConfiguration("log_level")],
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
             ),
             Node(
                 package="sailbot",
                 namespace="boat",
                 executable="gps",
                 name="gps",
-                arguments=["--ros-args","--log-level",LaunchConfiguration("log_level")],
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
             ),
             Node(
                 package="sailbot",
                 namespace="boat",
                 executable="transceiver",
                 name="transceiver",
-                arguments=["--ros-args","--log-level", LaunchConfiguration("log_level")]
-            ),
-            Node(
-                package="sailbot",
-                namespace="boat",
-                executable="windvane",
-                name="windvane",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")]
             ),
             Node(
