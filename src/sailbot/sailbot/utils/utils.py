@@ -28,12 +28,17 @@ class Waypoint:
     def __repr__(self):
         return f"Waypoint({self.lat, self.lon})"
 
-    def to_string(self) -> String():
-        return String(f"{self.lat},{self.lon}")
+    def to_string(self) -> String:
+        s = String()
+        s.data = f"{self.lat},{self.lon}"
+        return s
 
     @staticmethod
-    def from_string(string: String()):
-        vals = str(string.data()).split(',')
+    def from_string(string: String):
+        if string.data == '':
+            return Waypoint(None, None)
+        
+        vals = str(string.data).split(',')
         return Waypoint(float(vals[0]), float(vals[1]))
 
     def add_meters(self, dx, dy):

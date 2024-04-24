@@ -39,7 +39,8 @@ DOCKER = True if DOCKER == "True" else False
 if DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
-    TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
+    # TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
+    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 else:
     raise Exception("configure ports and tile server for pi")
 
@@ -160,6 +161,21 @@ class LogDatabase:
 
         return logs
 
+    def get_breadcrumbs_from_logs(self):
+        query = 'SELECT * FROM logs WHERE level >= ?'
+        params = [0]
+        query += ' AND name LIKE ?'
+        params.append(f'%GPS%')
+
+        logs = self.get_logs(query, params)
+
+        coords = []
+        for log in logs:
+            if log['msg'].startswith("GPS Publishing:"):
+                gps_data = log['msg'].split(":", 1)[1].replace('"', '').split(",")
+                coords.append(Waypoint(gps_data[0], gps_data[1]))
+
+        return coords
 
 class Website(Node):
     def __init__(self):
@@ -178,8 +194,9 @@ class Website(Node):
             "odrive_axis1": f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}",
         }
 
-        self.displayedBreadcrumbs = []
         self.logDB = LogDatabase(self)
+        self.displayedBreadcrumbs = self.logDB.get_breadcrumbs_from_logs()
+        
 
         self.waypoints = [
             {"name": "Waypoint 1", "lat": "42.849135", "lon": "-70.966314"},
@@ -212,7 +229,10 @@ class Website(Node):
             Log, "/rosout", self.ROS_LogCallback, 10 # all log messages are published to this topic
         )
         self.boat_state_subscription = self.create_subscription(
-            String, "/boat/boat_state", self.ROS_boatStateCallback, 10
+            String, "/boat/next_gps", self.ROS_nextGpsCallback, 10
+        )
+        self.rc_enabled_sub = self.create_subscription(
+            String, "/boat/rc_enabled", self.ROS_isRcCallback, 2
         )
         self.queued_waypoints_subscription = self.create_subscription(
             String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10
@@ -320,12 +340,16 @@ class Website(Node):
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
 
-    def ROS_boatStateCallback(self, string):
-        string = string.data
-        boatState = json.loads(string)
+    def ROS_nextGpsCallback(self, msg):
+        next_gps = Waypoint.from_string(msg)
+        # string = string.data
+        # boatState = json.loads(string)
 
-        self.boat_isRC = str(boatState['is_RC'])
-        self.boat_target = Waypoint(boatState['next_lat'], boatState['next_lon'])
+        # self.boat_isRC = str(boatState['is_RC'])
+        self.boat_target = next_gps
+
+    def ROS_isRcCallback(self, msg):
+        self.boat_isRC == msg.data == "1"
   
     def ROS_queuedWaypointsCallback(self, string):
         string = string.data
@@ -356,7 +380,7 @@ def dataJSON():
                 "queuedWaypoints": DATA.boat_event_coords,
                 'relative_wind': DATA.relative_wind,
                 "compass_dir": DATA.compass.angle,
-                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle
+                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0
                 }
     return jsonDict
 
@@ -439,10 +463,14 @@ def search_results():
     # display the logs
     return logs(DATA.logDB.get_logs(query, params))
 
-@app.route("/breadcrumbs")
-def breadcrumbs():
-    jsonDict = {"breadcrumbs": [wp.toJson() for wp in DATA.displayedBreadcrumbs]}
-    return jsonDict
+@app.route("/breadcrumbs/<int:n>")
+def breadcrumbs(n):
+    if n > 0:
+        recent_breadcrumbs = DATA.displayedBreadcrumbs[-n:]  # Get the last n breadcrumbs
+    else:
+        recent_breadcrumbs = DATA.displayedBreadcrumbs
+    jsonDict = {"breadcrumbs": [wp.toJson() for wp in recent_breadcrumbs]}
+    return jsonify(jsonDict)
 
 @app.route("/waypoints")
 def waypoints():
@@ -584,7 +612,6 @@ def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     angle_rad = math.atan2(y, x)
     
     # Convert the angle from radians to degrees
-    print(math.degrees(angle_rad))
     return math.degrees(angle_rad)
 
 if __name__ == "__main__":

@@ -46,21 +46,21 @@ class Event(Node):
             if key not in self.required_args and key not in self.base_required_args:
                 self.logging.warning(f"Found unused key in {self.__class__.__name__}: {key}")
 
-        self.pub = self.create_publisher(String, "next_GPS", 10)
+        self.pub = self.create_publisher(String, "next_gps", 10)
         timer_period = 5.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         try:
-            target = self.next_gps().toJson()
+            waypoint = self.next_gps()
+            target = waypoint.to_string()
         except Exception as e:
             self.logging.error(F"{self.__class__.__name__} failed to get next GPS with error: {e}")
-            target = str(None)
+            target = String()
+            target.data = ""
 
-        msg = String()
-        msg.data = target
-        self.pub.publish(msg)
-        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {msg.data}")
+        self.pub.publish(target)
+        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {waypoint}")
 
     @abstractmethod
     def next_gps(self):

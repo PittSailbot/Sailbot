@@ -61,7 +61,8 @@ setup(
             "virtualWindvane = sailbot.virtualPeripherals.windvane:main",
             "rosTest = sailbot.rosTest:main",
             'networkLogger = sailbot.utils.NetworkLogger:main',
-            'dummyEvent = sailbot.events.DummyEvent:main'
+            'dummyEvent = sailbot.events.DummyEvent:main',
+            'navigation = sailbot.navigation:main'
         ],
     },
 )

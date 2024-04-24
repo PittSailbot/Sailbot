@@ -206,7 +206,7 @@
 
             <br><br>
             <div id="BoatTargetGPS">
-                Boat GPS:
+                Target GPS:
                 <br><span id="boatTargetLatitude"></span>
                 <br><span id="boatTargetLongitude"></span>
             </div>
@@ -375,7 +375,7 @@
                             if (data.status === 'success') {
                                 distanceInfoElement.innerHTML = `Distance between click location and selected waypoint: ${data.distance.toFixed(2)} meters`;
                             } else {
-                                distanceInfoElement.innerHTML = 'Failed to calculate distance';
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance from click location to selected waypoint';
                             }
                         })
                         .catch(error => {
@@ -550,17 +550,22 @@
                 fetchAndCalculateTargetDistance();
             }
 
-            const fetchAndAddBreadcrumbs = async() => {
-                const response = await  fetch('/breadcrumbs');
-                if (!response.ok) {throw Error(response.statusText);}
-                var json = await response.json();
-                for (index in json.breadcrumbs){
-                    breadcrumb = JSON.parse(json.breadcrumbs[index])
-                    var circleMarker = L.circleMarker([breadcrumb.lat, breadcrumb.lon], {
-                                color: '#00F',
-                                radius: 1
-                            }).addTo(map);
+            let firstFetch = true;
+            const fetchAndAddBreadcrumbs = async (limit = 5) => {
+                let actualLimit = firstFetch ? 0 : limit;
+                const response = await fetch(`/breadcrumbs/${actualLimit}`);
+                if (!response.ok) {
+                    throw Error(response.statusText);
                 }
+                const json = await response.json();
+                for (const breadcrumb of json.breadcrumbs) {
+                    const parsedBreadcrumb = JSON.parse(breadcrumb);
+                    const circleMarker = L.circleMarker([parsedBreadcrumb.lat, parsedBreadcrumb.lon], {
+                        color: '#00F',
+                        radius: 1
+                    }).addTo(map);
+                }
+                firstFetch = false;
             }
             
             let existingCircles = [];
@@ -644,7 +649,7 @@
                     if (target_lat !== null && target_lon !== null) {
 
                         document.getElementById("BoatTargetGPS").innerHTML = `
-                            Boat GPS:
+                            Target GPS:
                             <br><span id="boatTargetLatitude">${target_lat}</span>
                             <br><span id="boatTargetLongitude">${target_lon}</span>
                         `;

@@ -13,14 +13,12 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "log_level", default_value=TextSubstitution(text=str("INFO"))
-            ),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="drivers",
-                name="node_Drivers",
+                executable="navigation",
+                name="node_Navigation",
                 arguments=[
                     "--ros-args",
                     "--log-level",
@@ -28,10 +26,32 @@ def generate_launch_description():
                 ],
             ),
             Node(
-                package="sailbot", 
-                namespace="boat", 
-                executable="main", 
-                name="node_Main",
+                package="sailbot",
+                namespace="boat",
+                executable="transceiver",
+                name="node_Transceiver",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="sail",
+                name="node_Sail",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="rudder",
+                name="node_Rudder",
                 arguments=[
                     "--ros-args",
                     "--log-level",
