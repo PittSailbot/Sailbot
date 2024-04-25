@@ -1,4 +1,5 @@
 export ROS_DOMAIN_ID=0
+unset ROS_LOCALHOST_ONLY
 rm -r build
 rm -r install
 colcon build

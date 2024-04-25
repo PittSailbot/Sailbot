@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 from threading import Thread
+import platform
 
 RUN_COMMAND   = ""
 # Script assumes chat server is launched with the command:
@@ -11,6 +12,21 @@ RUN_COMMAND   = ""
 
 NETWORK_NAME  = "SailNet"
 IP_BASE       = "172.30.100."
+
+OS_PI = "Raspberry Pi"
+OS_NOT_PI = "Not Pi"
+
+def get_os():
+    system = platform.system()
+    if system == 'Linux':
+        # Check if it's a Raspberry Pi or an Ubuntu desktop
+        release = platform.release()
+        if "raspi" in release or 'raspberry' in release:
+            return OS_PI
+        else:
+            return OS_NOT_PI
+    else:
+        return OS_NOT_PI
 
 def get_args(argv):
     parser = argparse.ArgumentParser(description="Script for testing sailbot code")
@@ -25,12 +41,14 @@ def get_args(argv):
 
     parser_init = subparsers.add_parser('run', description='Initialize Docker container')
     parser_init.add_argument('-nd', action='store_true', help="prevent the docker container from being deleted when closed")
-    parser_init.add_argument('--name', help="name the docker container")
-    parser_init.add_argument('--id', help="id of the docker container, used for ip address assignment")
+    # parser_init.add_argument('--name', help="name the docker container")
+    # parser_init.add_argument('--id', help="id of the docker container, used for ip address assignment")
     parser_init.add_argument('--image', help="name the docker image to use")
     parser_init.set_defaults(func=init_container)
 
     parser_connect = subparsers.add_parser('connect', description='connect to Docker container')
+    # parser_connect.add_argument('--name', help="name the docker container")
+    # parser_connect.add_argument('--id', help="id of the docker container, used for ip address assignment")
     parser_connect.set_defaults(func=connect_container)
 
     parser_vnc = subparsers.add_parser('runVNC', description='Initialize Docker container with VNC')
@@ -68,15 +86,18 @@ def init_network(args):
 
 # Create server containers and attach them to bridge network
 def init_container(args):
-    name = args.name if args.name else 'sailbot_client'
+    name = 'sailbot_client' #args.name if args.name else 'sailbot_client'
     image = args.image if args.image else 'sailbot'
-    id = int(args.id) if args.id else 1
+    id = 1 #int(args.id) if args.id else 1
     ports = container_ports(id)
 
     name = F'\"{name}_{id}\"'
 
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
-    cmd_str = F"docker create -t -it --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
+    privileged = "--privileged" if get_os() == OS_PI else ""
+    # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
+    cmd_str = F"docker create {privileged} -t -it --network host -p {ports} --name {name} {image}"
+
     subprocess.run(cmd_str, shell=True)
     #subprocess.Popen(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -95,9 +116,14 @@ def init_container(args):
         cleanup(args)
 
 def connect_container(args):
+    name = args.name if args.name else 'sailbot_client'
+    id = int(args.id) if args.id else 1
+
+    name = F'\"{name}_{id}\"'
+
     print("type: 'exit' to close connection")
 
-    cmd_str = "docker exec -it sailbot_client bash"
+    cmd_str = F"docker exec -it {name} bash"
     subprocess.run(cmd_str, shell=True)
 
 def init_vnc(args):

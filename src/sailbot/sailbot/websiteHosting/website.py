@@ -42,7 +42,10 @@ if DOCKER:
     # TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
     TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 else:
-    raise Exception("configure ports and tile server for pi")
+    # raise Exception("configure ports and tile server for pi")
+    PORTS = os.environ.get("PORTS", "5000:5000")
+    PORT = int(PORTS.split(':')[0])
+    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
