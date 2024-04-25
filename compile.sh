@@ -1,7 +1,7 @@
 #export PYTHONPATH=$PYTHONPATH:/workspace/install/sailbot/lib # this should be added to .bashrc
 source /opt/ros/humble/setup.bash
 export ROS_DOMAIN_ID=0
-export ROS_LOCALHOST_ONLY=1
+unset ROS_LOCALHOST_ONLY
 cd /home/pi/Sailbot
 rm -r build
 rm -r install
