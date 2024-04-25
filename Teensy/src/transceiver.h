@@ -2,7 +2,7 @@
 #define TRANSCEIVER_H
 #include "teensy.pb.h"
 
-void setupTransceiver();
-void readControllerState(Controller*);
+extern void setupTransceiver();
+extern void readControllerState(Controller*);
 
 #endif

@@ -12,6 +12,7 @@ message Data {
     optional Controller controller = 1;
     optional Command command = 2;
     optional WindVane windvane = 3;
+    optional WaterSensors water_sensors = 4;
 }
 
 // RC Controller State
@@ -35,4 +36,10 @@ message Command {
 
 message WindVane {
     int32 wind_angle = 1;
+}
+
+message WaterSensors {
+    optional bool sensor1_is_wet = 1;
+    optional bool sensor2_is_wet = 2;
+    optional bool sensor3_is_wet = 3;
 }

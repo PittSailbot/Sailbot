@@ -1,7 +1,7 @@
 // Reads the RC controller state from the FrSky receiver
 #include <Arduino.h>
 #include <sbus.h>
-#include "teensy.pb.h"
+#include "transceiver.h"
 
 #define RC_LOW 172
 #define RC_HIGH 1811

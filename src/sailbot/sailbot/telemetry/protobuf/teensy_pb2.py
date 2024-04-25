@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cteensy.proto\"\x96\x01\n\x04\x44\x61ta\x12$\n\ncontroller\x18\x01 \x01(\x0b\x32\x0b.ControllerH\x00\x88\x01\x01\x12\x1e\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x08.CommandH\x01\x88\x01\x01\x12 \n\x08windvane\x18\x03 \x01(\x0b\x32\t.WindVaneH\x02\x88\x01\x01\x42\r\n\x0b_controllerB\n\n\x08_commandB\x0b\n\t_windvane\"\x88\x02\n\nController\x12\x15\n\rleft_analog_y\x18\x01 \x01(\x05\x12\x16\n\x0eright_analog_x\x18\x02 \x01(\x05\x12\x16\n\x0eright_analog_y\x18\x03 \x01(\x05\x12\x15\n\rleft_analog_x\x18\x04 \x01(\x05\x12\x1a\n\x12\x66ront_left_switch1\x18\x05 \x01(\x05\x12\x1a\n\x12\x66ront_left_switch2\x18\x06 \x01(\x05\x12\x1a\n\x12\x66ront_right_switch\x18\x07 \x01(\x05\x12\x17\n\x0ftop_left_switch\x18\x08 \x01(\x05\x12\x18\n\x10top_right_switch\x18\t \x01(\x05\x12\x15\n\rpotentiometer\x18\n \x01(\x05\"\x16\n\x07\x43ommand\x12\x0b\n\x03msg\x18\x01 \x01(\t\"\x1e\n\x08WindVane\x12\x12\n\nwind_angle\x18\x01 \x01(\x05\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cteensy.proto\"\xd3\x01\n\x04\x44\x61ta\x12$\n\ncontroller\x18\x01 \x01(\x0b\x32\x0b.ControllerH\x00\x88\x01\x01\x12\x1e\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x08.CommandH\x01\x88\x01\x01\x12 \n\x08windvane\x18\x03 \x01(\x0b\x32\t.WindVaneH\x02\x88\x01\x01\x12)\n\rwater_sensors\x18\x04 \x01(\x0b\x32\r.WaterSensorsH\x03\x88\x01\x01\x42\r\n\x0b_controllerB\n\n\x08_commandB\x0b\n\t_windvaneB\x10\n\x0e_water_sensors\"\x88\x02\n\nController\x12\x15\n\rleft_analog_y\x18\x01 \x01(\x05\x12\x16\n\x0eright_analog_x\x18\x03 \x01(\x05\x12\x16\n\x0eright_analog_y\x18\x02 \x01(\x05\x12\x15\n\rleft_analog_x\x18\x04 \x01(\x05\x12\x1a\n\x12\x66ront_left_switch1\x18\x05 \x01(\x05\x12\x1a\n\x12\x66ront_left_switch2\x18\x06 \x01(\x05\x12\x1a\n\x12\x66ront_right_switch\x18\x07 \x01(\x05\x12\x17\n\x0ftop_left_switch\x18\x08 \x01(\x05\x12\x18\n\x10top_right_switch\x18\t \x01(\x05\x12\x15\n\rpotentiometer\x18\n \x01(\x05\"\x16\n\x07\x43ommand\x12\x0b\n\x03msg\x18\x01 \x01(\t\"\x1e\n\x08WindVane\x12\x12\n\nwind_angle\x18\x01 \x01(\x05\"\x9e\x01\n\x0cWaterSensors\x12\x1b\n\x0esensor1_is_wet\x18\x01 \x01(\x08H\x00\x88\x01\x01\x12\x1b\n\x0esensor2_is_wet\x18\x02 \x01(\x08H\x01\x88\x01\x01\x12\x1b\n\x0esensor3_is_wet\x18\x03 \x01(\x08H\x02\x88\x01\x01\x42\x11\n\x0f_sensor1_is_wetB\x11\n\x0f_sensor2_is_wetB\x11\n\x0f_sensor3_is_wetb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -22,11 +22,13 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'teensy_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_DATA']._serialized_start=17
-  _globals['_DATA']._serialized_end=167
-  _globals['_CONTROLLER']._serialized_start=170
-  _globals['_CONTROLLER']._serialized_end=434
-  _globals['_COMMAND']._serialized_start=436
-  _globals['_COMMAND']._serialized_end=458
-  _globals['_WINDVANE']._serialized_start=460
-  _globals['_WINDVANE']._serialized_end=490
+  _globals['_DATA']._serialized_end=228
+  _globals['_CONTROLLER']._serialized_start=231
+  _globals['_CONTROLLER']._serialized_end=495
+  _globals['_COMMAND']._serialized_start=497
+  _globals['_COMMAND']._serialized_end=519
+  _globals['_WINDVANE']._serialized_start=521
+  _globals['_WINDVANE']._serialized_end=551
+  _globals['_WATERSENSORS']._serialized_start=554
+  _globals['_WATERSENSORS']._serialized_end=712
 # @@protoc_insertion_point(module_scope)

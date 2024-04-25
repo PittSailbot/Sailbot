@@ -1,7 +1,8 @@
 #ifndef WINDVANE_H
 #define WINDVANE_H
+#include "teensy.pb.h"
 
-void setupWindvane();
-int readWindvane();
+extern void setupWindVane();
+extern void readWindVane(WindVane*);
 
 #endif
