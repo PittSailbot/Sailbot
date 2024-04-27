@@ -28,7 +28,9 @@ class Waypoint:
         return f"Waypoint({self.lat, self.lon})"
 
     def to_string(self) -> String():
-        return String(f"{self.lat},{self.lon}")
+        msg = String()
+        msg.data = f"{self.lat},{self.lon}"
+        return msg
 
     @staticmethod
     def from_string(string: String()):

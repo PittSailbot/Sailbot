@@ -12,6 +12,7 @@ from sailbot import constants as c
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
 from sailbot.telemety.protobuf import teensy_pb2
+from sailbot.utils.utils import Waypoint
 
 
 class Transceiver(Node):
@@ -27,6 +28,8 @@ class Transceiver(Node):
         - /offset_rudder
         - /navigation TODO: Autonomy ON/OFF
         - /wind_angle
+        - /position
+        - /speed
     """
 
     def __init__(self):
@@ -71,6 +74,9 @@ class Transceiver(Node):
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
+        self.position_pub = self.create_publisher(String, "position", 1)
+        self.speed_pub = self.create_publisher(String, "speed", 1)
+
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
@@ -80,6 +86,10 @@ class Transceiver(Node):
 
         self.publish_controller(teensy_data.controller)
         self.wind_angle_pub.publish(String(data=teensy_data.windvane.wind_angle))
+        self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_string())
+        msg = String()
+        msg.data = str(teensy_data.GPS.speed)
+        self.speed_pub.publish(msg)
 
     def send(self, data):
         self.ser.write(str(data).encode())

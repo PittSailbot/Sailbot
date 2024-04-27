@@ -7,6 +7,7 @@
 #include "teensy.pb.h"
 #include "transceiver.h"
 #include "windvane.h"
+#include "gps.h"
 #include "water_sensors.h"
 
 
@@ -15,6 +16,7 @@ void setup() {
   while (!Serial) {}
   setupTransceiver();
   setupWindVane();
+  setupGPS();
   setupWaterSensors();
   setupPumps();
 }
@@ -24,6 +26,7 @@ void loop () {
 
   readControllerState(&pi_data.controller);
   readWindVane(&pi_data.windvane);
+  readGPS(&pi_data.gps);
   readWaterSensors(&pi_data.water_sensors);
 
   /*if (pi_data.water_sensors.sensor1_is_wet || pi_data.water_sensors.sensor2_is_wet || pi_data.water_sensors.sensor3_is_wet) {
