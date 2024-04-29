@@ -40,6 +40,10 @@ class Waypoint:
         
         vals = str(string.data).split(',')
         return Waypoint(float(vals[0]), float(vals[1]))
+    
+    def from_gps(jsonString: String):
+        gpsJson = json.loads(jsonString.data)
+        return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 
     def add_meters(self, dx, dy):
         """Updates the waypoint gps by adding meters to the latitude and longitude"""
