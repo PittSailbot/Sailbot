@@ -16,7 +16,7 @@ void setupTransceiver() {
   Serial.println("Started Transceiver");
 }
 
-void readControllerState (Controller* controller) {
+bool readControllerState (Controller* controller) {
   /* EXPECTED RC CONTROLLER FORMAT
   Max and min trim thresholds are within +-10. They do not effect the max/min value. They only offset the "center" value.
   - Down/Left reads ~172-180 (Converted to 0)
@@ -58,5 +58,8 @@ void readControllerState (Controller* controller) {
     controller->top_left_switch = map(data.ch[7], RC_LOW, RC_HIGH, 0, 1);
     controller->top_right_switch = map(data.ch[8], RC_LOW, RC_HIGH, 0, 1);
     controller->potentiometer = map(data.ch[9], RC_LOW, RC_HIGH, 0, 100);
+
+    return true;
   }
+  return false;
 }

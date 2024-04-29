@@ -7,10 +7,14 @@ void setupWaterSensors() {
   pinMode (WATER_SENSOR1,INPUT_PULLDOWN);
   pinMode (WATER_SENSOR2,INPUT_PULLDOWN);
   pinMode (WATER_SENSOR3,INPUT_PULLDOWN);
+
+  Serial.println("Started Water Sensors");
 }
 
 void setupPumps() {
   pinMode (PUMP1,OUTPUT);
+
+  Serial.println("Started Pumps");
 }
 
 void readWaterSensors(WaterSensors* water_sensors) {

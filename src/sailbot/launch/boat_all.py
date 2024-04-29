@@ -24,13 +24,13 @@ def generate_launch_description():
                  name="navigation",
                  arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                  ),
-            Node(
-                package="sailbot",
-                namespace="boat",
-                executable="compass",
-                name="compass",
-                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
-            ),
+            #Node(
+               # package="sailbot",
+               # namespace="boat",
+               # executable="compass",
+               # name="compass",
+               # arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+            # ),
             # Node(
                 # package="sailbot",
                 # namespace="boat",

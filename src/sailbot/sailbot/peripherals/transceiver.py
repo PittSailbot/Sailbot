@@ -6,7 +6,9 @@ import rclpy
 import serial
 import smbus2 as smbus
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, GeoPose
+from geometry_msgs.msg import Quaternion
+from geographic_msgs.msg import GeoPose, GeoPoint
 
 from sailbot import constants as c
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
@@ -80,12 +82,15 @@ class Transceiver(Node):
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
+        # TODO: try except to echo published non-protobuf error strings from Teensy
         teensy_data = teensy_pb2.ParseFromString(self.read())
 
         self.logging.info(f"Received {teensy_data}")
 
         self.publish_controller(teensy_data.controller)
+        # TODO: if null, don't pub
         self.wind_angle_pub.publish(String(data=teensy_data.windvane.wind_angle))
+        # TODO: Fuse imu and gps into geopose
         self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_string())
         msg = String()
         msg.data = str(teensy_data.GPS.speed)
