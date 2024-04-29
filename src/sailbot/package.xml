@@ -12,6 +12,19 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_export_depend>ament_cmake</buildtool_export_depend>
+
+  <exec_depend>python</exec_depend>
+  <exec_depend>ament_copyright</exec_depend>
+  <exec_depend>ament_flake8</exec_depend>
+  <exec_depend>ament_pep257</exec_depend>
+  <exec_depend>python3-pytest</exec_depend>
+  
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <build_depend>std_msgs</build_depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>

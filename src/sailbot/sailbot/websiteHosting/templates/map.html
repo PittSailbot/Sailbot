@@ -51,18 +51,147 @@
             color: #f1f1f1;
         }
 
+        .sailboat-container {
+            width: 0;
+            height: 100%;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 20px;
+            color: gold;
+        }
+
+        #sailboat-container a {
+            width: 100%; /* Make the buttons fill the width */
+            padding: 15px 15px 15px 32px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+            box-sizing: border-box; /* Include padding in the total width */
+        }
+
+        #sailboat-container a:hover {
+            color: #f1f1f1;
+        }
+
+        #sailboat-container a:hover {
+            color: #f1f1f1;
+        }
+
+        #boat-mode-text {
+            color: gold;
+            position: absolute;
+            left: 25%;
+            transform: translate(-50%, 0%);
+        }
+
+        #error-warning-text {
+            color: gold;
+            position: absolute;
+            left: 75%;
+            transform: translate(-50%, 0%);
+        }
+
         #toggle-btn {
             position: absolute;
             left: 50%;
-            transform: translate(-50%, 50%);
+            transform: translate(-0%, 50%);
         }
 
+        #toggle-btn2 {
+            position: absolute;
+            left: 50%;
+            transform: translate(-100%, 50%);
+        }
+
+        .sailboat {
+            width: 100px;
+            height: 200px;
+        }
+
+        .wind-arrow {
+            transform: rotate(180deg) scale(0.8); 
+            opacity: 0.5;
+        }
+
+        .sail-image {
+            width: 200px;
+            height: 50px;
+            transform: translate(17%, 0%) rotate(0deg) scale(0.5); 
+            opacity: 0.5;
+        }
+        .sail-image-flipped {
+            width: 200px;
+            height: 50px;
+            transform: translate(-17%, 0%) rotate(0deg) scale(0.5); 
+            opacity: 0.5;
+            display: 'none';
+        }
+
+        .rudder-container{
+            transform: translate(0px, -15px)
+        }
+
+        .rudder-image{
+            width: 200px;
+            height: 50px;
+            transform: translate(0%, 50%) rotate(90deg) scale(0.25); 
+            opacity: 0.9;
+        }
+
+        .compass {
+            width: 200px;
+            height: 200px;
+            transform: translate(-2%, 0%);
+            opacity: 0.5;
+        }
+
+        .compass-needle {
+            width: 200px;
+            height: 200px;
+            transform: rotate(180deg) scale(0.75);
+            opacity: 1; 
+        }
+
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Added to position sub-images relative to the container */
+        }
+
+        .sub-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Adjust position to center */
+        }
+
+        /* Adjust as needed */
+        .sub-image img {
+            /* width: 100px;
+            height: auto; */
+            margin: 5px; /* Adjust margin as needed */
+        }
+
+        
+    </style>
+
+    <style>
+        .target-tracker{
+            position: relative;
+            top: -170%;
+            left: 50%;
+            transform: translate(-50%, 0%) rotate(0deg) scale(0.2);
+            opacity: 0.5;
+        }
     </style>
 
     <body style="height:100%;margin:0;padding:0;">
         
 
-        <div id="sidebar">
+        <div id="sidebar" class="sidebar">
             <div>
                 <button onclick="window.location='/';">Home Screen</button>
             </div>
@@ -107,10 +236,27 @@
                 <br><span id="boatLatitude"></span>
                 <br><span id="boatLongitude"></span>
             </div>
+
+            <br><br>
+            <div id="BoatTargetGPS">
+                Target GPS:
+                <br><span id="boatTargetLatitude"></span>
+                <br><span id="boatTargetLongitude"></span>
+            </div>
+
+            <br><br>
+            <div id="boatTargetDistanceInfo">
+                Distance between boat and boat target:
+            </div>
+
+            <br><br>
+            <div id="boatClickDistanceInfo">
+                Distance between boat and click location:
+            </div>
             
             <br><br>
             <div id="targetDistanceInfo">
-                Distance between target and selected waypoint:
+                Distance between click location and selected waypoint:
             </div>
 
             <br><br>
@@ -118,16 +264,93 @@
                 Distance between boat and selected waypoint:
             </div>
 
+            <br><br>
+            <div id="BrowserBoatDist">
+                Distance between you and boat:
+            </div>
+
+            
+
+            
+
+        </div>
+
+        <div id="sailboat-container" class="sailboat-container">
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='images/boat-top-down.png') }}" alt="Boat" width="200" class="sailboat">
+                <div class="sub-image" id="windArrow">
+                    <img src="{{ url_for('static', filename='images/wind-arrow.png') }}" alt="Wind Arrow" class="wind-arrow">
+                </div>
+                <div class="sub-image" id="targetPointer">
+                    <img src="{{ url_for('static', filename='images/pointer.png') }}" alt="target-tracker" class="target-tracker">
+                </div>
+                <div class="sub-image" id="sailOrientationImage">
+                    <img src="{{ url_for('static', filename='images/sail-image.png') }}" alt="sail-image" class="sail-image">
+                </div>
+                <div class="sub-image" id="sailOrientationImageFlipped">
+                    <img src="{{ url_for('static', filename='images/sail-image-flipped.png') }}" alt="sail-image-flipped" class="sail-image-flipped">
+                </div>
+                <div class="rudder-container">
+                    <div class="sub-image" id="rudderImage">
+                        <img src="{{ url_for('static', filename='images/rudder.png') }}" alt="rudder-image" class="rudder-image">
+                    </div>
+                </div>
+                
+            </div>
+            <br><br>
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='images/compass-2.png') }}" alt="Compass" class="compass">
+                <div class="sub-image" id="compassNeedle">
+                    <img src="{{ url_for('static', filename='images/compass-needle2.png') }}" alt="compass-needle" class="compass-needle">
+                </div>
+            </div>
+            <br><br>
+            <div id="windAngleText">
+                Relative wind angle:
+            </div>
+            <br>
+            <div id="compassAngleText">
+                Compass (Yaw) angle:
+            </div>
+            <br>
+            <div id="sailText">
+                Sail angle:
+            </div>
+            <br>
+            <div id="rudderText">
+                Rudder angle:
+            </div>
+            <br>
+            <div id="speedText">
+                Speed:
+            </div>
+
         </div>
     
         <div id="map-container">
             <div id="map" style="height: 95%"></div>
             <button id="toggle-btn" onclick="toggleNav()">Toggle Sidebar</button>
+            <button id="toggle-btn2" onclick="toggleSensorReadings()">Toggle Sensor Readings</button>
+            <div id="error-warning-text">
+                <p><span id="error-count" style="color: red;">X</span> errors generated, <span id="warning-count" style="color: yellow;">Y</span> warnings generated</p>
+            </div>
+            <div id="boat-mode-text">
+                <p>Boat mode: <span id="boat-mode-indicator"></span></p>
+            </div>
+            
         </div>
 
         <script>
             function toggleNav() {
                 var sidebar = document.getElementById("sidebar");
+                if (sidebar.style.width === "250px") {
+                    sidebar.style.width = "0";
+                } else {
+                    sidebar.style.width = "250px";
+                }
+            }
+            function toggleSensorReadings() {
+                var sidebar = document.getElementById("sailboat-container");
                 if (sidebar.style.width === "250px") {
                     sidebar.style.width = "0";
                 } else {
@@ -147,6 +370,8 @@
 
             document.getElementById("latitude").addEventListener("change", fetchAndCalculateTargetDistance);
             document.getElementById("longitude").addEventListener("change", fetchAndCalculateTargetDistance);
+            document.getElementById("latitude").addEventListener("change", fetchAndCalculateBoatClickDistance);
+            document.getElementById("longitude").addEventListener("change", fetchAndCalculateBoatClickDistance);
 
             function submitCircleForm() {
                 // Get values from the form
@@ -225,9 +450,9 @@
                         .then(data => {
                             const distanceInfoElement = document.getElementById("targetDistanceInfo");
                             if (data.status === 'success') {
-                                distanceInfoElement.innerHTML = `Distance between target and selected waypoint: ${data.distance.toFixed(2)} meters`;
+                                distanceInfoElement.innerHTML = `Distance between click location and selected waypoint: ${data.distance.toFixed(2)} meters`;
                             } else {
-                                distanceInfoElement.innerHTML = 'Failed to calculate distance';
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance from click location to selected waypoint';
                             }
                         })
                         .catch(error => {
@@ -268,6 +493,142 @@
                 }
             }
 
+            function fetchAndCalculateBoatClickDistance() {
+                const selectedLatText = document.getElementById("boatLatitude").innerText.trim();
+                const selectedLonText = document.getElementById("boatLongitude").innerText.trim();
+                const targetLatText = (document.getElementById("latitude").value);
+                const targetLonText = (document.getElementById("longitude").value);
+
+                if (selectedLatText === '' || selectedLonText === '' || targetLatText === '' || targetLonText === '') {
+                    return;
+                }
+
+                const selectedLat = parseFloat(selectedLatText);
+                const selectedLon = parseFloat(selectedLonText);
+                const targetLat = parseFloat(targetLatText);
+                const targetLon = parseFloat(targetLonText);
+
+                if (!isNaN(selectedLat) && !isNaN(selectedLon) && !isNaN(targetLat) && !isNaN(targetLon)) {
+                    fetch(`/calculateDistance?selectedLat=${selectedLat}&selectedLon=${selectedLon}&targetLat=${targetLat}&targetLon=${targetLon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const distanceInfoElement = document.getElementById("boatClickDistanceInfo");
+                            if (data.status === 'success') {
+                                distanceInfoElement.innerHTML = `Distance between boat and click location: ${data.distance.toFixed(2)} meters`;
+                            } else {
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance between boat and click location';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+
+            function fetchAndCalculateBoatTargetDistance() {
+                const targetLatText = document.getElementById("boatTargetLatitude").innerText.trim();
+                const targetLonText = document.getElementById("boatTargetLongitude").innerText.trim();
+                const boatLatText = document.getElementById("boatLatitude").innerText.trim();
+                const boatLonText = document.getElementById("boatLongitude").innerText.trim();
+
+                if (boatLatText === '' || boatLonText === '' || targetLatText === '' || targetLonText === '') {
+                    return;
+                }
+
+                const boatLat = parseFloat(boatLatText);
+                const boatLon = parseFloat(boatLonText);
+                const targetLat = parseFloat(targetLatText);
+                const targetLon = parseFloat(targetLonText);
+
+                if (!isNaN(boatLat) && !isNaN(boatLon) && !isNaN(targetLat) && !isNaN(targetLon)) {
+                    fetch(`/calculateDistance?selectedLat=${boatLat}&selectedLon=${boatLon}&targetLat=${targetLat}&targetLon=${targetLon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const distanceInfoElement = document.getElementById("boatTargetDistanceInfo");
+                            if (data.status === 'success') {
+                                distanceInfoElement.innerHTML = `Distance between boat and boat target: ${data.distance.toFixed(2)} meters`;
+                            } else {
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+
+            function getBrowserLocation() {
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(setBrowserLocation, showError);
+                } else {
+                    alert("Geolocation is not supported by this browser.");
+                }
+            }
+
+            var browserLocation = null;
+            var browserMarker = null;
+            function setBrowserLocation(position) {
+                browserLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                if (browserMarker != null){
+                    map.removeLayer(browserMarker)
+                }
+                browserMarker = L.marker([browserLocation.latitude, browserLocation.longitude], {icon: browserIcon});
+                map.addLayer(browserMarker)
+            }
+
+            function showDistanceFromBrowserToBoat() {
+                if (browserLocation != null) {
+                    var targetLat = browserLocation.latitude;
+                    var targetLon = browserLocation.longitude;
+                    const boatLatText = document.getElementById("boatLatitude").innerText.trim();
+                    const boatLonText = document.getElementById("boatLongitude").innerText.trim();
+
+                    if (boatLatText === '' || boatLonText === '') {
+                    return;
+                    }
+
+                    const boatLat = parseFloat(boatLatText);
+                    const boatLon = parseFloat(boatLonText);
+
+                    if (!isNaN(boatLat) && !isNaN(boatLon) && !isNaN(targetLat) && !isNaN(targetLon)) {
+                    fetch(`/calculateDistance?selectedLat=${boatLat}&selectedLon=${boatLon}&targetLat=${targetLat}&targetLon=${targetLon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const distanceInfoElement = document.getElementById("BrowserBoatDist");
+                            if (data.status === 'success') {
+                                distanceInfoElement.innerHTML = `Distance between you and boat: ${data.distance.toFixed(2)} meters`;
+                            } else {
+                                distanceInfoElement.innerHTML = 'Failed to calculate distance from you to boat';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    }
+                }
+            }
+
+            function showError(error) {
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                    document.getElementById("BrowserBoatDist").innerHTML = "User denied the request for Geolocation.";
+                    break;
+                    case error.POSITION_UNAVAILABLE:
+                    document.getElementById("BrowserBoatDist").innerHTML = "User Location information is unavailable.";
+                    break;
+                    case error.TIMEOUT:
+                    document.getElementById("BrowserBoatDist").innerHTML = "The request to get user location timed out.";
+                    break;
+                    case error.UNKNOWN_ERROR:
+                    document.getElementById("BrowserBoatDist").innerHTML = "An unknown error occurred when getting user location";
+                    break;
+                }
+            }
+
         </script>
 
         <!-- Map display functions -->
@@ -288,12 +649,24 @@
                 document.getElementById("latitude").value = e.latlng.lat.toFixed(6);
                 document.getElementById("longitude").value = e.latlng.lng.toFixed(6);
                 fetchAndCalculateTargetDistance();
+                fetchAndCalculateBoatClickDistance();
             }
             map.on('click', onMapClick);
 
             // init icons
             var boatIcon = L.icon({
                 iconUrl: "{{ url_for('static', filename='images/boat-icon.png') }}",
+                shadowUrl: "{{ url_for('static', filename='images/boat-icon-shadow.png') }}",
+
+                iconSize:     [40, 40], // size of the icon
+                shadowSize:   [40, 40], // size of the shadow
+                iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+                shadowAnchor: [20, 20],  // the same for the shadow
+                popupAnchor:  [20, 0] // point from which the popup should open relative to the iconAnchor
+            });
+
+            var browserIcon = L.icon({
+                iconUrl: "{{ url_for('static', filename='images/smartphone-ring.webp') }}",
                 shadowUrl: "{{ url_for('static', filename='images/boat-icon-shadow.png') }}",
 
                 iconSize:     [40, 40], // size of the icon
@@ -370,17 +743,22 @@
                 fetchAndCalculateTargetDistance();
             }
 
-            const fetchAndAddBreadcrumbs = async() => {
-                const response = await  fetch('/breadcrumbs');
-                if (!response.ok) {throw Error(response.statusText);}
-                var json = await response.json();
-                for (index in json.breadcrumbs){
-                    breadcrumb = json.breadcrumbs[index]
-                    var circleMarker = L.circleMarker([breadcrumb.lat, breadcrumb.lon], {
-                                color: '#00F',
-                                radius: 1
-                            }).addTo(map);
+            let firstFetch = true;
+            const fetchAndAddBreadcrumbs = async (limit = 5) => {
+                let actualLimit = firstFetch ? 0 : limit;
+                const response = await fetch(`/breadcrumbs/${actualLimit}`);
+                if (!response.ok) {
+                    throw Error(response.statusText);
                 }
+                const json = await response.json();
+                for (const breadcrumb of json.breadcrumbs) {
+                    const parsedBreadcrumb = JSON.parse(breadcrumb);
+                    const circleMarker = L.circleMarker([parsedBreadcrumb.lat, parsedBreadcrumb.lon], {
+                        color: '#00F',
+                        radius: 1
+                    }).addTo(map);
+                }
+                firstFetch = false;
             }
             
             let existingCircles = [];
@@ -416,6 +794,9 @@
 
             var showBreadcrumbs = true
             let boatMarker
+            var sailAngle = 0
+            const sailImg = "{{ url_for('static', filename='images/sail-image.png') }}"
+            const sailImgFlipped = "{{ url_for('static', filename='images/sail-image-flipped.png') }}"
             const fetchData = async() => {
                 try { 
                     let found = false
@@ -425,11 +806,12 @@
                     if (showBreadcrumbs){
                         fetchAndAddBreadcrumbs()
                     }
-                    const response = await  fetch('/gpsJSON');
+                    const response = await  fetch('/dataJSON');
                     if (!response.ok) {throw Error(response.statusText);}
                     var json = await response.json();
                     var lat = json.lat
                     var lon = json.lon
+                    
 
                     document.getElementById("BoatGPS").innerHTML = `
                         Boat GPS:
@@ -438,6 +820,8 @@
                     `;
 
                     fetchAndCalculateBoatDistance();
+                    fetchAndCalculateBoatClickDistance();
+                    showDistanceFromBrowserToBoat(browserLocation);
 
                     // for fixed size boat icon
                     boatMarker = L.marker([lat, lon], {icon: boatIcon});
@@ -448,6 +832,131 @@
                     // var marker = L.imageOverlay(imageUrl, imageBounds);
                     
                     map.addLayer(boatMarker)
+
+
+                    var target_lat = json.target_lat
+                    var target_lon = json.target_lon
+                    var queuedWaypoints = json.queuedWaypoints
+
+                    if (typeof polylinesArray !== 'undefined') {
+                        for (var i = 0; i < polylinesArray.length; i++) {
+                            map.removeLayer(polylinesArray[i]);
+                        }
+                    }
+                    polylinesArray = [];
+                    if (target_lat !== null && target_lon !== null) {
+
+                        document.getElementById("BoatTargetGPS").innerHTML = `
+                            Target GPS:
+                            <br><span id="boatTargetLatitude">${target_lat}</span>
+                            <br><span id="boatTargetLongitude">${target_lon}</span>
+                        `;
+
+                        fetchAndCalculateBoatTargetDistance()
+
+                        // Create a polyline between boat and target
+                        polyline = L.polyline([
+                            [lat, lon],
+                            [target_lat, target_lon]
+                        ]).addTo(map);
+                        polylinesArray.push(polyline);
+
+                        polyline.setStyle({
+                            color: 'red',
+                            weight: 3,
+                            opacity: 0.8
+                        });
+                    } 
+
+                    if (queuedWaypoints !== undefined && queuedWaypoints !== null) {
+                        // Draw lines between each queued waypoint
+                        for (var i = 0; i < queuedWaypoints.length - 1; i++) {
+                            var startPoint = [queuedWaypoints[i].lat, queuedWaypoints[i].lon];
+                            var endPoint = [queuedWaypoints[i + 1].lat, queuedWaypoints[i + 1].lon];
+
+                            polyline = L.polyline([startPoint, endPoint]).addTo(map);
+                            polylinesArray.push(polyline);
+                            polyline.setStyle({
+                                color: 'red',
+                                weight: 2,
+                                opacity: 0.3
+                            });
+                        }
+                    }
+
+                   boatMode = json.is_RC
+                   
+                    var boatModeText = document.getElementById('boat-mode-indicator');
+                    if (boatMode.toUpperCase() === "TRUE") {
+                        boatModeText.textContent = 'Remote Control';
+                        boatModeText.style.color = 'green';
+                    } else if (boatMode.toUpperCase() === "FALSE") {
+                        boatModeText.textContent = 'Autonomus';
+                        boatModeText.style.color = 'red';
+                    } else {
+                        // Handle other cases or set default values
+                        boatModeText.textContent = boatMode.toUpperCase();
+                        boatModeText.style.color = 'gold';
+                    }
+
+                    var errorCount = json.error_count;
+                    var warningCount = json.warning_count;
+
+                    // Update error and warning text and color
+                    var errorCountText = document.getElementById('error-count');
+                    var warningCountText = document.getElementById('warning-count');
+
+                    errorCountText.textContent = errorCount;
+                    warningCountText.textContent = warningCount;
+
+                    // Update the wind arrow direction
+                    windDirection = json.relative_wind;
+                    windArrow = document.getElementById('windArrow');
+                    windArrow.style.transform = `translate(-50%, -50%) rotate(${windDirection}deg)`;
+
+                    targetDirection = json.relative_target;
+                    if (typeof targetDirection !== undefined && targetDirection !== null){
+                        targetPointer = document.getElementById('targetPointer');
+                        targetPointer.style.transform = `translate(-50%, -50%) rotate(${targetDirection}deg)`;
+                    }
+                    windAngleText = document.getElementById('windAngleText');
+                    windAngleText.innerHTML = `Relative wind angle: ${windDirection.toFixed(2)}`
+
+                    // Update the compass arrow direction
+                    compassDirection = json.compass_dir
+                    compassNeedle = document.getElementById('compassNeedle');
+                    compassNeedle.style.transform = `translate(-50%, -50%) rotate(${compassDirection}deg)`;
+                    compassAngleText = document.getElementById('compassAngleText');
+                    compassAngleText.innerHTML = `Compass (Yaw) angle: ${compassDirection.toFixed(2)}`
+
+                    // Update Rudder rotation
+                    rudderAngle = json.rudder_angle
+                    rudderImage = document.getElementById('rudderImage');
+                    rudderImage.style.transform = `translate(-50%, -50%) rotate(${rudderAngle}deg)`;
+                    rudderText = document.getElementById('rudderText');
+                    rudderText.innerHTML = `Rudder angle: ${rudderAngle.toFixed(2)}`
+
+                    // update Sail rotation
+                    sailAngle = json.sail_angle
+                    sailOrientationImage = document.getElementById('sailOrientationImage');
+                    sailOrientationImageFlipped = document.getElementById('sailOrientationImageFlipped');
+                    sailText = document.getElementById('sailText');
+                    sailText.innerHTML = `Sail angle: ${sailAngle.toFixed(2)}`
+
+                    if (windDirection > 180){
+                        sailOrientationImage.style.display = 'none';
+                        sailOrientationImageFlipped.style.display = 'block';
+                        sailOrientationImageFlipped.style.transform = `translate(-50%, -50%) rotate(${-90+sailAngle}deg)`;
+                    }
+                    else{
+                        sailOrientationImageFlipped.style.display = 'none';
+                        sailOrientationImage.style.display = 'block';
+                        sailOrientationImage.style.transform = `translate(-50%, -50%) rotate(${90-sailAngle}deg)`;
+                    }
+
+                    speed = json.speed
+                    speedText = document.getElementById('speedText');
+                    speedText.innerHTML = `Speed: ${speed.toFixed(2)}`
                     
                     // set the time below to how frequently you wanna update 
                     setTimeout(() => fetchData(), 1000); // update every 1 seconds
@@ -460,6 +969,7 @@
             fetchAndAddWaypoints();
             fetchAndAddCircles();
             fetchData()
+            setInterval(getBrowserLocation, 5000);
             var hash = L.hash(map)
         </script>
         

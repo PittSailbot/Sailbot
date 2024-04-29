@@ -1,14 +1,17 @@
 """
 Reads and sends data from the connected USB transceiver
 """
+import time
 import os
+
+from sailbot.telemetry.protobuf import controlsData_pb2
 import rclpy
 import serial
 import smbus2 as smbus
 from rclpy.node import Node
-from std_msgs.msg import String, GeoPose
+from std_msgs.msg import String, Float32
 from geometry_msgs.msg import Quaternion
-from geographic_msgs.msg import GeoPose, GeoPoint
+# from geographic_msgs.msg import GeoPose, GeoPoint
 
 from sailbot import constants as c
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
@@ -37,6 +40,9 @@ class Transceiver(Node):
     def __init__(self):
         super().__init__("transceiver")
         self.logging = self.get_logger()
+
+        self.pub = self.create_publisher(String, "transceiver", 10)
+        self.timer = self.create_timer(0.1, self.timer_callback)
 
         ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
         for i, port in enumerate(ports):
@@ -67,8 +73,8 @@ class Transceiver(Node):
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.rc_enabled_pub = self.create_publisher(String, "rc_enabled", 1)
 
-        self.sail_pub = self.create_publisher(String, "cmd_sail", 1)
-        self.rudder_pub = self.create_publisher(String, "cmd_rudder", 1)
+        self.sail_pub = self.create_publisher(Float32, "cmd_sail", 1)
+        self.rudder_pub = self.create_publisher(Float32, "cmd_rudder", 1)
 
         self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
         self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
@@ -127,12 +133,18 @@ class Transceiver(Node):
 
         if False and RESET_ENABLED:
             # TODO: wait 5s, zero out rudder & sail, then reboot
-            self.sail_pub.publish(String(0))
-            self.rudder_pub.publish(String(50))
+            ss = String()
+            ss.data = 0
+            self.sail_pub.publish(ss)
+            rs = String()
+            ss.data = 50
+            self.rudder_pub.publish(rs)
             return
 
         if RC_ENABLED:
-            self.rc_enabled_pub.publish(String("1"))
+            rcMsg = String()
+            rcMsg.data = "1"
+            self.rc_enabled_pub.publish(rcMsg)
             OFFSET_MODE = controller.front_right_switch
             AUTO_SET_SAIL = True if controller.front_left_switch1 == 2 else False
 
@@ -140,19 +152,29 @@ class Transceiver(Node):
                 pass
                 # TODO: auto set sail navigation.auto_adjust_sail()
             else:
-                self.sail_pub.publish(String(data=controller.left_analog_y))
-            self.rudder_pub.publish(String(data=controller.right_analog_x))
+                sailMsg = Float32()
+                sailMsg.data = controller.left_analog_y
+                self.sail_pub.publish(sailMsg)
+            rudderMsg = Float32()
+            rudderMsg.data = controller.right_analog_x
+            self.rudder_pub.publish(rudderMsg)
 
             if OFFSET_MODE != 0:
                 relative_offset = controller.potentiometer - self.prev_offset
                 if OFFSET_MODE == 1:
-                    self.sail_offset_pub.publish(String(relative_offset))
+                    sailOffsetMsg = String()
+                    sailOffsetMsg.data = str(relative_offset)
+                    self.sail_offset_pub.publish(sailOffsetMsg)
                 elif OFFSET_MODE == 2:
-                    self.rudder_offset_pub.publish(String(relative_offset))
+                    rudderOffsetMsg = String()
+                    rudderOffsetMsg.data = str(relative_offset)
+                    self.rudder_offset_pub.publish(rudderOffsetMsg)
             else:
                 self.prev_offset = controller.potentiometer
         else:
-            self.rc_enabled_pub.publish(String(""))
+            rcMsg = String()
+            rcMsg.data = ""
+            self.rc_enabled_pub.publish(rcMsg)
 
 
 def main(args=None):

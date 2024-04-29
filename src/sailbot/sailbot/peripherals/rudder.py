@@ -5,7 +5,7 @@ import os
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 
 from sailbot import constants as c
 from sailbot.peripherals.Odrive import Odrive
@@ -28,11 +28,11 @@ class Rudder(Node):
         self.logging.info("Initializing rudder")
 
         self.odrive = Odrive(preset="rudder")
-        self.sub = self.create_subscription(String, "cmd_rudder", self.rudder_callback, 10)
+        self.sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
         self.offset_sub = self.create_subscription(String, "offset_rudder", self.offset_callback, 10)
 
     def rudder_callback(self, msg):
-        angle = int(msg.data)
+        angle = float(msg.data)
 
         if angle < self.MIN_ANGLE:
             angle = self.MIN_ANGLE

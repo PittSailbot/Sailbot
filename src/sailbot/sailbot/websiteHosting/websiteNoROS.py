@@ -124,8 +124,8 @@ def home():
 def gps():
     return f"{DATA.gps.latitude}, {DATA.gps.longitude}"
 
-@app.route("/gpsJSON")
-def gpsJSON():
+@app.route("/dataJSON")
+def dataJSON():
 
     
 

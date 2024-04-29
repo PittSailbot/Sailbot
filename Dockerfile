@@ -55,8 +55,13 @@ COPY requirements-dev.txt /workspace/
 RUN pip install --no-cache-dir -r /workspace/requirements-dev.txt
 
 ENV USER ubuntu
-ENV IS_DOCKER True
 
 RUN apt-get install -y net-tools iproute2
+
+# Install the GPIO library if running on the Pi (assumed that Pi is only aarch64 cpu used)
+RUN uname -m > /tmp/arch.txt
+RUN cat /tmp/arch.txt | grep -q 'aarch64' && pip install RPi.GPIO || echo "Not a Raspberry Pi, skipping extra dependency installation"
+RUN cat /tmp/arch.txt | grep -q 'aarch64' && export IS_PI_DOCKER=true || export IS_DOCKER=true
+ENV ROS_DOMAIN_ID 0
 
 WORKDIR /workspace/

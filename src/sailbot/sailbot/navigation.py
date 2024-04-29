@@ -3,10 +3,11 @@ Handles autonomous navigation to a desired GPS point
 """
 import logging
 import os
+import json
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 
 from sailbot import constants as c
 from sailbot.utils import boatMath, utils
@@ -39,19 +40,19 @@ class Navigation(Node):
         self.compass_angle = 0
         self.wind_angle = 0
 
-        self.next_gps_sub = self.create_subscription(String, "next_gps", self.next_gps_callback, 2)
-        self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 2)
-        self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 2)
-        self.windvane_sub = self.create_subscription(String, "windvane", self.windvane_callback, 2)
-        self.rc_enabled_sub = self.create_subscription(String, "rc_enabled", self.rc_enabled_callback, 2)
+        self.next_gps_sub = self.create_subscription(String, "/boat/next_gps", self.next_gps_callback, 2)
+        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
+        self.compass_sub = self.create_subscription(String, "/boat/compass", self.compass_callback, 2)
+        self.windvane_sub = self.create_subscription(String, "/boat/windvane", self.windvane_callback, 2)
+        self.rc_enabled_sub = self.create_subscription(String, "/boat/rc_enabled", self.rc_enabled_callback, 2)
 
-        self.sail_pub = self.create_publisher(String, "cmd_sail", 10)
-        self.rudder_pub = self.create_publisher(String, "cmd_rudder", 10)
+        self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
+        self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
 
         self.go_to_gps_timer = self.create_timer(0.2, self.go_to_gps)
 
         self.latest_waypoint = None
-        self.rc_enabled = True
+        self.rc_enabled = False
         self.allow_tacking = True
 
     def next_gps_callback(self, msg):
@@ -60,24 +61,29 @@ class Navigation(Node):
             self.logging.info(f"Navigating to {next_gps}")
             self.latest_waypoint = next_gps
 
+    def rc_enabled_callback(self, msg):
+        self.rc_enabled == msg.data == "1"
+
     def windvane_callback(self, msg):
-        self.wind_angle = int(msg.data())
+        data_dict = json.loads(msg.data)
+        self.wind_angle = float(data_dict['angle'])
 
     def compass_callback(self, msg):
-        self.compass_angle = int(msg.data())
+        self.compass_angle = float(msg.data)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_string(msg)
+        self.position = Waypoint.from_gps(msg)
 
     def controller_callback(self, msg):
-        self.rc_enabled = bool(msg.data())
+        self.rc_enabled = bool(msg.data)
 
-    def go_to_gps(self, target):
+    def go_to_gps(self):
         """
         Moves the boat to the target GPS
         Args:
             target (Waypoint): the GPS point to go to
         """
+        target = self.latest_waypoint
 
         if self.rc_enabled or target is None:
             return
@@ -91,17 +97,23 @@ class Navigation(Node):
 
         self.auto_adjust_sail()
 
-        delta_angle = boatMath.angleToPoint(self.compass_angle, self.position.lat, self.position.lon, target.lat, target.lon)
-        target_angle = (self.compass_angle + delta_angle) % 360
+        target_angle = boatMath.angleToPoint(self.position.lat, self.position.lon, target.lat, target.lon)
+        delta_angle = (target_angle - self.compass_angle) % 360
+        if delta_angle > 180:
+            delta_angle -= 360
 
+        self.logging.info(F"Nav- target_angle: {target_angle}, delta_angle: {delta_angle}")
+
+        # TODO: Fix this its not working
         # Boat can't sail straight upwind; snap angle to the closest allowed no_go_zone bound if target angle is in irons
-        no_go_zone_left_bound = (self.wind_angle - self.NO_GO_ANGLE / 2) % 360
-        no_go_zone_right_bound = (self.wind_angle + self.NO_GO_ANGLE / 2) % 360
-        if boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
-            if (delta_angle + self.wind_angle) % 360 < no_go_zone_left_bound:
-                target_angle = no_go_zone_left_bound
-            elif (delta_angle + self.wind_angle) % 360 < no_go_zone_right_bound:
-                target_angle = no_go_zone_right_bound
+        # no_go_zone_left_bound = (self.wind_angle - self.NO_GO_ANGLE / 2) % 360
+        # no_go_zone_right_bound = (self.wind_angle + self.NO_GO_ANGLE / 2) % 360
+        # if boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
+        #     self.logging.info("Cannot sail directly to point")
+        #     if (delta_angle + self.wind_angle) % 360 < no_go_zone_left_bound:
+        #         target_angle = no_go_zone_left_bound
+        #     elif (delta_angle + self.wind_angle) % 360 < no_go_zone_right_bound:
+        #         target_angle = no_go_zone_right_bound
 
         # TODO: Check speed before commiting to a tack
         self.turn_to_angle(target_angle, self.allow_tacking)
@@ -115,27 +127,37 @@ class Navigation(Node):
             allow_tacking (bool): whether the boat is allowed to turn through the 'no go zone'
         """
         if boatMath.is_within_angle(target_angle, (self.compass_angle - self.ACCEPTABLE_ERROR) % 360, (self.compass_angle + self.ACCEPTABLE_ERROR) % 360):
-            logging.info(f"Holding boat at {target_angle} degrees")
-            self.rudder_pub.publish(0)
+            self.logging.info(f"Holding boat at {target_angle} degrees")
+            msg = Float32()
+            msg.data = 0.0
+            self.rudder_pub.publish(msg)
             return
 
         if allow_tacking:
             if (self.compass_angle - target_angle) % 360 < 180:
-                logging.info(f"Tacking right from {self.compass_angle} degrees to {target_angle} degrees")
+                self.logging.info(f"Tacking right from {self.compass_angle} degrees to {target_angle} degrees")
                 rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
             else:
-                logging.info(f"Tacking left {self.compass_angle} degrees to {target_angle} degrees")
+                self.logging.info(f"Tacking left from {self.compass_angle} degrees to {target_angle} degrees")
                 rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
         else:
             if ((self.compass_angle < target_angle) and (self.compass_angle <= self.wind_angle <= target_angle)) or \
                     ((target_angle < self.compass_angle) and (target_angle >= self.wind_angle and self.wind_angle <= self.compass_angle)):
-                logging.info(f"Jibing left from {self.compass_angle} degrees to {target_angle} degrees")
+                self.logging.info(f"Jibing left from {self.compass_angle} degrees to {target_angle} degrees")
                 rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
             else:
-                logging.info(f"Jibing right from {self.compass_angle} degrees to {target_angle} degrees")
+                self.logging.info(f"Jibing right from {self.compass_angle} degrees to {target_angle} degrees")
                 rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
-        self.rudder_pub.publish(rudder_angle)
+        if abs(rudder_angle) > 90:
+            self.logging.warning(F"Navigation suggested rudder angle is very large ({rudder_angle})")
+        
+        rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
+        rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
+
+        msg = Float32()
+        msg.data = rudder_angle
+        self.rudder_pub.publish(msg)
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
@@ -144,7 +166,9 @@ class Navigation(Node):
 
         sail_angle = max(min(self.wind_angle / 2, 90), 3)
 
-        self.sail_pub.publish(sail_angle)
+        msg = Float32()
+        msg.data = float(sail_angle)
+        self.sail_pub.publish(msg)
 
 
 def main(args=None):

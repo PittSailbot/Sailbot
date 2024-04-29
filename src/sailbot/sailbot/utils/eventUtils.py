@@ -4,6 +4,7 @@ Event blueprint class and common utility functions used in events
 from abc import abstractmethod
 import configparser
 from rclpy.node import Node
+from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.utils.utils import Waypoint
@@ -11,7 +12,7 @@ from sailbot.utils.utils import Waypoint
 EVENT_DICT_INITIALIZED = False
 
 
-class Event:
+class Event(Node):
     """
     Basic blueprint for creating new events
 
@@ -23,13 +24,14 @@ class Event:
         - next_gps() - event logic which determines where to sail to next
     """
 
-    base_required_args = ["gps"]
+    base_required_args = []
     required_args = {}
 
     def __init__(self, event_info):
         self._event_info = event_info
-        self._node = Node(self.__class__.__name__)
-        self.logging = self._node.get_logger()
+        super().__init__(self.__class__.__name__)
+        self.logging = self.get_logger()
+
         self.logging.info(f"Initializing {self.__class__.__name__}")
 
         for key in self.required_args:
@@ -44,7 +46,21 @@ class Event:
             if key not in self.required_args and key not in self.base_required_args:
                 self.logging.warning(f"Found unused key in {self.__class__.__name__}: {key}")
 
-        self.gps = event_info["gps"]
+        self.pub = self.create_publisher(String, "next_gps", 10)
+        timer_period = 5.0  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+    def timer_callback(self):
+        try:
+            waypoint = self.next_gps()
+            target = waypoint.to_string()
+        except Exception as e:
+            self.logging.error(F"{self.__class__.__name__} failed to get next GPS with error: {e}")
+            target = String()
+            target.data = ""
+
+        self.pub.publish(target)
+        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {waypoint}")
 
     @abstractmethod
     def next_gps(self):

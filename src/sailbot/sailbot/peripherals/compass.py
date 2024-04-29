@@ -4,6 +4,7 @@ Handles interfacing with the I2C compass and accelerometer sensor
 import math
 from time import sleep
 import os
+import os
 
 import adafruit_lis2mdl
 import adafruit_lsm303_accel

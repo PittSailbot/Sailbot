@@ -114,7 +114,7 @@ class Search(Event):
         self.position = Waypoint(0, 0)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_string(msg)
+        self.position = Waypoint.from_gps(msg)
 
     def next_gps(self):
         """

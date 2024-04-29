@@ -2,6 +2,7 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
+import json
 
 import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
@@ -33,9 +34,16 @@ class Waypoint:
         return msg
 
     @staticmethod
-    def from_string(string: String()):
-        vals = str(string.data()).split(',')
+    def from_string(string: String):
+        if string.data == '':
+            return Waypoint(None, None)
+        
+        vals = str(string.data).split(',')
         return Waypoint(float(vals[0]), float(vals[1]))
+    
+    def from_gps(jsonString: String):
+        gpsJson = json.loads(jsonString.data)
+        return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 
     def add_meters(self, dx, dy):
         """Updates the waypoint gps by adding meters to the latitude and longitude"""
@@ -43,6 +51,16 @@ class Waypoint:
 
         self.lat += (dy / EARTH_RADIUS) * (180 / math.pi)
         self.lon += (dx / EARTH_RADIUS) * (180 / math.pi) / math.cos(self.lat * math.pi / 180)
+
+    def toJson(self):
+        return json.dumps({"lat": self.lat, "lon": self.lon})
+    
+    def fromJson(json_data):
+        if str(json_data).upper() == 'NONE':
+            return None
+        
+        data = json.loads(json_data)
+        return Waypoint(data['lat'], data['lon'])
 
 
 class DummyObject:

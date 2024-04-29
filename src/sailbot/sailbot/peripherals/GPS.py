@@ -19,7 +19,9 @@ class GPS(Node):
     """
 
     def __init__(self):
-        super().__init__("gps")
+        self.latitude = None
+        self.longitude = None
+        super().__init__("GPS")
         self.logging = self.get_logger()
 
         # Can also use adafruit_gps module (but didn't work at competition?)
