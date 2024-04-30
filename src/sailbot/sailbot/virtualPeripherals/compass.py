@@ -4,10 +4,12 @@ Handles interfacing with the I2C compass and accelerometer sensor
 import math
 from time import sleep
 import os
+import json
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
+from sailbot import constants as c
 
 
 class Compass(Node):
@@ -25,14 +27,29 @@ class Compass(Node):
     def __init__(self):
         super().__init__("Compass")
         self.logging = self.get_logger()
-
+        self.rudder_angle = 0
+        self.velocity = 0.0
+        self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
         self.pub = self.create_publisher(String, "compass", 10)
+        self.gps_subscription = self.create_subscription(
+            String, "/boat/GPS", self.ROS_GPSCallback, 10
+        )
         self.timer = self.create_timer(1.0, self.timer_callback)
-        self.timer2 = self.create_timer(15, self.angle_increment)
 
-        self.compassAngle = 0
+        self.compassAngle = 90
+
+    def ROS_GPSCallback(self, string):
+        string = string.data
+        gpsJson = json.loads(string)
+        self.velocity = gpsJson['velocity']
+
+    def rudder_callback(self, msg):
+        self.rudder_angle = float(msg.data)
 
     def timer_callback(self):
+        if abs(self.rudder_angle) > float(c.config["RUDDER"]["acceptable_error"]):
+            self.compassAngle -= (self.rudder_angle / 10) * self.velocity
+            
         msg = String()
         msg.data = f"{self.angle}"
         self.pub.publish(msg)
@@ -43,8 +60,6 @@ class Compass(Node):
         # returns smoothed angle measurement
         return self.compassAngle
     
-    def angle_increment(self):
-        self.compassAngle += 45
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/compass"

@@ -6,11 +6,19 @@ import os
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 
 from sailbot.utils.utils import DummyObject
 import random
+import math
+import json
 
+
+NO_GO_MIN = 30
+NO_GO_MAX = 360 - NO_GO_MIN
+
+MAX_VEL = 1 #m/s
+MAX_ACCEL = 0.01 #m/s^2
 
 class GPS(Node):
     """
@@ -22,35 +30,76 @@ class GPS(Node):
     def __init__(self):
         self.gps = DummyObject()
         self.gps.latitude = 42.84963
-        self.gps.longitude = 70.986314
+        self.gps.longitude = -70.986314
+        self.velocity = 0.0
+        self.compass_yaw = 0.0
+        self.relative_wind = 0.0
+        self.rudder_angle = 0.0
+        self.sail_angle = 0.0
         self.gps.track_angle_deg = -1
 
         super().__init__("GPS")
         self.logging = self.get_logger()
         self.pub = self.create_publisher(String, "GPS", 10)
+
+        self.compass_subscription = self.create_subscription(
+            String, "/boat/compass", self.ROS_compassCallback, 10
+        )
+        self.windvane_subscription = self.create_subscription(
+            String, "/boat/windvane", self.ROS_windvaneCallback, 10
+        )
+        
+        self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
+        
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.logging.info("GPS Started")
 
+    def sail_callback(self, msg):
+        self.sail_angle = float(msg.data)
 
-        self.logging.info("GPS Started")
+    def ROS_windvaneCallback(self, string):
+        string = string.data
+        angle = json.loads(string)['angle']
+        self.relative_wind = angle
+
+    def ROS_compassCallback(self, string):
+        string = string.data
+        if string == "None,None":
+            self.compass_yaw = 0.0
+            return
+
+        angle = string.replace("(", "").replace(")", "")
+        self.compass_yaw = float(angle)
 
     def timer_callback(self):
+        
+        optAngle = max(min(self.relative_wind / 2, 90), 3)
+        self.sail_angle = optAngle
+        if (
+            self.relative_wind > NO_GO_MIN
+            and self.relative_wind < NO_GO_MAX
+        ):
+            self.velocity = min(MAX_VEL, self.velocity + MAX_ACCEL) * max(
+                (1 - abs(self.sail_angle - optAngle) / 30), 0
+            )
+        else:
+            self.velocity = max(self.velocity - 0.05, 0) * max(
+                (1 - abs(self.sail_angle - optAngle) / 30), 0
+            )
 
-        self.gps.longitude += 0.00001
-        if self.gps.longitude > -70.972903:
-            self.gps.longitude = -70.986314
-            self.gps.latitude += 0.0005
-        randomOffset = 0.00005
-
-        noisyLat =  self.gps.latitude + random.random() * randomOffset - randomOffset / 2
-        noisyLon = self.gps.longitude + random.random() * randomOffset - randomOffset / 2
-
+        dx, dy = self.calculate_position_change(self.velocity, degreesToRadians(self.compass_yaw))
+        self.gps.latitude, self.gps.longitude = self.computeNewCoordinate(self.gps.latitude, self.gps.longitude, dx, dy)
+        gpsNoise = 0
+        noisyLat, noisyLon = self.computeNewCoordinate(self.gps.latitude, self.gps.longitude, self.getNoise(gpsNoise), self.getNoise(gpsNoise))
 
         msg = String()
         msg.data = (
-            f"{noisyLat},{noisyLon},{self.gps.track_angle_deg}"
+            json.dumps({'lat': noisyLat,
+                        'lon': noisyLon,
+                        'track_angle': self.gps.track_angle_deg,
+                        'velocity': self.velocity})
         )
         self.pub.publish(msg)
         self.logging.debug(F'GPS Publishing: "{msg.data}"')
@@ -64,6 +113,48 @@ class GPS(Node):
             return super().__getattribute__(name)
         except:
             return self.gps.__getattribute__(name)
+
+    def getNoise(self, max_noise):
+        return random.random() * max_noise - max_noise / 2
+
+    def calculate_position_change(self, velocity, yaw):
+        """
+        Calculate change in x and y position given yaw (angle) and velocity.
+
+        Parameters:
+        yaw (float): Yaw angle in radians.
+        velocity (float): Velocity in m/s.
+
+        Returns:
+        tuple: Change in x and y position (delta_x, delta_y).
+        """
+        delta_x = velocity * math.cos(yaw)
+        delta_y = velocity * math.sin(yaw)
+        return delta_x, delta_y
+
+    def computeNewCoordinate(self, lat, lon, d_lat, d_lon):
+        """
+        finds the gps coordinate that is x meters from given coordinate
+        d_lat, d_lon in meters
+        """
+        earthRadiusKm = 6371
+
+        d_lat /= 1000
+        d_lon /= 1000
+
+        new_lat = lat + (d_lat / earthRadiusKm) * (180 / math.pi)
+        new_lon = lon + (d_lon / earthRadiusKm) * (180 / math.pi) / math.cos(
+            lat * math.pi / 180
+        )
+
+        return (new_lat, new_lon)
+    
+def degreesToRadians(degrees):
+    return degrees * math.pi / 180
+
+
+def radiansToDegrees(rads):
+    return rads * 180 / math.pi
 
 
 def main(args=None):

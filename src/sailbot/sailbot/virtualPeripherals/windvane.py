@@ -33,13 +33,31 @@ class WindVane(Node):
         super().__init__("WindVane")
         self.logging = self.get_logger()
 
+        self.wind_source_angle = 0.0
+        self.compass_yaw = 0.0
+
         self.pub = self.create_publisher(String, "windvane", 10)
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
+        self.compass_subscription = self.create_subscription(
+            String, "/boat/compass", self.ROS_compassCallback, 10
+        )
+
         self._angle = 0
 
+    def ROS_compassCallback(self, string):
+        string = string.data
+        if string == "None,None":
+            self.compass_yaw = 0.0
+            return
+
+        angle = string.replace("(", "").replace(")", "")
+        self.compass_yaw = float(angle)
+
     def timer_callback(self):
+
+        self.angle = (-self.compass_yaw + self.wind_source_angle) % 360
 
         msg = String()
         msg.data = (
@@ -55,11 +73,6 @@ class WindVane(Node):
         x = min(max(x, min1), max1)
         return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
 
-    @property
-    def angle(self):
-        self._angle += 10
-        self._angle %= 360
-        return self._angle
 
 class NoGoZone:
     """Simplifies checking whether a compass heading is inside the no go zone

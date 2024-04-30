@@ -16,11 +16,11 @@ import json
 import math
 
 import rclpy
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 import socket
 from geopy.distance import geodesic
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 from rcl_interfaces.msg import Log
 import sqlite3
 from dateutil import parser
@@ -214,6 +214,8 @@ class Website(Node):
         self.warning_count = 0
         self.error_count = 0
         self.relative_wind = None
+        self.sail_angle = 0.0
+        self.rudder_angle = 0.0
 
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(
@@ -240,12 +242,15 @@ class Website(Node):
         self.queued_waypoints_subscription = self.create_subscription(
             String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10
         )
+        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()
         self.gps.latitude = -1
         self.gps.longitude = -1
         self.gps.track_angle_deg = -1
+        self.gps.velocity = 0
 
         self.compass = DummyObject()
         self.compass.angle = -1
@@ -287,17 +292,13 @@ class Website(Node):
 
     def ROS_GPSCallback(self, string):
         string = string.data
+        gpsJson = json.loads(string)
 
-        if string == "None,None,None":
-            self.gps.latitude = None
-            self.gps.longitude = None
-            self.gps.track_angle_deg = None
-            return
-
-        lat, long, trackangle = string.replace("(", "").replace(")", "").split(",")
+        lat, long = gpsJson['lat'], gpsJson['lon']
         self.gps.latitude = float(lat)
         self.gps.longitude = float(long)
-        self.gps.track_angle_deg = float(trackangle)
+        self.gps.track_angle_deg = float(gpsJson['track_angle'])
+        self.gps.velocity = float(gpsJson['velocity'])
 
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
         self.displayedBreadcrumbs.append(Waypoint(self.gps.latitude, self.gps.longitude))
@@ -362,7 +363,17 @@ class Website(Node):
         for waypoint in coords['Waypoints']:
             self.boat_event_coords.append(Waypoint.fromJson(waypoint))
 
+    def ROS_sailCmd_callback(self, msg):
+        self.sail_angle = float(msg.data)
+
+    def ROS_rudderCmd_callback(self, msg):
+        self.rudder_angle = float(msg.data)
+
 @app.route("/", methods=["GET", "POST"])
+def default():
+    return redirect('/map')
+
+@app.route("/home", methods=["GET", "POST"])
 def home():
     return render_template("index.html", **DATA.dataDict)
 
@@ -383,7 +394,10 @@ def dataJSON():
                 "queuedWaypoints": DATA.boat_event_coords,
                 'relative_wind': DATA.relative_wind,
                 "compass_dir": DATA.compass.angle,
-                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0
+                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
+                "sail_angle": DATA.sail_angle,
+                "rudder_angle": DATA.rudder_angle,
+                'speed': DATA.gps.velocity,
                 }
     return jsonDict
 
@@ -594,8 +608,11 @@ def ros_main():
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/website"
     rclpy.init()
     DATA = Website()
+    DATA.logging.info(F"Website available at https://localhost:{PORT}")
 
-    app.run(debug=False, host="0.0.0.0", port=PORT) # debug true causes the process to fork which causes problems
+    # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem')) # debug true causes the process to fork which causes problems
+
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians

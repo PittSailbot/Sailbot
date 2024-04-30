@@ -51,10 +51,36 @@ def angle_between(waypoint1, waypoint2) -> float:
     return brng
 
 
-def angleToPoint(heading, lat1, long1, lat2, long2):
-    phi = math.atan2(long1 - long2, lat1 - lat2)
-
-    return (360 - (math.degrees(phi) + heading + 180)) % 360
+def angleToPoint(lat1, lon1, lat2, lon2):
+    """
+    Calculate the compass angle (bearing) between two GPS coordinates.
+    
+    Args:
+    lat1 (float): Latitude of the first point in degrees.
+    lon1 (float): Longitude of the first point in degrees.
+    lat2 (float): Latitude of the second point in degrees.
+    lon2 (float): Longitude of the second point in degrees.
+    
+    Returns:
+    float: Compass angle in degrees (0 to 360), relative to the north direction.
+    """
+    # Convert degrees to radians
+    lat1 = math.radians(lat1)
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
+    
+    # Calculate the differences in longitudes and latitudes
+    delta_lon = lon2 - lon1
+    y = math.sin(delta_lon) * math.cos(lat2)
+    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(delta_lon)
+    
+    # Calculate the compass angle (bearing)
+    angle = math.atan2(y, x)
+    angle = math.degrees(angle)
+    angle = (angle + 360) % 360  # Normalize angle to be between 0 and 360 degrees
+    
+    return angle
 
 
 def convertDegMinToDecDeg(degMin):

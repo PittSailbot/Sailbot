@@ -116,8 +116,8 @@ def init_container(args):
         cleanup(args)
 
 def connect_container(args):
-    name = args.name if args.name else 'sailbot_client'
-    id = int(args.id) if args.id else 1
+    name = 'sailbot_client' #args.name if args.name else 'sailbot_client'
+    id = 1 #int(args.id) if args.id else 1
 
     name = F'\"{name}_{id}\"'
 
