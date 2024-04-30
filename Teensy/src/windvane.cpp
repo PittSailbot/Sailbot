@@ -14,7 +14,6 @@ void encoderISR() {
     cli();
     // Serial.print("ISR ");
     int bState = digitalRead(WINDVANE_ENCODER_B);
-    // Serial.println(bState);
     encoderValue += (bState == HIGH) ? 1 : -1;
     encoderValue %= ENCODER_ROTATION;
 
@@ -34,12 +33,12 @@ extern void readWindVane(WindVane* windvane) {
 }
 
 // For testing independently
-/*void loop () {
-    delay(100);
-    // did we move around?
-    if (encoderValue != lastEncoderValue) {
-         Serial.print("Position: ");
-         Serial.println(encoderValue);
-         lastEncoderValue = encoderValue;
-    }
-}*/
+// void loop () {
+//     delay(100);
+//     // did we move around?
+//     if (true || encoderValue != lastEncoderValue) {
+//          Serial.print("Position: ");
+//          Serial.println(encoderValue);
+//          lastEncoderValue = encoderValue;
+//     }
+// }

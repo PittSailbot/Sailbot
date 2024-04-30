@@ -16,6 +16,10 @@ IP_BASE       = "172.30.100."
 OS_PI = "Raspberry Pi"
 OS_NOT_PI = "Not Pi"
 
+WARNING = '\033[93m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+
 def get_os():
     system = platform.system()
     if system == 'Linux':
@@ -27,6 +31,17 @@ def get_os():
             return OS_NOT_PI
     else:
         return OS_NOT_PI
+
+def line_exists_in_file(file_path, text_to_find):
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                if text_to_find in line:
+                    return True
+        return False
+    except FileNotFoundError:
+        print(F"{WARNING}Warning: File: {file_path} not found.{ENDC}")
+        return False
 
 def get_args(argv):
     parser = argparse.ArgumentParser(description="Script for testing sailbot code")
@@ -93,10 +108,15 @@ def init_container(args):
 
     name = F'\"{name}_{id}\"'
 
+    use_privileged_desktop = False
+    if not line_exists_in_file('/etc/udev/rules.d/99-serial.rules', 'KERNEL=="ttyACM[0-9]*",MODE="0666"'):
+        print(F"{WARNING}You do not appear to have rules configured for allowing access to the USB, instructions for setting this up can be found here: https://www.losant.com/blog/how-to-access-serial-devices-in-docker{ENDC}")
+        use_privileged_desktop = True
+
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
-    privileged = "--privileged" if get_os() == OS_PI else ""
+    privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""
     # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
-    cmd_str = F"docker create {privileged} -t -it --network host -p {ports} --name {name} {image}"
+    cmd_str = F"docker create {privileged} -v /dev:/dev -t -it --network host -p {ports} --name {name} {image}"
 
     subprocess.run(cmd_str, shell=True)
     #subprocess.Popen(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

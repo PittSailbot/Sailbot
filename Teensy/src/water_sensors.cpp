@@ -4,9 +4,17 @@
 #include <Arduino.h>
 
 void setupWaterSensors() {
-  pinMode (WATER_SENSOR1,INPUT_PULLDOWN);
-  pinMode (WATER_SENSOR2,INPUT_PULLDOWN);
-  pinMode (WATER_SENSOR3,INPUT_PULLDOWN);
+  if (WATER_SENSOR1_INSTALLED){
+    pinMode (WATER_SENSOR1,INPUT_PULLDOWN);
+  }
+  if (WATER_SENSOR2_INSTALLED){
+    pinMode (WATER_SENSOR2,INPUT_PULLDOWN);
+  }
+  if (WATER_SENSOR3_INSTALLED){
+    pinMode (WATER_SENSOR3,INPUT_PULLDOWN);
+  }
+  
+  
 
   Serial.println("Started Water Sensors");
 }
@@ -17,10 +25,22 @@ void setupPumps() {
   Serial.println("Started Pumps");
 }
 
-void readWaterSensors(WaterSensors* water_sensors) {
-  water_sensors->sensor1_is_wet = digitalRead(WATER_SENSOR1);
-  water_sensors->sensor2_is_wet = digitalRead(WATER_SENSOR2);
-  water_sensors->sensor3_is_wet = digitalRead(WATER_SENSOR3);
+bool readWaterSensors(WaterSensors* water_sensors) {
+
+  if (WATER_SENSOR1_INSTALLED){
+    water_sensors->sensor1_is_wet = digitalRead(WATER_SENSOR1);
+    water_sensors->has_sensor1_is_wet = true;
+  }
+  if (WATER_SENSOR2_INSTALLED){
+    water_sensors->sensor2_is_wet = digitalRead(WATER_SENSOR2);
+    water_sensors->has_sensor3_is_wet = true;
+  }
+  if (WATER_SENSOR3_INSTALLED){
+    water_sensors->sensor3_is_wet = digitalRead(WATER_SENSOR3);
+    water_sensors->has_sensor3_is_wet = true;
+  }
+  
+  return WATER_SENSOR1_INSTALLED || WATER_SENSOR2_INSTALLED || WATER_SENSOR3_INSTALLED;
 }
 
 void enablePumps() {

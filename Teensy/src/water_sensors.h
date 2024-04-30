@@ -3,7 +3,7 @@
 #include "teensy.pb.h"
 
 extern void setupWaterSensors();
-extern void readWaterSensors(WaterSensors*);
+extern bool readWaterSensors(WaterSensors*);
 
 extern void setupPumps();
 extern void enablePumps();

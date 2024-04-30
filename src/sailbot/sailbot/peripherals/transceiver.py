@@ -4,7 +4,7 @@ Reads and sends data from the connected USB transceiver
 import time
 import os
 
-from sailbot.telemetry.protobuf import controlsData_pb2
+from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 import rclpy
 import serial
 import smbus2 as smbus
@@ -16,7 +16,6 @@ from geometry_msgs.msg import Quaternion
 from sailbot import constants as c
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
-from sailbot.telemety.protobuf import teensy_pb2
 from sailbot.utils.utils import Waypoint
 
 
@@ -51,9 +50,9 @@ class Transceiver(Node):
                 # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
-                assert self.read() is not None
+                assert self.readRaw() is not None
 
-            except OSError:
+            except OSError as e:
                 self.logging.warning(f"No transceiver detected on port: {port}")
                 if i == len(ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
@@ -89,18 +88,24 @@ class Transceiver(Node):
         """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
         # TODO: try except to echo published non-protobuf error strings from Teensy
-        teensy_data = teensy_pb2.ParseFromString(self.read())
+        teensy_data = self.read()
+
+        if teensy_data == None:
+            return
 
         self.logging.info(f"Received {teensy_data}")
 
-        self.publish_controller(teensy_data.controller)
+        # self.publish_controller(teensy_data.controller)
         # TODO: if null, don't pub
-        self.wind_angle_pub.publish(String(data=teensy_data.windvane.wind_angle))
+        if teensy_data.HasField("windvane"):
+            self.logging.warning(F"{teensy_data.windvane.wind_angle}")
+            self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
         # TODO: Fuse imu and gps into geopose
-        self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_string())
-        msg = String()
-        msg.data = str(teensy_data.GPS.speed)
-        self.speed_pub.publish(msg)
+        if teensy_data.HasField("gps"):
+            self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_string())
+            msg = String()
+            msg.data = str(teensy_data.GPS.speed)
+            self.speed_pub.publish(msg)
 
     def send(self, data):
         self.ser.write(str(data).encode())
@@ -109,9 +114,23 @@ class Transceiver(Node):
         """Reads incoming data from the Teensy"""
         self.send("?")  # transceiver is programmed to respond to '?' with its data
 
-        message = teensy_pb2.Data(self.ser.readline())
+        msg = self.ser.readline().strip()
+        
+        try:
+            message = teensy_pb2.Data()
+            message.ParseFromString(msg)
+        except Exception as e:
+            # self.logging.warning(F"Exception: [{e}] raised when processing: {msg}")
+            return None
 
+        # self.logging.warning(F"Message success: {message}")
         return message
+    
+    def readRaw(self):
+        self.send("?")  # transceiver is programmed to respond to '?' with its data
+
+        return self.ser.readline()
+
 
     def publish_controller(self, controller: teensy_pb2.Controller):
         """Publishes the keybind/meaning of each controller input to the relevant topic.
@@ -153,10 +172,10 @@ class Transceiver(Node):
                 # TODO: auto set sail navigation.auto_adjust_sail()
             else:
                 sailMsg = Float32()
-                sailMsg.data = controller.left_analog_y
+                sailMsg.data = float(controller.left_analog_y)
                 self.sail_pub.publish(sailMsg)
             rudderMsg = Float32()
-            rudderMsg.data = controller.right_analog_x
+            rudderMsg.data = float(controller.right_analog_x)
             self.rudder_pub.publish(rudderMsg)
 
             if OFFSET_MODE != 0:

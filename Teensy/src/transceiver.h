@@ -3,6 +3,6 @@
 #include "teensy.pb.h"
 
 extern void setupTransceiver();
-extern bool readControllerState(Controller*);
+extern bool readControllerState(RCData*);
 
 #endif
