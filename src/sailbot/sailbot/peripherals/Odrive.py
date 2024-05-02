@@ -30,6 +30,8 @@ class Odrive:
         - calibrate(): used to tune the odrive's settings
     """
 
+    od = None
+
     def __init__(self, preset, calibrate=False):
         """
         Args:
@@ -42,7 +44,9 @@ class Odrive:
         self.logging.debug(f"Initializing ODrive with preset: {preset}")
         self.preset = preset
 
-        self.od = odrive.find_any()
+        if self.od == None:
+            self.od = odrive.find_any()
+            
         self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
 
         self.offset = 0

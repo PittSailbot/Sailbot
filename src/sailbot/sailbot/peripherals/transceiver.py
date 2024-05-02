@@ -5,6 +5,7 @@ import time
 import os
 
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
+from sailbot.utils import boatMath
 import rclpy
 import serial
 from serial.tools import list_ports
@@ -43,6 +44,10 @@ class Transceiver(Node):
 
         self.pub = self.create_publisher(String, "transceiver", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
+
+        self.sail_offset_last_message_value = None
+        self.rudder_offset_last_message_value = None
+        self.last_motor_offset_state = None
 
         found_ports, found_descriptions, found_hwids = self.listPorts()
 
@@ -85,9 +90,8 @@ class Transceiver(Node):
         self.sail_pub = self.create_publisher(Float32, "cmd_sail", 1)
         self.rudder_pub = self.create_publisher(Float32, "cmd_rudder", 1)
 
-        self.sail_offset_pub = self.create_publisher(String, "offset_sail", 1)
-        self.rudder_offset_pub = self.create_publisher(String, "offset_rudder", 1)
-        self.prev_offset = 50
+        self.sail_offset_pub = self.create_publisher(Float32, "offset_sail", 10)
+        self.rudder_offset_pub = self.create_publisher(Float32, "offset_rudder", 10)
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
@@ -165,20 +169,11 @@ class Transceiver(Node):
         RC_ENABLED = True if controller.top_left_switch == 0 else False
         RESET_ENABLED = True if controller.top_right_switch == 1 else False
 
-        if False and RESET_ENABLED:
-            # TODO: wait 5s, zero out rudder & sail, then reboot
-            ss = String()
-            ss.data = controller.left_analog_y
-            self.sail_pub.publish(ss)
-            rs = String()
-            ss.data = controller.right_analog_x
-            self.rudder_pub.publish(rs)
-            return
+        rcMsg = String()
+        rcMsg.data = "1" if RC_ENABLED else ""
+        self.rc_enabled_pub.publish(rcMsg)
 
         if RC_ENABLED:
-            rcMsg = String()
-            rcMsg.data = "1"
-            self.rc_enabled_pub.publish(rcMsg)
             OFFSET_MODE = controller.front_right_switch
             AUTO_SET_SAIL = True if controller.front_left_switch1 == 2 else False
 
@@ -189,26 +184,33 @@ class Transceiver(Node):
                 sailMsg = Float32()
                 sailMsg.data = float(controller.left_analog_y)
                 self.sail_pub.publish(sailMsg)
+
             rudderMsg = Float32()
             rudderMsg.data = float(controller.right_analog_x)
             self.rudder_pub.publish(rudderMsg)
 
-            if OFFSET_MODE != 0:
-                relative_offset = controller.potentiometer - self.prev_offset
-                if OFFSET_MODE == 1:
-                    sailOffsetMsg = String()
-                    sailOffsetMsg.data = str(relative_offset)
-                    self.sail_offset_pub.publish(sailOffsetMsg)
+            if OFFSET_MODE != 1:
+                if OFFSET_MODE == 0:
+                    if self.last_motor_offset_state == 2:
+                        offsetChange = controller.potentiometer - self.sail_offset_last_message_value
+
+                        sailOffsetMsg = String()
+                        sailOffsetMsg.data = float(offsetChange)
+                        self.rudder_offset_pub.publish(sailOffsetMsg)
+
+                    self.sail_offset_last_message_value = controller.potentiometer
+
                 elif OFFSET_MODE == 2:
-                    rudderOffsetMsg = String()
-                    rudderOffsetMsg.data = str(relative_offset)
-                    self.rudder_offset_pub.publish(rudderOffsetMsg)
-            else:
-                self.prev_offset = controller.potentiometer
-        else:
-            rcMsg = String()
-            rcMsg.data = ""
-            self.rc_enabled_pub.publish(rcMsg)
+                    if self.last_motor_offset_state == 2:
+                        offsetChange = controller.potentiometer - self.rudder_offset_last_message_value
+
+                        rudderOffsetMsg = String()
+                        rudderOffsetMsg.data = float(offsetChange)
+                        self.rudder_offset_pub.publish(rudderOffsetMsg)
+
+                    self.rudder_offset_last_message_value = controller.potentiometer
+                
+            self.last_motor_offset_state = OFFSET_MODE
 
     def listPorts(self):
         """!

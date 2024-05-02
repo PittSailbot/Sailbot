@@ -3,9 +3,6 @@ from glob import glob
 
 from setuptools import setup, find_packages
 
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
-
 package_name = "sailbot"
 data_files=[]
 data_files.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
@@ -30,7 +27,6 @@ data_files.append(('lib/sailbot/websiteHosting/static/leaflet/', glob(package_na
 data_files.append(('share/' + package_name + '/launch', glob('launch/*.launch.py')))
 data_files.append(('share/' + package_name + '/config', glob('config/*.yaml')))
 
-
 setup(
     name=package_name,
     version="0.0.0",
@@ -50,11 +46,9 @@ setup(
             "compass = sailbot.peripherals.compass:main",
             "gps = sailbot.peripherals.GPS:main",
             "windvane = sailbot.peripherals.windvane:main",
+            "motorDrivers = sailbot.peripherals.motorDrivers:main",
             "transceiver = sailbot.peripherals.transceiver:main",
             "main = sailbot.main:main",
-            "sail = sailbot.peripherals.sail:main",
-            "rudder = sailbot.peripherals.rudder:main",
-            "offset = sailbot.deprecated.motorOffset:main",
             "website = sailbot.websiteHosting.website:ros_main",
             "virtualDrivers = sailbot.virtualPeripherals.drivers:main",
             "virtualGPS = sailbot.virtualPeripherals.GPS:main",
