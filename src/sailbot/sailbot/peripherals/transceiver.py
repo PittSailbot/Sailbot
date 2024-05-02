@@ -7,6 +7,7 @@ import os
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 import rclpy
 import serial
+from serial.tools import list_ports
 import smbus2 as smbus
 from rclpy.node import Node
 from std_msgs.msg import String, Float32
@@ -43,24 +44,33 @@ class Transceiver(Node):
         self.pub = self.create_publisher(String, "transceiver", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
 
-        ports = [c.config["TRANSCEIVER"]["ardu_port"], c.config["TRANSCEIVER"]["ardu_port2"], c.config["TRANSCEIVER"]["ardu_port3"]]
-        for i, port in enumerate(ports):
+        found_ports, found_descriptions, found_hwids = self.listPorts()
+
+        for i, port in enumerate(found_ports):
+            if str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", "") != (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")):
+
+                if i == len(found_ports) - 1:
+                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                    debug_str = "Found ports are: \n"
+                    for i in range(len(found_ports)):
+                        debug_str += F"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
+                    debug_str += F'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
+                    self.logging.warning(debug_str)
+                    raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                else:
+                    continue
             try:
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
                 assert self.readRaw() is not None
-
-            except OSError as e:
-                self.logging.warning(f"No transceiver detected on port: {port}")
-                if i == len(ports) - 1:
-                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-                    raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                self.last_successful_message = time.time()
 
             except Exception as e:
-                self.logging.error(f"Failed to read from port: {port}\nRaised: {e}")
-                raise e
+                self.logging.error(f"Failed to read from port: {port}")
+                self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
 
             else:
                 self.logging.info(f"Transceiver initialized with port: {port}")
@@ -95,10 +105,9 @@ class Transceiver(Node):
 
         self.logging.info(f"Received {teensy_data}")
 
-        # self.publish_controller(teensy_data.controller)
+        self.publish_controller(teensy_data.rc_data)
         # TODO: if null, don't pub
         if teensy_data.HasField("windvane"):
-            self.logging.warning(F"{teensy_data.windvane.wind_angle}")
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
         # TODO: Fuse imu and gps into geopose
         if teensy_data.HasField("gps"):
@@ -112,27 +121,33 @@ class Transceiver(Node):
 
     def read(self):
         """Reads incoming data from the Teensy"""
-        self.send("?")  # transceiver is programmed to respond to '?' with its data
+        # self.send("?")  # transceiver is programmed to respond to '?' with its data
 
         msg = self.ser.readline().strip()
-        
+        # self.logging.warning(msg)
         try:
             message = teensy_pb2.Data()
-            message.ParseFromString(msg)
+            retVal = message.ParseFromString(msg)
+            # self.logging.warning("retVal:" + str(retVal))
+
+            if str(message).strip() != '':
+                self.last_successful_message = time.time()
+                return message
         except Exception as e:
             # self.logging.warning(F"Exception: [{e}] raised when processing: {msg}")
-            return None
+            pass
 
-        # self.logging.warning(F"Message success: {message}")
-        return message
-    
+        if (time.time() - self.last_successful_message) > 1: #seconds
+            self.logging.warning("No valid message recived in awhile, check transceiver")
+            self.last_successful_message = time.time()
+        return None
+        
     def readRaw(self):
-        self.send("?")  # transceiver is programmed to respond to '?' with its data
+        # self.send("?")  # transceiver is programmed to respond to '?' with its data
 
         return self.ser.readline()
 
-
-    def publish_controller(self, controller: teensy_pb2.Controller):
+    def publish_controller(self, controller: teensy_pb2.RCData):
         """Publishes the keybind/meaning of each controller input to the relevant topic.
         Editing this function will 'rebind' what an input does.
 
@@ -153,10 +168,10 @@ class Transceiver(Node):
         if False and RESET_ENABLED:
             # TODO: wait 5s, zero out rudder & sail, then reboot
             ss = String()
-            ss.data = 0
+            ss.data = controller.left_analog_y
             self.sail_pub.publish(ss)
             rs = String()
-            ss.data = 50
+            ss.data = controller.right_analog_x
             self.rudder_pub.publish(rs)
             return
 
@@ -194,6 +209,24 @@ class Transceiver(Node):
             rcMsg = String()
             rcMsg.data = ""
             self.rc_enabled_pub.publish(rcMsg)
+
+    def listPorts(self):
+        """!
+        @brief Provide a list of names of serial ports that can be opened
+        @return A tuple of the port list and a corresponding list of device descriptions, and hwids
+        """
+        ports = list( list_ports.comports() )
+
+        resultPorts = []
+        descriptions = []
+        hwids = []
+        for port in ports:
+            # if port.device:
+            resultPorts.append( port.device )
+            descriptions.append( str( port.description ) )
+            hwids.append( str( port.hwid ) )
+
+        return (resultPorts, descriptions, hwids)
 
 
 def main(args=None):
