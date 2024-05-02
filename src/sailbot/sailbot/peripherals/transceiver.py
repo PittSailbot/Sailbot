@@ -169,9 +169,7 @@ class Transceiver(Node):
         rudder_manual = True if controller.front_left_switch1 <= 1 else False
         sail_manual = True if controller.front_left_switch1 == 0 else False
 
-        rcMsg = String()
-        rcMsg.data = "1" if rudder_manual else ""
-        rcMsg = ControlState(rudder_manual, sail_manual)
+        rcMsg = ControlState(rudder_manual, sail_manual).toRosMessage()
         self.control_state_pub.publish(rcMsg)
 
         motor_offset_mode = controller.front_right_switch
@@ -182,12 +180,12 @@ class Transceiver(Node):
             self.sail_pub.publish(sailMsg)
 
             if motor_offset_mode == 0:
-                if self.last_motor_offset_state == 2:
-                    offsetChange = controller.potentiometer - self.sail_offset_last_message_value
+                if self.last_motor_offset_state == 0:
+                    offsetChange = (controller.potentiometer - self.sail_offset_last_message_value) / 200
 
-                    sailOffsetMsg = String()
+                    sailOffsetMsg = Float32()
                     sailOffsetMsg.data = float(offsetChange)
-                    self.rudder_offset_pub.publish(sailOffsetMsg)
+                    self.sail_offset_pub.publish(sailOffsetMsg)
 
                 self.sail_offset_last_message_value = controller.potentiometer
 
@@ -200,9 +198,9 @@ class Transceiver(Node):
 
             if motor_offset_mode == 2:
                 if self.last_motor_offset_state == 2:
-                    offsetChange = controller.potentiometer - self.rudder_offset_last_message_value
+                    offsetChange = (controller.potentiometer - self.rudder_offset_last_message_value) / 200
 
-                    rudderOffsetMsg = String()
+                    rudderOffsetMsg = Float32()
                     rudderOffsetMsg.data = float(offsetChange)
                     self.rudder_offset_pub.publish(rudderOffsetMsg)
 

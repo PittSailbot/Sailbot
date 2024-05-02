@@ -32,45 +32,49 @@ class MotorDriver(Node):
         self.logging.info("Initializing motor driver")
 
         self.rudder_odrive = Odrive(preset="rudder")
-        self.rudder_offset = 0
+        self.rudder_set = False
         self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
         self.rudder_offset_sub = self.create_subscription(Float32, "offset_rudder", self.rudder_offset_callback, 10)
 
         self.sail_odrive = Odrive(preset="sail")
-        self.sail_offset = 0
+        self.sail_set = False
         self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
         self.sail_offset_sub = self.create_subscription(Float32, "offset_sail", self.sail_offset_callback, 10)
 
     def rudder_callback(self, msg):
         angle = float(msg.data)
-
-        angle = max(angle, self.RUDDER_MIN_ANGLE)
-        angle = min(angle, self.RUDDER_MAX_ANGLE)
-
-        self.logging.debug(f"Moving rudder to {angle} degrees")
-        rotations = boatMath.remap(angle + self.rudder_offset, self.RUDDER_MIN_ANGLE, self.RUDDER_MAX_ANGLE, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
-        self.rudder_odrive.pos = rotations
+        self.logging.debug(f"Moving rudder to {angle}")
+        
+        rotations = boatMath.remap(angle, self.RUDDER_MIN_ANGLE, self.RUDDER_MAX_ANGLE, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
+        
+        if self.rudder_set:
+            self.rudder_odrive.pos = rotations
+        else:
+            self.rudder_odrive.offset = self.rudder_odrive.pos - rotations
+            self.rudder_set = True
 
     def rudder_offset_callback(self, msg):
         messageVal = float(msg.data)
         
-        self.rudder_offset += messageVal
+        self.rudder_odrive.offset += messageVal
         self.logging.debug(f"Changing Rudder offset by: {messageVal}%")
 
     def sail_callback(self, msg):
         angle = float(msg.data)
+        self.logging.debug(f"Moving sail to {angle}")
+        
+        rotations = boatMath.remap(angle, self.SAIL_MIN_ANGLE, self.SAIL_MAX_ANGLE, -self.sail_odrive.max_rotations / 2, self.sail_odrive.max_rotations / 2)
 
-        angle = max(angle, self.RUDDER_MIN_ANGLE)
-        angle = min(angle, self.RUDDER_MAX_ANGLE)
-
-        self.logging.debug(f"Moving sail to {angle} degrees")
-        rotations = boatMath.remap(angle + self.sail_offset, self.SAIL_MIN_ANGLE, self.SAIL_MAX_ANGLE, -self.sail_odrive.max_rotations / 2, self.sail_odrive.max_rotations / 2)
-        self.sail_odrive.pos = rotations
+        if self.sail_set:
+            self.sail_odrive.pos = rotations
+        else:
+            self.sail_odrive.offset = self.sail_odrive.pos - rotations
+            self.sail_set = True
 
     def sail_offset_callback(self, msg):
         messageVal = float(msg.data)
         
-        self.sail_offset += messageVal
+        self.sail_odrive.offset += messageVal
         self.logging.debug(f"Changing Sail offset by: {messageVal}%")
 
 def main(args=None):

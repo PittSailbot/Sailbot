@@ -117,8 +117,8 @@ class Odrive:
     def pos(self, value):
         if value < -self.max_rotations or value > self.max_rotations:
             raise ValueError(f"Tried setting odrive position above max limit {value}")
-        # self.axis.controller.input_pos = value
-        self.axis.controller.input_pos = value
+
+        self.axis.controller.input_pos = value + self.offset
 
     @property
     def vel(self):
