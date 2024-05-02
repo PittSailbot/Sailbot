@@ -41,7 +41,7 @@ class Waypoint:
         vals = str(string.data).split(',')
         return Waypoint(float(vals[0]), float(vals[1]))
     
-    def from_gps(jsonString: String):
+    def from_gps_msg(jsonString: String):
         gpsJson = json.loads(jsonString.data)
         return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 
@@ -71,6 +71,36 @@ class DummyObject:
 
     def __init__(self, *args, **kwargs):
         pass
+
+class ControlState:
+
+    def __init__(self, rudder_manual: bool, sail_manual: bool):
+        self.rudder_manual = rudder_manual
+        self.sail_manual = sail_manual
+
+    def __repr__(self) -> str:
+        if self.sail_manual and self.rudder_manual:
+            return "RC Control"
+        elif self.rudder_manual:
+            return "Auto Sail"
+        else:
+            return "Autonomous"
+
+    def toRosMessage(self):
+        msgData = {
+            'rudder_manual': self.rudder_manual,
+            'sail_manual': self.sail_manual
+        }
+        msg = String()
+        msg.data = json.dumps(msgData)
+        
+        return msg
+    
+    @staticmethod
+    def fromRosMessage(message):
+        data = json.loads(message.data)
+        return ControlState(data['rudder_manual'], data['sail_manual'])
+
 
 
 # TODO: make function use ROS to resolve circulat import error

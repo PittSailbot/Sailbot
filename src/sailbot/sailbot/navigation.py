@@ -11,7 +11,7 @@ from std_msgs.msg import String, Float32
 
 from sailbot import constants as c
 from sailbot.utils import boatMath, utils
-from sailbot.utils.utils import Waypoint
+from sailbot.utils.utils import Waypoint, ControlState
 
 
 # TODO: Implement Waypoint from serialized ROS message
@@ -23,7 +23,7 @@ class Navigation(Node):
             - /gps (String):
             - /compass (String):
             - /windvane (String):
-            - /rc_enabled (Bool):
+            - /control_state (Bool):
         Publishes to:
             - /cmd_rudder (String)
             - /cmd_sail (String)
@@ -44,15 +44,16 @@ class Navigation(Node):
         self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
         self.compass_sub = self.create_subscription(String, "/boat/compass", self.compass_callback, 2)
         self.windvane_sub = self.create_subscription(String, "/boat/windvane", self.windvane_callback, 2)
-        self.rc_enabled_sub = self.create_subscription(String, "/boat/rc_enabled", self.rc_enabled_callback, 2)
+        self.control_state_pub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
 
         self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
         self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
 
         self.go_to_gps_timer = self.create_timer(0.2, self.go_to_gps)
+        self.sail_adjust_timer = self.create_timer(0.5, self.auto_adjust_sail)
 
         self.latest_waypoint = None
-        self.rc_enabled = False
+        self.control_state = False
         self.allow_tacking = True
 
     def next_gps_callback(self, msg):
@@ -61,8 +62,8 @@ class Navigation(Node):
             self.logging.info(f"Navigating to {next_gps}")
             self.latest_waypoint = next_gps
 
-    def rc_enabled_callback(self, msg):
-        self.rc_enabled == msg.data == "1"
+    def control_state_callback(self, msg):
+        self.control_state = ControlState.fromRosMessage(msg)
 
     def windvane_callback(self, msg):
         data_dict = json.loads(msg.data)
@@ -72,10 +73,7 @@ class Navigation(Node):
         self.compass_angle = float(msg.data)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_gps(msg)
-
-    def controller_callback(self, msg):
-        self.rc_enabled = bool(msg.data)
+        self.position = Waypoint.from_gps_msg(msg)
 
     def go_to_gps(self):
         """
@@ -85,7 +83,7 @@ class Navigation(Node):
         """
         target = self.latest_waypoint
 
-        if self.rc_enabled or target is None:
+        if self.control_state.rudder_manual or target is None:
             return
 
         if utils.has_reached_waypoint(target):
@@ -94,8 +92,6 @@ class Navigation(Node):
             self.sail_pub.publish(0)
             self.rudder_pub.publish(0)
             return
-
-        self.auto_adjust_sail()
 
         target_angle = boatMath.angleToPoint(self.position.lat, self.position.lon, target.lat, target.lon)
         delta_angle = (target_angle - self.compass_angle) % 360
@@ -161,6 +157,9 @@ class Navigation(Node):
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
+        if self.control_state.sail_manual:
+            return 
+        
         if self.wind_angle > 180:
             self.wind_angle = 180 - (self.wind_angle - 180)
 
