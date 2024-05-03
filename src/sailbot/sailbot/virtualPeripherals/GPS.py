@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32
 
-from sailbot.utils.utils import DummyObject
+from sailbot.utils.utils import DummyObject, ControlState
 import random
 import math
 import json
@@ -41,6 +41,7 @@ class GPS(Node):
         super().__init__("GPS")
         self.logging = self.get_logger()
         self.pub = self.create_publisher(String, "GPS", 10)
+        self.control_state_pub = self.create_publisher(String, "control_state", 10)
 
         self.compass_subscription = self.create_subscription(
             String, "/boat/compass", self.ROS_compassCallback, 10
@@ -74,6 +75,7 @@ class GPS(Node):
         self.compass_yaw = float(angle)
 
     def timer_callback(self):
+        self.control_state_pub.publish(ControlState(False, False).toRosMessage())
         
         optAngle = max(min(self.relative_wind / 2, 90), 3)
         self.sail_angle = optAngle
