@@ -52,7 +52,7 @@ class Transceiver(Node):
         found_ports, found_descriptions, found_hwids = self.listPorts()
 
         for i, port in enumerate(found_ports):
-            if str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", "") != (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")):
+            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
 
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")

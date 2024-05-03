@@ -7,15 +7,17 @@
 
 int encoderValue = 0;
 int lastEncoderValue = 0;
+bool hasChanged = false;
 
 void encoderISR() {
     // Interrupt functions to update the encoder value whenever the windvane changes angle
     // Read the current state of encoder pin B
     cli();
-    // Serial.print("ISR ");
+    
     int bState = digitalRead(WINDVANE_ENCODER_B);
     encoderValue += (bState == HIGH) ? 1 : -1;
     encoderValue %= ENCODER_ROTATION;
+    hasChanged = true;
 
     sei();
 }
@@ -28,8 +30,9 @@ extern void setupWindVane() {
     Serial.println("Started WindVane");
 }
 
-extern void readWindVane(WindVane* windvane) {
+extern bool readWindVane(WindVane* windvane) {
     windvane->wind_angle = map(encoderValue, 0, ENCODER_ROTATION, 0, 360);  // 0-360 degrees
+    return hasChanged;
 }
 
 // For testing independently
