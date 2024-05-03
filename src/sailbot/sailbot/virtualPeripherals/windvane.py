@@ -5,14 +5,6 @@ from threading import Lock, Thread
 from time import sleep
 import os 
 import json
-
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
-
-if not DOCKER:
-    import board
-    from adafruit_seesaw import digitalio, rotaryio, seesaw
-    from RPi import GPIO
     
 import rclpy
 from rclpy.node import Node

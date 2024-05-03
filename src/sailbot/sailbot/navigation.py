@@ -53,7 +53,7 @@ class Navigation(Node):
         self.sail_adjust_timer = self.create_timer(0.5, self.auto_adjust_sail)
 
         self.latest_waypoint = None
-        self.control_state = False
+        self.control_state = None
         self.allow_tacking = True
 
     def next_gps_callback(self, msg):
@@ -83,7 +83,7 @@ class Navigation(Node):
         """
         target = self.latest_waypoint
 
-        if self.control_state.rudder_manual or target is None:
+        if self.control_state == None or self.control_state.rudder_manual or target is None:
             return
 
         if utils.has_reached_waypoint(target):
@@ -157,7 +157,7 @@ class Navigation(Node):
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
-        if self.control_state.sail_manual:
+        if self.control_state == None or self.control_state.sail_manual:
             return 
         
         if self.wind_angle > 180:
