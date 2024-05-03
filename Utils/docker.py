@@ -25,7 +25,7 @@ def get_os():
     if system == 'Linux':
         # Check if it's a Raspberry Pi or an Ubuntu desktop
         release = platform.release()
-        if "raspi" in release or 'raspberry' in release:
+        if "raspi" in release or 'raspberry' in release or 'rpi' in release:
             return OS_PI
         else:
             return OS_NOT_PI
@@ -116,7 +116,8 @@ def init_container(args):
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""
     # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
-    cmd_str = F"docker create {privileged} -v /dev:/dev -t -it --network host -p {ports} --name {name} {image}"
+    enviroment_var = "IS_PI_DOCKER=true" if get_os() == OS_PI else "IS_DOCKER=true"
+    cmd_str = F"docker create -e {enviroment_var} {privileged} -v /dev:/dev -t -it --network host -p {ports} --name {name} {image} "
 
     subprocess.run(cmd_str, shell=True)
     #subprocess.Popen(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

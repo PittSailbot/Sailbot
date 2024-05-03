@@ -35,17 +35,21 @@ app = Flask(__name__)
 app.secret_key = "sailbot"
 
 DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
+DOCKER = True if str(DOCKER).lower() == "true" else False
+PI_DOCKER = os.environ.get("IS_PI_DOCKER", False)
+PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
 if DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
     # TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
-    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-else:
-    # raise Exception("configure ports and tile server for pi")
+    TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
+elif PI_DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
-    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    TILE_SERVER = 'https://' + '10.0.0.163' + ':443/tile/{z}/{x}/{y}.png'
+    # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
+else:
+    raise Exception("configure ports and tile server")
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
@@ -391,7 +395,7 @@ def dataJSON():
                 "error_count": DATA.error_count,
                 "ControlState": str(DATA.boat_controlState) if DATA.boat_controlState else "UNKNOWN",
                 "queuedWaypoints": DATA.boat_event_coords,
-                'relative_wind': DATA.relative_wind,
+                'relative_wind': DATA.relative_wind if DATA.relative_wind != None else 0.0,
                 "compass_dir": DATA.compass.angle,
                 "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
                 "sail_angle": DATA.sail_angle,

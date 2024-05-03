@@ -65,7 +65,6 @@ RUN apt-get install -y net-tools iproute2
 RUN uname -m > /tmp/arch.txt
 RUN cat /tmp/arch.txt | grep -q 'aarch64' && pip install --no-cache-dir -r /workspace/requirements-pi.txt || echo "Not a Raspberry Pi, skipping extra dependency installation"
 RUN cat /tmp/arch.txt | grep -q 'aarch64' && pip install RPi.GPIO || echo "Not a Raspberry Pi, skipping extra dependency installation"
-RUN cat /tmp/arch.txt | grep -q 'aarch64' && export IS_PI_DOCKER=true || export IS_DOCKER=true
 
 RUN pip install --no-cache-dir -r /workspace/requirements-dev.txt
 
