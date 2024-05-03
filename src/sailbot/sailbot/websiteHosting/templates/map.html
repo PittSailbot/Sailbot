@@ -884,18 +884,18 @@
                         }
                     }
 
-                   boatMode = json.is_RC
+                   boatMode = json.ControlState
                    
                     var boatModeText = document.getElementById('boat-mode-indicator');
-                    if (boatMode.toUpperCase() === "TRUE") {
-                        boatModeText.textContent = 'Remote Control';
+                    boatModeText.textContent = boatMode;
+
+                    if (boatMode === "RC Control") {
                         boatModeText.style.color = 'green';
-                    } else if (boatMode.toUpperCase() === "FALSE") {
-                        boatModeText.textContent = 'Autonomus';
+                    } else if (boatMode === "Auto Sail") {
+                        boatModeText.style.color = 'cyan';
+                    } else if (boatMode === "Autonomous") {
                         boatModeText.style.color = 'red';
                     } else {
-                        // Handle other cases or set default values
-                        boatModeText.textContent = boatMode.toUpperCase();
                         boatModeText.style.color = 'gold';
                     }
 

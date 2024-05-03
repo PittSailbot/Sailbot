@@ -3,6 +3,6 @@
 #include "teensy.pb.h"
 
 extern int setupIMU();
-extern void readIMU(IMU*);
+extern bool readIMU(IMU*);
 
 #endif

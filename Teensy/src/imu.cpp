@@ -34,6 +34,7 @@ Adafruit_Mahony filter;  // fastest/smalleset
 #define FILTER_UPDATE_RATE_HZ 100
 
 uint32_t timestamp;
+bool found_transceiver = false;
 
 int setupIMU() {
   if (!cal.begin()) {
@@ -43,7 +44,7 @@ int setupIMU() {
   }
 
   if (!init_sensors()) {
-    Serial.println("Failed to find IMU");
+    // Serial.println("Failed to find IMU");
     return 1;
   }
   
@@ -56,13 +57,19 @@ int setupIMU() {
   timestamp = millis();
 
   Wire.setClock(400000); // 400KHz
+  found_transceiver = true;
+  Serial.println("Started IMU");
   return 0;
 }
 
 
-void readIMU(IMU* imu) {
+bool readIMU(IMU* imu) {
+  if (!found_transceiver){
+    return false;
+  }
+
   if ((millis() - timestamp) < (1000 / FILTER_UPDATE_RATE_HZ)) {
-    return;
+    return false;
   }
   timestamp = millis();
 
@@ -89,4 +96,6 @@ void readIMU(IMU* imu) {
 
   // Return boat's orientation in quaternion format (pitch/roll/yaw, but better)
   filter.getQuaternion(&(imu->qw), &(imu->qx), &(imu->qy), &(imu->qz));
+
+  return true;
 }

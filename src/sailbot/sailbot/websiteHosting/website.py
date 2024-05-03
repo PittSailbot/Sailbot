@@ -26,7 +26,7 @@ import sqlite3
 from dateutil import parser
 
 import sailbot.constants as c
-from sailbot.utils.utils import DummyObject, Waypoint
+from sailbot.utils.utils import DummyObject, Waypoint, ControlState
 
 
 import os
@@ -35,17 +35,21 @@ app = Flask(__name__)
 app.secret_key = "sailbot"
 
 DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
+DOCKER = True if str(DOCKER).lower() == "true" else False
+PI_DOCKER = os.environ.get("IS_PI_DOCKER", False)
+PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
 if DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
     # TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
-    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-else:
-    # raise Exception("configure ports and tile server for pi")
+    TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
+elif PI_DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
-    TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    TILE_SERVER = 'https://' + '10.0.0.163' + ':443/tile/{z}/{x}/{y}.png'
+    # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
+else:
+    raise Exception("configure ports and tile server")
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
@@ -208,7 +212,7 @@ class Website(Node):
 
         self.circles = [{"lat": "42.849135", "lon": "-70.976314", "radius": 50}]
 
-        self.boat_isRC = "UNKNOWN"
+        self.boat_controlState = None
         self.boat_target = Waypoint(None, None)
         self.boat_event_coords = []
         self.warning_count = 0
@@ -236,8 +240,8 @@ class Website(Node):
         self.boat_state_subscription = self.create_subscription(
             String, "/boat/next_gps", self.ROS_nextGpsCallback, 10
         )
-        self.rc_enabled_sub = self.create_subscription(
-            String, "/boat/rc_enabled", self.ROS_isRcCallback, 2
+        self.control_state_sub = self.create_subscription(
+            String, "/boat/control_state", self.ROS_controlStateCallback, 2
         )
         self.queued_waypoints_subscription = self.create_subscription(
             String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10
@@ -349,11 +353,10 @@ class Website(Node):
         # string = string.data
         # boatState = json.loads(string)
 
-        # self.boat_isRC = str(boatState['is_RC'])
         self.boat_target = next_gps
 
-    def ROS_isRcCallback(self, msg):
-        self.boat_isRC == msg.data == "1"
+    def ROS_controlStateCallback(self, msg):
+        self.boat_controlState = ControlState.fromRosMessage(msg)
   
     def ROS_queuedWaypointsCallback(self, string):
         string = string.data
@@ -390,9 +393,9 @@ def dataJSON():
                 "target_lon": target.lon,
                 'warning_count': DATA.warning_count,
                 "error_count": DATA.error_count,
-                "is_RC": str(DATA.boat_isRC),
+                "ControlState": str(DATA.boat_controlState) if DATA.boat_controlState else "UNKNOWN",
                 "queuedWaypoints": DATA.boat_event_coords,
-                'relative_wind': DATA.relative_wind,
+                'relative_wind': DATA.relative_wind if DATA.relative_wind != None else 0.0,
                 "compass_dir": DATA.compass.angle,
                 "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
                 "sail_angle": DATA.sail_angle,

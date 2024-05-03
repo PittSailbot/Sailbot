@@ -55,7 +55,7 @@ class Endurance(Event):
         self.position = Waypoint(0, 0)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_gps(msg)
+        self.position = Waypoint.from_gps_msg(msg)
 
     def next_gps(self):
         """

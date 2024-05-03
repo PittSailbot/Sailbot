@@ -3,6 +3,6 @@
 #include "teensy.pb.h"
 
 extern void setupGPS();
-extern void readGPS(GPSData*);
+extern bool readGPS(GPSData*);
 
 #endif

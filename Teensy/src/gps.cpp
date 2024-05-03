@@ -34,7 +34,7 @@ void setupGPS() {
   Serial.println("Started GPS");
 }
 
-void readGPS (GPSData* gps) {
+bool readGPS (GPSData* gps) {
   // read data from the GPS in the 'main loop'
   char c = GPS.read();
   // if you want to debug, this is a good time to do it!
@@ -50,7 +50,11 @@ void readGPS (GPSData* gps) {
     // so be very wary if using OUTPUT_ALLDATA and trying to print out data
     Serial.print(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-      return; // we can fail to parse a sentence in which case we should just wait for another
+      return false; // we can fail to parse a sentence in which case we should just wait for another
+  }
+
+  if (!GPS.fix){
+    return false;
   }
 
   gps->lat = GPS.latitudeDegrees;
@@ -58,6 +62,8 @@ void readGPS (GPSData* gps) {
   gps->speed = GPS.speed * 0.5144; // knots -> m/s
   // gps->fix = GPS.fix;
   // gps->altitude = GPS.altitude;
+
+  return false;
 }
 
 void printDebug() {
