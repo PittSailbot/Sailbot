@@ -10,6 +10,7 @@
 #include "gps.h"
 #include "imu.h"
 #include "water_sensors.h"
+#include "receiveCmds.h"
 
 int pwm_val = 0;
 int pwm_peak = 150;
@@ -24,6 +25,7 @@ void setup() {
   setupIMU();
   setupWaterSensors();
   //setupPumps();
+  setupReceiver();
 
   Serial.println("Initialized Teensy");
 

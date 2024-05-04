@@ -22,3 +22,11 @@
 
 #define WINDVANE_ENCODER_A 34
 #define WINDVANE_ENCODER_B 35
+
+#define SLAVE_ADDRESS 0x10
+
+// the first byte in an i2c command, to indicate the intention of the message
+// absolute movements for the camera
+#define CAM_H_MOVE_ABS_CMD 0 
+#define CAM_V_MOVE_ABS_CMD 1
+#define CAM_MOVE_ABS_CMD 2

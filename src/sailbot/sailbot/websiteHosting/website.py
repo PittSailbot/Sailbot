@@ -26,7 +26,7 @@ import sqlite3
 from dateutil import parser
 
 import sailbot.constants as c
-from sailbot.utils.utils import DummyObject, Waypoint, ControlState
+from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState
 
 
 import os
@@ -221,6 +221,8 @@ class Website(Node):
         self.sail_angle = 0.0
         self.rudder_angle = 0.0
 
+        self.camera_servo_pub = self.create_publisher(String, "cam_servo_control", 10)
+
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(
             String, "/boat/GPS", self.ROS_GPSCallback, 10
@@ -379,6 +381,16 @@ def default():
 @app.route("/home", methods=["GET", "POST"])
 def home():
     return render_template("index.html", **DATA.dataDict)
+
+@app.route("/camera", methods=["GET", "POST"])
+def camera():
+    if request.method == 'POST':
+        pitch = request.form['pitch']
+        yaw = request.form['yaw']
+        msg = CameraServoState(yaw, pitch).toRosMessage()
+        DATA.camera_servo_pub.publish(msg)
+
+    return render_template("camera.html")
 
 @app.route("/gps")
 def gps():

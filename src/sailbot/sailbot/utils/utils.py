@@ -11,7 +11,6 @@ from std_msgs.msg import String, Bool
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between
 
-
 @dataclass(slots=True)
 class Waypoint:
     """
@@ -101,7 +100,25 @@ class ControlState:
         data = json.loads(message.data)
         return ControlState(data['rudder_manual'], data['sail_manual'])
 
+class CameraServoState:
+    def __init__(self, horizonal_pos: int, vertical_pos: int):
+        self.horizonal_pos = horizonal_pos
+        self.vertical_pos = vertical_pos
 
+    def toRosMessage(self):
+        msgData = {
+            'horizonal_pos': self.horizonal_pos,
+            'vertical_pos': self.vertical_pos
+        }
+        msg = String()
+        msg.data = json.dumps(msgData)
+        
+        return msg
+    
+    @staticmethod
+    def fromRosMessage(message):
+        data = json.loads(message.data)
+        return CameraServoState(data['horizonal_pos'], data['vertical_pos'])
 
 # TODO: make function use ROS to resolve circulat import error
 def has_reached_waypoint(waypoint, distance=float(c.config["CONSTANTS"]["reached_waypoint_distance"])):
