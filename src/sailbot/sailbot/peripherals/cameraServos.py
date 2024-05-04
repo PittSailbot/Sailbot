@@ -2,10 +2,19 @@
 Drivers and interface for camera servos
 """
 # Code adapted from https://github.com/ArduCAM/PCA9685
-import adafruit_servokit
+import rclpy
 from rclpy.node import Node
+from std_msgs.msg import String
+import smbus2 as smbus
+import os
 
 from sailbot import constants as c
+from sailbot.utils.utils import CameraServoState
+
+TEENSY_ADDRESS = int(c.config["MAIN"]["teensy_i2c_address"], 0)
+CAM_MOVE_ABS_CMD = int(c.config["CAMERASERVOS"]["CAM_MOVE_CMD"])
+CAM_V_MOVE_ABS_CMD = int(c.config["CAMERASERVOS"]["CAM_V_MOVE_ABS_CMD"])
+CAM_H_MOVE_ABS_CMD = int(c.config["CAMERASERVOS"]["CAM_H_MOVE_ABS_CMD"])
 
 
 class CameraServos(Node):
@@ -25,68 +34,56 @@ class CameraServos(Node):
     MAX_ANGLE = int(c.config["CAMERASERVOS"]["max_angle"])
     DEFAULT_ANGLE = int(c.config["CAMERASERVOS"]["default_angle"])
 
-    # Servo connection ports, if inputs are reversed then switch
-    # If servos don't move try setting ports to 2 and 3
-    PITCH_PORT = int(c.config["CAMERASERVOS"]["pitch_port"])
-    YAW_PORT = int(c.config["CAMERASERVOS"]["yaw_port"])
-
-    # IS_FLIPPED_PITCH = bool(c.config["CAMERA"]["reverse_pitch"])
-
     def __init__(self):
         super().__init__("camera_servos")
         self.logging = self.get_logger()
 
-        self._kit = adafruit_servokit.ServoKit(channels=16)
-        self._pitch = self.DEFAULT_ANGLE
-        self._yaw = self.DEFAULT_ANGLE
-
         self.logging.debug("Initializing camera servos")
+
+        self.bus = smbus.SMBus(1)
         self.reset()
+
+        self.servo_sub = self.create_subscription(String, "cam_servo_control", self.ROS_servo_control_callback, 10)
 
     def __del__(self):
         self.reset()
 
     def reset(self):
         """Return camera servos to center"""
-        self.pitch = self.DEFAULT_ANGLE
-        self.yaw = self.DEFAULT_ANGLE
+        pitch = self.DEFAULT_ANGLE
+        yaw = self.DEFAULT_ANGLE
+        self.setPosition(CameraServoState(yaw, pitch))
 
-    @property
-    def pitch(self):
-        return self._kit.servo[self.PITCH_PORT].angle
+    def setPosition(self, position: CameraServoState):
+        if position.horizonal_pos == "" and position.vertical_pos != "":
+            data_to_send = [int(CAM_V_MOVE_ABS_CMD), int(position.vertical_pos)]
+        elif position.vertical_pos == "" and position.horizonal_pos != "":
+            data_to_send = [int(CAM_H_MOVE_ABS_CMD), int(position.horizonal_pos)]
+        elif position.horizonal_pos != "" and position.vertical_pos != "":
+            data_to_send = [int(CAM_MOVE_ABS_CMD), int(position.horizonal_pos), int(position.vertical_pos)]
+        self.send_data_to_teensy(data_to_send)
 
-    @pitch.setter
-    def pitch(self, angle):
-        if angle < self.MIN_ANGLE:
-            angle = self.MIN_ANGLE
-        elif angle > self.MAX_ANGLE:
-            angle = self.MAX_ANGLE
+    def send_data_to_teensy(self, data: list):
+        if len(data) > 32:
+            print("Teensy is only configured to store 32 bytes of data per chunk")
+        try:
+            # Send a block of data to Teensy
+            print(data)
+            self.bus.write_i2c_block_data(TEENSY_ADDRESS, 0, data)
+        except IOError as e:
+            print("Error sending data to Teensy: ", e)
 
-        # if self.IS_FLIPPED_PITCH:
-        # angle = 180 - angle
-        self.logging.debug(f"Moving camera pitch to {angle}")
-        self._kit.servo[self.PITCH_PORT].angle = angle
+    def ROS_servo_control_callback(self, message):
+        pos = CameraServoState.fromRosMessage(message)
+        self.setPosition(pos)
 
-    @property
-    def yaw(self):
-        return self._kit.servo[self.YAW_PORT].angle
+def main(args=None):
+    
+    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/cameraServos"
+    rclpy.init(args=args)
 
-    @yaw.setter
-    def yaw(self, angle):
-        if angle < self.MIN_ANGLE:
-            angle = self.MIN_ANGLE
-        elif angle > self.MAX_ANGLE:
-            angle = self.MAX_ANGLE
-        self.logging.debug(f"Moving camera yaw to {angle}")
-        self._kit.servo[self.YAW_PORT].angle = angle
-
+    servos = CameraServos()
+    rclpy.spin(servos)
 
 if __name__ == "__main__":
-    servos = CameraServos()
-
-    while True:
-        servos.pitch = int(input("Enter pitch: "))
-        servos.yaw = int(input("Enter yaw: "))
-
-        print(servos.pitch)
-        print(servos.yaw)
+    main()

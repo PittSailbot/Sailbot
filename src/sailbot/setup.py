@@ -48,6 +48,7 @@ setup(
             "windvane = sailbot.peripherals.windvane:main",
             "motorDrivers = sailbot.peripherals.motorDrivers:main",
             "transceiver = sailbot.peripherals.transceiver:main",
+            "cameraServos = sailbot.peripherals.cameraServos:main",
             "main = sailbot.main:main",
             "website = sailbot.websiteHosting.website:ros_main",
             "virtualDrivers = sailbot.virtualPeripherals.drivers:main",
