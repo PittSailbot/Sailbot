@@ -65,6 +65,28 @@ def generate_launch_description():
                 executable="rudder",
                 name="node_Rudder",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")]
-            )
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="cameraServos",
+                name="node_cameraServos",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="actionManager",
+                name="node_actionManager",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+            ),
         ]
     )

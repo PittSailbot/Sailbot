@@ -26,18 +26,6 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="virtualDrivers",
-                name="node_Drivers",
-                arguments=[
-                    "--ros-args",
-                    "--log-level",
-                    LaunchConfiguration("log_level"),
-                ],
-                parameters=[config],
-            ),
-            Node(
-                package="sailbot",
-                namespace="boat",
                 executable="virtualGPS",
                 name="node_GPS",
                 arguments=[
@@ -73,8 +61,8 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="dummyEvent",
-                name="node_DummyEvent",
+                executable="virtualWindvane",
+                name="node_Windvane",
                 arguments=[
                     "--ros-args",
                     "--log-level",
@@ -85,8 +73,8 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="virtualWindvane",
-                name="node_Windvane",
+                executable="actionManager",
+                name="node_actionManager",
                 arguments=[
                     "--ros-args",
                     "--log-level",
@@ -94,5 +82,6 @@ def generate_launch_description():
                 ],
                 parameters=[config],
             ),
+            
         ]
     )

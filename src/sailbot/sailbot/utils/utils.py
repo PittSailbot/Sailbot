@@ -3,6 +3,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import os
 
 import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
@@ -61,7 +62,6 @@ class Waypoint:
         data = json.loads(json_data)
         return Waypoint(data['lat'], data['lon'])
 
-
 class DummyObject:
     """
     a class that can be used as a placeholder for something else, usually a physical sensor that is not present.
@@ -119,6 +119,47 @@ class CameraServoState:
     def fromRosMessage(message):
         data = json.loads(message.data)
         return CameraServoState(data['horizonal_pos'], data['vertical_pos'])
+
+class EventLaunchDescription:
+    def __init__(self, eventExecutable, paramsFile):
+        self.eventExecutable = eventExecutable
+        self.paramsFile = paramsFile
+
+    def __repr__(self):
+        return F"EventLaunchDescription({self.eventExecutable}, {self.paramsFile if self.paramsFile else '<Default Params>'})"
+
+    def toRosMessage(self):
+        file_contents = None
+        if self.paramsFile:
+            with open(self.paramsFile, 'r') as file:
+                file_contents = file.read()
+
+        msgData = {
+            'eventExecutable': self.eventExecutable,
+            'params_file_name': self.paramsFile.split('/')[-1] if self.paramsFile else None,
+            'params': file_contents
+        }
+        msg = String()
+        msg.data = json.dumps(msgData)
+        
+        return msg
+    
+    @staticmethod
+    def fromRosMessage(message):
+        data = json.loads(message.data)
+        if data['params_file_name']:
+            create_directory_if_not_exists('/uploadedParams/')
+            file_path = "/uploadedParams/" + data['params_file_name']
+            with open(file_path, 'w') as file:
+                file.write(data['params'])
+        else:
+            file_path = None
+        return EventLaunchDescription(data['eventExecutable'], file_path)
+
+def create_directory_if_not_exists(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
 # TODO: make function use ROS to resolve circulat import error
 def has_reached_waypoint(waypoint, distance=float(c.config["CONSTANTS"]["reached_waypoint_distance"])):

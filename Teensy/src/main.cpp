@@ -17,7 +17,7 @@ int pwm_peak = 150;
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) {}
+  // while (!Serial) {}
   setupTransceiver();
   // TODO: one of these is reading the Teensy's serialized messages (GPU?) and screwing with transceiver.py (enable one by one)
   setupWindVane();

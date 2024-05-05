@@ -26,7 +26,7 @@ import sqlite3
 from dateutil import parser
 
 import sailbot.constants as c
-from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState
+from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState, EventLaunchDescription, create_directory_if_not_exists
 
 
 import os
@@ -221,7 +221,8 @@ class Website(Node):
         self.sail_angle = 0.0
         self.rudder_angle = 0.0
 
-        self.camera_servo_pub = self.create_publisher(String, "cam_servo_control", 10)
+        self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
+        self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
 
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(
@@ -295,6 +296,15 @@ class Website(Node):
             self.warning_count += 1
 
         self.logDB.insert_log(messageDict)
+
+    def publishModeChange(self, modeString, file_path=None):
+        
+        try:
+            msg = EventLaunchDescription(modeString, file_path).toRosMessage()
+            self.setEventPub.publish(msg)
+            self.logging.debug('Publishing: "%s"' % modeString) 
+        except Exception as e:
+            self.logging.error(e)
 
     def ROS_GPSCallback(self, string):
         string = string.data
@@ -391,6 +401,37 @@ def camera():
         DATA.camera_servo_pub.publish(msg)
 
     return render_template("camera.html")
+
+@app.route("/mode/<mode>", methods=["GET", "POST"])
+def setMode(mode):
+    if 'file' not in request.files:
+        file_path = None
+    else:
+        file = request.files['file']
+        if file.filename == '':
+            file_path = None
+        else:
+            create_directory_if_not_exists(f'uploaded_files/{file.filename}')
+            file.save(f'uploaded_files/{file.filename}')
+            file_path = f'uploaded_files/{file.filename}'
+
+    mappingDict = {
+        "manual": c.config["EVENTS"]["REMOTE_CONTROL"],
+        "avoid": c.config["EVENTS"]["EVENT_COLLISION_AVOID"],
+        "nav": c.config["EVENTS"]["EVENT_PRECISION_NAVIGATE"],
+        "endurance": c.config["EVENTS"]["EVENT_ENDURANCE"],
+        "keeping": c.config["EVENTS"]["EVENT_STATION_KEEPING"],
+        "search": c.config["EVENTS"]["EVENT_SEARCH"],
+    }
+
+    if mode.lower() in mappingDict:
+        DATA.publishModeChange(mappingDict[mode.lower()], file_path=file_path)
+        DATA.notification = f"Mode set: {mode}, file:{file_path}"
+
+    else:
+        DATA.notification = f"ignoring attempt to set mode to unknown value"
+
+    return {}
 
 @app.route("/gps")
 def gps():
@@ -579,7 +620,7 @@ def returnNotification():
         message = DATA.notification
 
         def resetNotifTimer():
-            time.sleep(2)
+            time.sleep(30)
             if DATA.notification == message:
                 DATA.notification = ""
 
@@ -627,7 +668,6 @@ def ros_main():
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
     app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem')) # debug true causes the process to fork which causes problems
-
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians

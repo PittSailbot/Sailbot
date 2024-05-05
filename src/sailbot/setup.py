@@ -51,14 +51,14 @@ setup(
             "cameraServos = sailbot.peripherals.cameraServos:main",
             "main = sailbot.main:main",
             "website = sailbot.websiteHosting.website:ros_main",
-            "virtualDrivers = sailbot.virtualPeripherals.drivers:main",
             "virtualGPS = sailbot.virtualPeripherals.GPS:main",
             "virtualCompass = sailbot.virtualPeripherals.compass:main",
             "virtualWindvane = sailbot.virtualPeripherals.windvane:main",
             "rosTest = sailbot.rosTest:main",
             'networkLogger = sailbot.utils.NetworkLogger:main',
             'dummyEvent = sailbot.events.DummyEvent:main',
-            'navigation = sailbot.navigation:main'
+            'navigation = sailbot.navigation:main',
+            'actionManager = sailbot.ActionManager:main'
         ],
     },
 )

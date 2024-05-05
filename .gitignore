@@ -10,3 +10,4 @@
 .idea/
 /.pytest_cache
 /venv
+*.code-workspace

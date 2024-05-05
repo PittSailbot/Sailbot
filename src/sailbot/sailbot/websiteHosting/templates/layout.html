@@ -16,14 +16,24 @@
       </ul>
     {% endif %}
   {% endwith %}
-  <!-- <label hx-get="/Notification" hx-trigger="every 1.0s"></label> -->
-
-  <div class="body">
-  {% block body %}{% endblock %}
+  <div class="title-bar">
+    <div class="nav-buttons">
+        <label>SailNet | </label>
+        <button onclick="window.location.href='/home'">Home</button>
+        <button onclick="window.location.href='/map'">Map</button>
+        <button onclick="window.location.href='/logs'">Logs</button>
+        <button onclick="window.location.href='/camera'">Camera</button>
+        <label> | </label>
+        <label hx-get="/Notification" hx-trigger="every 1.0s"></label>
+    </div>
+    
   </div>
+  
+
+{% block body %}{% endblock %}
 
   <br>
   <div class="footer" style= "padding-top: 180px; text-align: right; margin-right: 10px;">
-    SailbotVis &mdash; A Flask Application
+    SailNet &mdash; A Flask Application
   </div>
 </div>

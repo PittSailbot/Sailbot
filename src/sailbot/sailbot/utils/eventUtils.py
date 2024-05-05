@@ -46,9 +46,16 @@ class Event(Node):
             if key not in self.required_args and key not in self.base_required_args:
                 self.logging.warning(f"Found unused key in {self.__class__.__name__}: {key}")
 
+
+        self.node_shutdown_sub = self.create_subscription(
+            String, "event_shutdown", self.event_stop_callback, 10
+        )
         self.pub = self.create_publisher(String, "next_gps", 10)
         timer_period = 5.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
+
+    def event_stop_callback(self, msg):
+        raise KeyboardInterrupt()
 
     def timer_callback(self):
         try:

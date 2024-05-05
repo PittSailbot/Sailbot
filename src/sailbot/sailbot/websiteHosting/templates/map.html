@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
     <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
     <script src="{{ url_for('static', filename='leaflet/leaflet-hash.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/htmx.js') }}"></script>
     
     <style type="text/css">
     .leaflet-tile-container { pointer-events: auto; }
@@ -15,6 +16,7 @@
             margin: 0;
             padding: 0;
             background-color: #1a1a1a;
+            color: gold;
             display: flex;
         }
 
@@ -189,12 +191,8 @@
     </style>
 
     <body style="height:100%;margin:0;padding:0;">
-        
 
         <div id="sidebar" class="sidebar">
-            <div>
-                <button onclick="window.location='/';">Home Screen</button>
-            </div>
             
             <button onclick="fetchAndAddWaypoints()">Refresh Waypoints</button>
             <button onclick="fetchAndAddCircles()">Refresh Circles</button>
@@ -328,7 +326,20 @@
         </div>
     
         <div id="map-container">
-            <div id="map" style="height: 95%"></div>
+            
+            <div class="title-bar">
+                <div class="nav-buttons">
+                    <label >SailNet | </label>
+                    <button onclick="window.location.href='/home'">Home</button>
+                    <button onclick="window.location.href='/map'">Map</button>
+                    <button onclick="window.location.href='/logs'">Logs</button>
+                    <button onclick="window.location.href='/camera'">Camera</button>
+                    <label> | </label>
+                    <label hx-get="/Notification" hx-trigger="every 1.0s"></label>
+                </div>
+            </div>
+
+            <div id="map" style="height: 92%"></div>
             <button id="toggle-btn" onclick="toggleNav()">Toggle Sidebar</button>
             <button id="toggle-btn2" onclick="toggleSensorReadings()">Toggle Sensor Readings</button>
             <div id="error-warning-text">
