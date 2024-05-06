@@ -82,7 +82,7 @@ class Camera(Node):
         self.compass_angle = int(msg.data())
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_gps_msg(msg)
+        self.position = Waypoint.from_msg(msg)
 
     def capture(self, context=True, detect=False, annotate=False, save=False) -> Frame:
         """Takes a single picture from camera

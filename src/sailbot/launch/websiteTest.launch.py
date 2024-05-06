@@ -15,13 +15,13 @@ def generate_launch_description():
     config = os.path.join(
         get_package_share_directory('sailbot'),
         'config',
-        'params_websiteTest.yaml'
+        'params_eventDefaults.yaml'
         )
 
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "log_level", default_value=TextSubstitution(text=str("DEBUG"))
+                "log_level", default_value=TextSubstitution(text=str("INFO"))
             ),
             Node(
                 package="sailbot",
@@ -81,6 +81,29 @@ def generate_launch_description():
                     LaunchConfiguration("log_level"),
                 ],
                 parameters=[config],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable='dummyEvent',
+                name="node_DummyEvent",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ],
+                parameters=[config],
+            ),
+            Node(
+                package="sailbot",
+                namespace="",
+                executable="website",
+                name="node_Website",
+                arguments=[
+                    "--ros-args",
+                    "--log-level",
+                    LaunchConfiguration("log_level"),
+                ]
             ),
             
         ]

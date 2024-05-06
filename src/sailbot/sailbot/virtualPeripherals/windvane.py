@@ -33,7 +33,7 @@ class WindVane(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.compass_subscription = self.create_subscription(
-            String, "/boat/compass", self.ROS_compassCallback, 10
+            String, "compass", self.ROS_compassCallback, 10
         )
 
         self._angle = 0

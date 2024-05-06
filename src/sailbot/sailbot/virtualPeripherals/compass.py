@@ -32,7 +32,7 @@ class Compass(Node):
         self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
         self.pub = self.create_publisher(String, "compass", 10)
         self.gps_subscription = self.create_subscription(
-            String, "/boat/GPS", self.ROS_GPSCallback, 10
+            String, "GPS", self.ROS_GPSCallback, 10
         )
         self.timer = self.create_timer(1.0, self.timer_callback)
 

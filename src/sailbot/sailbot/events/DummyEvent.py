@@ -51,6 +51,10 @@ class DummyEvent(Event):
         timer_period = 10.0  # seconds
         self.timer = self.create_timer(timer_period, self.publish_queued_waypoints)
 
+        self.set_event_subscription = self.create_subscription(
+            String, "set_event_target", self.ROS_setEventCallback, 10
+        )
+
     def configureParameters(self):
         descriptor = ParameterDescriptor(
             type=ParameterType.PARAMETER_DOUBLE_ARRAY,
@@ -83,6 +87,10 @@ class DummyEvent(Event):
         msg.data = json.dumps({'Waypoints': [self.target.toJson()] + [wp.toJson() for wp in self.queuedWaypoints]})
         self.pub_queuedWaypoints.publish(msg)
     
+    def ROS_setEventCallback(self, msg):
+        self.target = Waypoint.from_msg(msg)
+        
+
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/main"
     rclpy.init(args=args)

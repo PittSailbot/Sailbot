@@ -41,7 +41,7 @@ class GPS(Node):
             position = Waypoint(lat=packet.position()[0], lon=packet.position()[1])
 
             self.logging.info(f"Publishing: '{position}'")
-            self.pub.publish(position.to_string())
+            self.pub.publish(position.to_msg())
         else:
             self.logging.warning(f"No GPS fix")
 

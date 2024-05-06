@@ -72,7 +72,7 @@ class StationKeeping(Event):
         self.wind_angle = 0
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_gps_msg(msg)
+        self.position = Waypoint.from_msg(msg)
 
     def windvane_callback(self, msg):
         self.wind_angle = int(msg)

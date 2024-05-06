@@ -17,8 +17,9 @@ import json
 NO_GO_MIN = 30
 NO_GO_MAX = 360 - NO_GO_MIN
 
-MAX_VEL = 1 #m/s
+MAX_VEL = 1.5 #m/s
 MAX_ACCEL = 0.01 #m/s^2
+MAX_DECCEL = 0.01
 
 class GPS(Node):
     """
@@ -44,10 +45,10 @@ class GPS(Node):
         self.control_state_pub = self.create_publisher(String, "control_state", 10)
 
         self.compass_subscription = self.create_subscription(
-            String, "/boat/compass", self.ROS_compassCallback, 10
+            String, "compass", self.ROS_compassCallback, 10
         )
         self.windvane_subscription = self.create_subscription(
-            String, "/boat/windvane", self.ROS_windvaneCallback, 10
+            String, "windvane", self.ROS_windvaneCallback, 10
         )
         
         self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
@@ -87,7 +88,7 @@ class GPS(Node):
                 (1 - abs(self.sail_angle - optAngle) / 30), 0
             )
         else:
-            self.velocity = max(self.velocity - 0.05, 0) * max(
+            self.velocity = max(self.velocity - MAX_DECCEL, 0) * max(
                 (1 - abs(self.sail_angle - optAngle) / 30), 0
             )
 

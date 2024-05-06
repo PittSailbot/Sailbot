@@ -218,6 +218,7 @@
             
                 <button type="button" onclick="submitCircleForm()">Add Circle</button>
                 <button type="button" onclick="addWaypoint()">Add Waypoint</button>
+                <button type="button" onclick="setEventTarget()">Set Event Target</button>
             </form>
 
             <br><br>
@@ -443,6 +444,22 @@
                     } else {
                         alert('Failed to add waypoint');
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+            function setEventTarget() {
+                const latitude = document.getElementById("latitude").value;
+                const longitude = document.getElementById("longitude").value;
+
+                fetch('/setEventTarget', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `latitude=${latitude}&longitude=${longitude}`,
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -805,6 +822,8 @@
 
             var showBreadcrumbs = true
             let boatMarker
+            let drawnPolygon
+            let drawnHeadingLine
             var sailAngle = 0
             const sailImg = "{{ url_for('static', filename='images/sail-image.png') }}"
             const sailImgFlipped = "{{ url_for('static', filename='images/sail-image-flipped.png') }}"
@@ -895,8 +914,27 @@
                         }
                     }
 
-                   boatMode = json.ControlState
-                   
+                    if (typeof drawnPolygon !== 'undefined'){
+                        map.removeLayer(drawnPolygon)
+                        drawnPolygon = undefined
+                    }
+
+                    polygonArray = json.polygon_coords
+                    if (polygonArray !== undefined && polygonArray !== null){
+                        drawnPolygon = L.polygon(polygonArray, {color: '#00000000', fillColor: '#FF0000'}).addTo(map)
+                    }
+
+                    if (typeof drawnHeading !== 'undefined'){
+                        map.removeLayer(drawnHeading)
+                        drawnHeading = undefined
+                    }
+
+                    headingLineArray = json.heading_polyline_coords
+                    if (headingLineArray !== undefined && headingLineArray !== null){
+                        drawnHeading = L.polyline(headingLineArray, {color: '#00FF00', fillColor: '#000000'}).addTo(map)
+                    }
+                    
+                    boatMode = json.ControlState
                     var boatModeText = document.getElementById('boat-mode-indicator');
                     boatModeText.textContent = boatMode;
 

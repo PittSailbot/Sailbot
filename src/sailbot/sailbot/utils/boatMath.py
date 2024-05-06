@@ -2,6 +2,7 @@
 Math functions useful for sailbotting
 """
 import math
+from sailbot import constants as c
 
 
 def distance_between(waypoint1, waypoint2) -> float:
@@ -103,6 +104,27 @@ def remap(x, min1, max1, min2, max2):
     """
     x = min(max(x, min1), max1)
     return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
+
+
+def get_no_go_zone_bounds(wind_angle, compass_angle):
+    wind_angle += compass_angle
+    no_go_angle = float(c.config["NAVIGATION"]["no_go_angle"])
+    no_go_zone_left_bound = (wind_angle - no_go_angle / 2) % 360
+    no_go_zone_right_bound = (wind_angle + no_go_angle / 2) % 360
+
+    return no_go_zone_left_bound, no_go_zone_right_bound
+
+
+def calculateCoordinates(x0, y0, angleInDegrees, distanceInMeters):
+    earthRadius = 6371000
+
+    angularDistance = distanceInMeters / earthRadius
+    angleInRadians = math.radians(angleInDegrees)
+
+    newX = x0 + math.cos(angleInRadians) * angularDistance
+    newY = y0 + math.sin(angleInRadians) * angularDistance
+
+    return newX, newY
 
 
 def is_within_angle(b, a, c):

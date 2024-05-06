@@ -30,7 +30,6 @@ class Navigation(Node):
     """
     ACCEPTABLE_ERROR = float(c.config["RUDDER"]["acceptable_error"])
     SMOOTHING_CONSTANT = float(c.config["RUDDER"]["smooth_const"])
-    NO_GO_ANGLE = float(c.config["NAVIGATION"]["no_go_angle"])
 
     def __init__(self):
         super().__init__("navigation")
@@ -57,7 +56,7 @@ class Navigation(Node):
         self.allow_tacking = True
 
     def next_gps_callback(self, msg):
-        next_gps = Waypoint.from_string(msg)
+        next_gps = Waypoint.from_msg(msg)
         if next_gps != self.latest_waypoint:
             self.logging.info(f"Navigating to {next_gps}")
             self.latest_waypoint = next_gps
@@ -73,7 +72,7 @@ class Navigation(Node):
         self.compass_angle = float(msg.data)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_gps_msg(msg)
+        self.position = Waypoint.from_msg(msg)
 
     def go_to_gps(self):
         """
@@ -102,14 +101,13 @@ class Navigation(Node):
 
         # TODO: Fix this its not working
         # Boat can't sail straight upwind; snap angle to the closest allowed no_go_zone bound if target angle is in irons
-        # no_go_zone_left_bound = (self.wind_angle - self.NO_GO_ANGLE / 2) % 360
-        # no_go_zone_right_bound = (self.wind_angle + self.NO_GO_ANGLE / 2) % 360
-        # if boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
-        #     self.logging.info("Cannot sail directly to point")
-        #     if (delta_angle + self.wind_angle) % 360 < no_go_zone_left_bound:
-        #         target_angle = no_go_zone_left_bound
-        #     elif (delta_angle + self.wind_angle) % 360 < no_go_zone_right_bound:
-        #         target_angle = no_go_zone_right_bound
+        no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
+        if boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
+            self.logging.info("Cannot sail directly to point")
+            if (delta_angle + self.wind_angle) % 360 < no_go_zone_left_bound:
+                target_angle = no_go_zone_left_bound
+            elif (delta_angle + self.wind_angle) % 360 < no_go_zone_right_bound:
+                target_angle = no_go_zone_right_bound
 
         # TODO: Check speed before commiting to a tack
         self.turn_to_angle(target_angle, self.allow_tacking)

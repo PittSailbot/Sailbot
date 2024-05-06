@@ -27,21 +27,17 @@ class Waypoint:
 
     def __repr__(self):
         return f"Waypoint({self.lat, self.lon})"
-
-    def to_string(self) -> String():
+    
+    def to_msg(self):
         msg = String()
-        msg.data = f"{self.lat},{self.lon}"
+        msg.data = self.toJson()
+
         return msg
 
-    @staticmethod
-    def from_string(string: String):
-        if string.data == '':
-            return Waypoint(None, None)
+    def from_msg(jsonString: String):
+        if jsonString == "":
+            return Waypoint(-1, -1)
         
-        vals = str(string.data).split(',')
-        return Waypoint(float(vals[0]), float(vals[1]))
-    
-    def from_gps_msg(jsonString: String):
         gpsJson = json.loads(jsonString.data)
         return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 

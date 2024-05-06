@@ -21,9 +21,6 @@ def generate_launch_description():
     eventExecutable = LaunchConfiguration('executable')
     paramsFile = LaunchConfiguration('paramsFile', default=default)
 
-    with open('file.txt', 'w') as w:
-        w.write(str(paramsFile))
-
     return LaunchDescription(
         [
             DeclareLaunchArgument(

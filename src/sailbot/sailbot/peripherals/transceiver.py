@@ -115,7 +115,7 @@ class Transceiver(Node):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
         # TODO: Fuse imu and gps into geopose
         if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_string())
+            self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_msg())
             msg = String()
             msg.data = str(teensy_data.GPS.speed)
             self.speed_pub.publish(msg)

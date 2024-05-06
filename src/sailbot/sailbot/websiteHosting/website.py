@@ -27,7 +27,7 @@ from dateutil import parser
 
 import sailbot.constants as c
 from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState, EventLaunchDescription, create_directory_if_not_exists
-
+from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calculateCoordinates
 
 import os
 
@@ -223,6 +223,7 @@ class Website(Node):
 
         self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
         self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
+        self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
 
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(
@@ -361,7 +362,7 @@ class Website(Node):
         self.addLogMessage(log)
 
     def ROS_nextGpsCallback(self, msg):
-        next_gps = Waypoint.from_string(msg)
+        next_gps = Waypoint.from_msg(msg)
         # string = string.data
         # boatState = json.loads(string)
 
@@ -440,21 +441,24 @@ def gps():
 @app.route("/dataJSON")
 def dataJSON():
     target = DATA.boat_target
-    jsonDict = {"lat": DATA.gps.latitude, 
-                "lon": DATA.gps.longitude, 
-                "target_lat": target.lat, 
-                "target_lon": target.lon,
-                'warning_count': DATA.warning_count,
-                "error_count": DATA.error_count,
-                "ControlState": str(DATA.boat_controlState) if DATA.boat_controlState else "UNKNOWN",
-                "queuedWaypoints": DATA.boat_event_coords,
-                'relative_wind': DATA.relative_wind if DATA.relative_wind != None else 0.0,
-                "compass_dir": DATA.compass.angle,
-                "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
-                "sail_angle": DATA.sail_angle,
-                "rudder_angle": DATA.rudder_angle,
-                'speed': DATA.gps.velocity,
-                }
+    jsonDict = {
+        "lat": DATA.gps.latitude, 
+        "lon": DATA.gps.longitude, 
+        "target_lat": target.lat, 
+        "target_lon": target.lon,
+        'warning_count': DATA.warning_count,
+        "error_count": DATA.error_count,
+        "ControlState": str(DATA.boat_controlState) if DATA.boat_controlState else "UNKNOWN",
+        "queuedWaypoints": DATA.boat_event_coords,
+        'relative_wind': DATA.relative_wind if DATA.relative_wind != None else 0.0,
+        "compass_dir": DATA.compass.angle,
+        "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
+        "sail_angle": DATA.sail_angle,
+        "rudder_angle": DATA.rudder_angle,
+        'speed': DATA.gps.velocity,
+        'polygon_coords': get_no_go_zone_polygon(),
+        'heading_polyline_coords': get_heading_coords(),
+    }
     return jsonDict
 
 @app.route("/logs")
@@ -561,6 +565,18 @@ def add_waypoint():
         DATA.waypoints.append({"lat": latitude, "lon": longitude, "name": name})
 
         return jsonify({'status': 'success', 'message': 'Waypoint added successfully'})
+    
+@app.route('/setEventTarget', methods=['POST'])
+def set_event_target():
+    if request.method == 'POST':
+        # Get form data from the request
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+
+        msg = Waypoint(latitude, longitude).to_msg()
+        DATA.setEventTargetPub.publish(msg)
+
+        return jsonify({'status': 'success', 'message': 'Set event published successfully'})
 
 @app.route('/addCircle', methods=['POST'])
 def add_circle():
@@ -688,6 +704,34 @@ def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     
     # Convert the angle from radians to degrees
     return math.degrees(angle_rad)
+
+def get_no_go_zone_polygon():
+    
+    if DATA.relative_wind == None and DATA.compass.angle:
+        return None
+    try:
+        left_bound, right_bound = get_no_go_zone_bounds(DATA.relative_wind, DATA.compass.angle)
+
+        lx, ly = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, left_bound, 300)
+        rx, ry = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, right_bound, 300)
+
+        coords = [
+            [DATA.gps.latitude, DATA.gps.longitude],
+            [lx, ly],
+            [rx, ry],
+            [DATA.gps.latitude, DATA.gps.longitude]
+        ]
+
+        return coords
+    except Exception as e:
+        DATA.logging.warning(str(e))
+        return None
+    
+def get_heading_coords():
+    x, y = DATA.gps.latitude, DATA.gps.longitude
+    hx, hy = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, DATA.compass.angle, 150)
+
+    return [[x,y], [hx, hy]]
 
 if __name__ == "__main__":
     # main()

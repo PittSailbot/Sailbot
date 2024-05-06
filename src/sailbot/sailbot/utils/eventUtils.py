@@ -60,7 +60,7 @@ class Event(Node):
     def timer_callback(self):
         try:
             waypoint = self.next_gps()
-            target = waypoint.to_string()
+            target = waypoint.to_msg()
         except Exception as e:
             self.logging.error(F"{self.__class__.__name__} failed to get next GPS with error: {e}")
             target = String()
