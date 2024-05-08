@@ -141,3 +141,20 @@ def is_within_angle(b, a, c):
             return True
 
     return False
+
+def degrees_between(angle1, angle2):
+    """
+    Computes the number of degrees between two angles measured in degrees.
+
+    Parameters:
+        angle1 (float): The first angle in degrees.
+        angle2 (float): The second angle in degrees.
+
+    Returns:
+        float: The number of degrees between the two angles.
+    """
+    angle1 = angle1 % 360
+    angle2 = angle2 % 360
+
+    diff = abs(angle1 - angle2)
+    return min(diff, 360 - diff)

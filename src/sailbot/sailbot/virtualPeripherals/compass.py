@@ -49,6 +49,7 @@ class Compass(Node):
     def timer_callback(self):
         if abs(self.rudder_angle) > float(c.config["RUDDER"]["acceptable_error"]):
             self.compassAngle -= (self.rudder_angle / 10) * self.velocity
+            self.compassAngle %= 360
             
         msg = String()
         msg.data = f"{self.angle}"

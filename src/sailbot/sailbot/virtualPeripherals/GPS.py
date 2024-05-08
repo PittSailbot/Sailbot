@@ -9,17 +9,18 @@ from rclpy.node import Node
 from std_msgs.msg import String, Float32
 
 from sailbot.utils.utils import DummyObject, ControlState
+from sailbot.utils.boatMath import is_within_angle
 import random
 import math
 import json
 
 
-NO_GO_MIN = 30
+NO_GO_MIN = 40
 NO_GO_MAX = 360 - NO_GO_MIN
 
 MAX_VEL = 1.5 #m/s
 MAX_ACCEL = 0.01 #m/s^2
-MAX_DECCEL = 0.01
+MAX_DECCEL = 0.05
 
 class GPS(Node):
     """
@@ -80,10 +81,7 @@ class GPS(Node):
         
         optAngle = max(min(self.relative_wind / 2, 90), 3)
         self.sail_angle = optAngle
-        if (
-            self.relative_wind > NO_GO_MIN
-            and self.relative_wind < NO_GO_MAX
-        ):
+        if ( is_within_angle(self.relative_wind, (NO_GO_MIN), (NO_GO_MAX))):
             self.velocity = min(MAX_VEL, self.velocity + MAX_ACCEL) * max(
                 (1 - abs(self.sail_angle - optAngle) / 30), 0
             )

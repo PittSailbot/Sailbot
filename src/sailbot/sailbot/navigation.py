@@ -13,6 +13,8 @@ from sailbot import constants as c
 from sailbot.utils import boatMath, utils
 from sailbot.utils.utils import Waypoint, ControlState
 
+TACK_TO_WIND_STARBOARD = -1
+TACK_TO_WIND_PORT = 1
 
 # TODO: Implement Waypoint from serialized ROS message
 class Navigation(Node):
@@ -38,6 +40,8 @@ class Navigation(Node):
         self.position = Waypoint(0, 0)
         self.compass_angle = 0
         self.wind_angle = 0
+        self.boat_speed = float('inf') # change this to boat speed once available
+        self.aborted_tacks = 0
 
         self.next_gps_sub = self.create_subscription(String, "/boat/next_gps", self.next_gps_callback, 2)
         self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
@@ -54,6 +58,7 @@ class Navigation(Node):
         self.latest_waypoint = None
         self.control_state = None
         self.allow_tacking = True
+        self.tack = None
 
     def next_gps_callback(self, msg):
         next_gps = Waypoint.from_msg(msg)
@@ -97,22 +102,36 @@ class Navigation(Node):
         if delta_angle > 180:
             delta_angle -= 360
 
-        self.logging.info(F"Nav- target_angle: {target_angle}, delta_angle: {delta_angle}")
-
-        # TODO: Fix this its not working
         # Boat can't sail straight upwind; snap angle to the closest allowed no_go_zone bound if target angle is in irons
+        # TODO take into account angular velocity
         no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
-        if boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
-            self.logging.info("Cannot sail directly to point")
-            if (delta_angle + self.wind_angle) % 360 < no_go_zone_left_bound:
+        if self.tack == None and boatMath.is_within_angle(self.compass_angle, no_go_zone_left_bound, no_go_zone_right_bound):
+            self.logging.warning("Unexpectedly in irons, turning to nearest edge")
+            
+            if boatMath.degrees_between(target_angle, no_go_zone_left_bound) < boatMath.degrees_between(target_angle, no_go_zone_right_bound):
+                self.tack = TACK_TO_WIND_STARBOARD
+            else:
+                self.tack = TACK_TO_WIND_PORT
+
+        elif self.tack == None and boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
+            # Need to go upwind
+            # Stick to the closest angle until we can sail directly to target
+            
+            if boatMath.degrees_between(self.compass_angle, no_go_zone_left_bound) < boatMath.degrees_between(self.compass_angle, no_go_zone_right_bound):
                 target_angle = no_go_zone_left_bound
-            elif (delta_angle + self.wind_angle) % 360 < no_go_zone_right_bound:
+            else:
                 target_angle = no_go_zone_right_bound
 
-        # TODO: Check speed before commiting to a tack
-        self.turn_to_angle(target_angle, self.allow_tacking)
+            self.logging.info(F"Need to go upwind, setting target angle to {target_angle}")
+        
+        
+        if self.tack != None:
+            # turn as fast as possible to complete tack
+            self.complete_tack()
+        else:
+            self.turn_to_angle(target_angle)
 
-    def turn_to_angle(self, target_angle, allow_tacking=True):
+    def turn_to_angle(self, target_angle):
         """
         Sets the rudder once to turn the board towards the specified compass angle
             - Does NOT recenter the rudder once it faces the specified angle; only checked when function is called
@@ -121,27 +140,48 @@ class Navigation(Node):
             allow_tacking (bool): whether the boat is allowed to turn through the 'no go zone'
         """
         if boatMath.is_within_angle(target_angle, (self.compass_angle - self.ACCEPTABLE_ERROR) % 360, (self.compass_angle + self.ACCEPTABLE_ERROR) % 360):
-            self.logging.info(f"Holding boat at {target_angle} degrees")
+            self.logging.debug(f"Holding boat at {target_angle} degrees")
             msg = Float32()
             msg.data = 0.0
             self.rudder_pub.publish(msg)
             return
 
-        if allow_tacking:
-            if (self.compass_angle - target_angle) % 360 < 180:
-                self.logging.info(f"Tacking right from {self.compass_angle} degrees to {target_angle} degrees")
-                rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
+        no_go_zone_center = self.wind_angle
+        turning_right = (self.compass_angle - target_angle) % 360 < 180
+        no_go_zone_right = ((self.wind_angle + self.compass_angle) - no_go_zone_center) % 360 < 180
+        no_go_distance = boatMath.degrees_between((self.wind_angle + self.compass_angle), no_go_zone_center)
+        distance_to_target = boatMath.degrees_between(self.compass_angle, target_angle)
+
+        self.logging.info(str((turning_right, no_go_zone_right, no_go_distance, distance_to_target)))
+
+        need_to_tack = turning_right and no_go_zone_right and distance_to_target > no_go_distance
+        need_to_tack = need_to_tack or (not turning_right and not no_go_zone_right and distance_to_target > no_go_distance)
+
+        self.logging.info(str((need_to_tack, self.allow_tacking)))
+
+        if (need_to_tack):
+            # Shortest path to target is across the no-go-zone
+            if self.allow_tacking:
+                # TODO: Check speed before committing to a tack
+                self.tack = TACK_TO_WIND_STARBOARD if turning_right else TACK_TO_WIND_PORT
+                self.logging.info(F"Starting tack: {self.tack}")
+                return self.complete_tack()
             else:
-                self.logging.info(f"Tacking left from {self.compass_angle} degrees to {target_angle} degrees")
-                rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
-        else:
-            if ((self.compass_angle < target_angle) and (self.compass_angle <= self.wind_angle <= target_angle)) or \
+                # Jibe to target
+                if ((self.compass_angle < target_angle) and (self.compass_angle <= self.wind_angle <= target_angle)) or \
                     ((target_angle < self.compass_angle) and (target_angle >= self.wind_angle and self.wind_angle <= self.compass_angle)):
-                self.logging.info(f"Jibing left from {self.compass_angle} degrees to {target_angle} degrees")
-                rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
-            else:
-                self.logging.info(f"Jibing right from {self.compass_angle} degrees to {target_angle} degrees")
-                rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
+                    self.logging.debug(f"Jibing left from {self.compass_angle} degrees to {target_angle} degrees")
+                    rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
+                else:
+                    self.logging.debug(f"Jibing right from {self.compass_angle} degrees to {target_angle} degrees")
+                    rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
+
+        elif turning_right:
+            self.logging.debug(f"Turning right from {self.compass_angle} degrees to {target_angle} degrees")
+            rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
+        else:
+            self.logging.debug(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees")
+            rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
         if abs(rudder_angle) > 90:
             self.logging.warning(F"Navigation suggested rudder angle is very large ({rudder_angle})")
@@ -153,15 +193,47 @@ class Navigation(Node):
         msg.data = rudder_angle
         self.rudder_pub.publish(msg)
 
+    def complete_tack(self):
+        no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
+
+        if boatMath.degrees_between(self.compass_angle, no_go_zone_left_bound) < boatMath.degrees_between(self.compass_angle, no_go_zone_right_bound):
+            closest = TACK_TO_WIND_STARBOARD
+        else:
+            closest = TACK_TO_WIND_PORT
+            
+        if self.boat_speed <= float(c.config['NAVIGATION']['tack_min_continue_speed']) and self.tack != closest:
+            # abort tack
+            self.logging.warning("Speed dropped too rapidly, aborting tack")
+            self.aborted_tacks += 1
+            self.tack = closest
+
+        if (not boatMath.is_within_angle(self.compass_angle, no_go_zone_left_bound, no_go_zone_right_bound) and closest == self.tack):
+            # tack complete
+            self.logging.info("Tack Complete")
+            self.tack = None
+            return
+
+        else:
+            if self.tack == TACK_TO_WIND_STARBOARD:
+                rudder_angle = float(c.config['RUDDER']['max_angle'])
+            else:
+                rudder_angle = float(c.config['RUDDER']['min_angle'])
+
+        msg = Float32()
+        msg.data = rudder_angle
+        self.rudder_pub.publish(msg)
+
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
         if self.control_state == None or self.control_state.sail_manual:
             return 
         
         if self.wind_angle > 180:
-            self.wind_angle = 180 - (self.wind_angle - 180)
+            wind_angle = 180 - (self.wind_angle - 180)
+        else:
+            wind_angle = self.wind_angle
 
-        sail_angle = max(min(self.wind_angle / 2, 90), 3)
+        sail_angle = max(min(wind_angle / 2, 90), 3)
 
         msg = Float32()
         msg.data = float(sail_angle)
