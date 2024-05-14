@@ -128,6 +128,9 @@ class Transceiver(Node):
         # self.send("?")  # transceiver is programmed to respond to '?' with its data
 
         msg = self.ser.readline().strip()
+        if self.ser.in_waiting > 0:
+            # empty queue
+            _ = self.ser.read(self.ser.in_waiting)
         # self.logging.warning(msg)
         try:
             message = teensy_pb2.Data()
