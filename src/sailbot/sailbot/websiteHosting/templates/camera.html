@@ -6,7 +6,7 @@
 
 <div class="home">
     <div class="Camera">
-        <h2>Input Form</h2>
+        <h2>Camera Control</h2>
         <form action="/camera" method="post">
             <label for="pitch">Pitch:</label><br>
             <input type="text" id="pitch" name="pitch"><br>
@@ -14,6 +14,18 @@
             <input type="text" id="yaw" name="yaw"><br><br>
             <button type="submit">Submit</button>
         </form>
+
+        <h2>Video Stream</h2>
+        <img id="videoStream" src="{{ video_url }}" width="640" height="480" onerror="displayErrorMessage()" />
+
+        <script>
+            function displayErrorMessage() {
+                var errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Failed to load video stream, make sure stream is running at {{ video_url }}';
+                var videoStream = document.getElementById('videoStream');
+                videoStream.parentNode.replaceChild(errorMessage, videoStream);
+            }
+        </script>
         
     </div>
 </div>

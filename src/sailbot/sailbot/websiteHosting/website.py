@@ -31,6 +31,8 @@ from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calcu
 
 import os
 
+MY_IP = '192.168.8.225'
+
 app = Flask(__name__)
 app.secret_key = "sailbot"
 
@@ -41,12 +43,11 @@ PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
 if DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
-    # TILE_SERVER = 'http://' + '10.0.0.110' + ':8080/tile/{z}/{x}/{y}.png'
     TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
 elif PI_DOCKER:
     PORTS = os.environ.get("PORTS", "5000:5000")
     PORT = int(PORTS.split(':')[0])
-    TILE_SERVER = 'https://' + '10.0.0.163' + ':443/tile/{z}/{x}/{y}.png'
+    TILE_SERVER = 'https://' + MY_IP + ':443/tile/{z}/{x}/{y}.png'
     # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
 else:
     raise Exception("configure ports and tile server")
@@ -233,7 +234,7 @@ class Website(Node):
             String, "/boat/compass", self.ROS_compassCallback, 10
         )
         self.windvane_subscription = self.create_subscription(
-            String, "/boat/windvane", self.ROS_windvaneCallback, 10
+            String, "/boat/wind_angle", self.ROS_windvaneCallback, 10
         )
         self.odrive_subscription = self.create_subscription(
             String, "/boat/odriveStatus", self.ROS_odriveCallback, 10
@@ -332,8 +333,7 @@ class Website(Node):
         self.dataDict["compass"] = f"{self.compass.angle}"
 
     def ROS_windvaneCallback(self, string):
-        string = string.data
-        angle = json.loads(string)['angle']
+        angle = float(string.data)
         self.relative_wind = angle
 
     def ROS_odriveCallback(self, string):
@@ -401,7 +401,7 @@ def camera():
         msg = CameraServoState(yaw, pitch).toRosMessage()
         DATA.camera_servo_pub.publish(msg)
 
-    return render_template("camera.html")
+    return render_template("camera.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
 
 @app.route("/mode/<mode>", methods=["GET", "POST"])
 def setMode(mode):
