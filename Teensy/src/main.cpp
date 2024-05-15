@@ -19,7 +19,6 @@ void setup() {
   Serial.begin(115200);
   // while (!Serial) {}
   setupTransceiver();
-  // TODO: one of these is reading the Teensy's serialized messages (GPU?) and screwing with transceiver.py (enable one by one)
   setupWindVane();
   // setupGPS();
   setupIMU();
@@ -68,5 +67,5 @@ void loop () {
     Serial.println(stream.errmsg);
   }
   
-  delay(10);
+  delay(100);
 }
