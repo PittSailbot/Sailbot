@@ -28,7 +28,7 @@ class WindVane(Node):
         self.wind_source_angle = 0.0
         self.compass_yaw = 0.0
 
-        self.pub = self.create_publisher(String, "windvane", 10)
+        self.pub = self.create_publisher(String, "wind_angle", 10)
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -52,9 +52,7 @@ class WindVane(Node):
         self.angle = (-self.compass_yaw + self.wind_source_angle) % 360
 
         msg = String()
-        msg.data = (
-            json.dumps({'angle': self.angle})
-        )
+        msg.data = str(self.angle)
         self.pub.publish(msg)
         self.logging.debug(F'Windvane Publishing: "{msg.data}"')
 
