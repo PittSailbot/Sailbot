@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32
 
-from sailbot.utils.utils import DummyObject, ControlState
+from sailbot.utils.utils import DummyObject, ControlState, ImuData
 from sailbot.utils.boatMath import is_within_angle
 import random
 import math
@@ -46,10 +46,10 @@ class GPS(Node):
         self.control_state_pub = self.create_publisher(String, "control_state", 10)
 
         self.compass_subscription = self.create_subscription(
-            String, "compass", self.ROS_compassCallback, 10
+            String, "imu", self.ROS_compassCallback, 10
         )
         self.windvane_subscription = self.create_subscription(
-            String, "windvane", self.ROS_windvaneCallback, 10
+            String, "wind_angle", self.ROS_windvaneCallback, 10
         )
         
         self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
@@ -63,18 +63,12 @@ class GPS(Node):
         self.sail_angle = float(msg.data)
 
     def ROS_windvaneCallback(self, string):
-        string = string.data
-        angle = json.loads(string)['angle']
+        angle = float(string.data)
         self.relative_wind = angle
 
     def ROS_compassCallback(self, string):
-        string = string.data
-        if string == "None,None":
-            self.compass_yaw = 0.0
-            return
-
-        angle = string.replace("(", "").replace(")", "")
-        self.compass_yaw = float(angle)
+        data = ImuData.fromRosMessage(string)
+        self.compass_yaw = data.yaw
 
     def timer_callback(self):
         self.control_state_pub.publish(ControlState(False, False).toRosMessage())

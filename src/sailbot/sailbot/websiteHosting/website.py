@@ -26,7 +26,7 @@ import sqlite3
 from dateutil import parser
 
 import sailbot.constants as c
-from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState, EventLaunchDescription, create_directory_if_not_exists
+from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState, EventLaunchDescription, create_directory_if_not_exists, ImuData
 from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calculateCoordinates
 
 import os
@@ -221,6 +221,7 @@ class Website(Node):
         self.relative_wind = None
         self.sail_angle = 0.0
         self.rudder_angle = 0.0
+        self.imu = None
 
         self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
         self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
@@ -230,8 +231,8 @@ class Website(Node):
         self.gps_subscription = self.create_subscription(
             String, "/boat/GPS", self.ROS_GPSCallback, 10
         )
-        self.compass_subscription = self.create_subscription(
-            String, "/boat/compass", self.ROS_compassCallback, 10
+        self.imu_subscription = self.create_subscription(
+            String, "/boat/imu", self.ROS_imuCallback, 10
         )
         self.windvane_subscription = self.create_subscription(
             String, "/boat/wind_angle", self.ROS_windvaneCallback, 10
@@ -321,14 +322,11 @@ class Website(Node):
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
         self.displayedBreadcrumbs.append(Waypoint(self.gps.latitude, self.gps.longitude))
 
-    def ROS_compassCallback(self, string):
-        string = string.data
-        if string == "None,None":
-            self.compass.angle = -1
-            return
+    def ROS_imuCallback(self, string):
+        data = ImuData.fromRosMessage(string)
 
-        angle = string.replace("(", "").replace(")", "")
-        self.compass.angle = float(angle)
+        self.compass.angle = data.yaw
+        self.imu = data
 
         self.dataDict["compass"] = f"{self.compass.angle}"
 
@@ -452,6 +450,8 @@ def dataJSON():
         "queuedWaypoints": DATA.boat_event_coords,
         'relative_wind': DATA.relative_wind if DATA.relative_wind != None else 0.0,
         "compass_dir": DATA.compass.angle,
+        'roll_dir': DATA.imu.roll if DATA.imu else 0.0,
+        'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
         "rudder_angle": DATA.rudder_angle,

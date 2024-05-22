@@ -2,6 +2,7 @@
 Math functions useful for sailbotting
 """
 import math
+import numpy as np
 from sailbot import constants as c
 
 
@@ -142,6 +143,7 @@ def is_within_angle(b, a, c):
 
     return False
 
+
 def degrees_between(angle1, angle2):
     """
     Computes the number of degrees between two angles measured in degrees.
@@ -158,3 +160,30 @@ def degrees_between(angle1, angle2):
 
     diff = abs(angle1 - angle2)
     return min(diff, 360 - diff)
+
+
+def quaternion_to_euler(x, y, z, w):
+    """
+    Convert a quaternion into euler angles (roll, pitch, yaw)
+    roll is rotation around x in radians (counterclockwise)
+    pitch is rotation around y in radians (counterclockwise)
+    yaw is rotation around z in radians (counterclockwise)
+    """
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+    
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+    
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+
+    yaw_z_degrees = yaw_z * (180 / math.pi)
+    pitch_y_degrees = pitch_y * (180 / math.pi)
+    roll_x_degrees = roll_x * (180 / math.pi)
+    return yaw_z_degrees, pitch_y_degrees, roll_x_degrees
+    

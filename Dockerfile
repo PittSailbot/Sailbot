@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-colcon-mixin \
     python3-rosdep \
     python3-vcstool \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # bootstrap rosdep

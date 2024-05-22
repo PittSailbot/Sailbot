@@ -11,7 +11,7 @@ from std_msgs.msg import String, Float32
 
 from sailbot import constants as c
 from sailbot.utils import boatMath, utils
-from sailbot.utils.utils import Waypoint, ControlState
+from sailbot.utils.utils import Waypoint, ControlState, ImuData
 
 TACK_TO_WIND_STARBOARD = -1
 TACK_TO_WIND_PORT = 1
@@ -40,13 +40,14 @@ class Navigation(Node):
         self.position = Waypoint(0, 0)
         self.compass_angle = 0
         self.wind_angle = 0
+        self.imuData = None
         self.boat_speed = float('inf') # change this to boat speed once available
         self.aborted_tacks = 0
 
         self.next_gps_sub = self.create_subscription(String, "/boat/next_gps", self.next_gps_callback, 2)
         self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
-        self.compass_sub = self.create_subscription(String, "/boat/compass", self.compass_callback, 2)
-        self.windvane_sub = self.create_subscription(String, "/boat/windvane", self.windvane_callback, 2)
+        self.imu_sub = self.create_subscription(String, "/boat/imu", self.imu_callback, 2)
+        self.windvane_sub = self.create_subscription(String, "/boat/wind_angle", self.windvane_callback, 2)
         self.control_state_pub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
 
         self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
@@ -70,11 +71,12 @@ class Navigation(Node):
         self.control_state = ControlState.fromRosMessage(msg)
 
     def windvane_callback(self, msg):
-        data_dict = json.loads(msg.data)
-        self.wind_angle = float(data_dict['angle'])
+        angle = float(msg.data)
+        self.wind_angle = angle % 360
 
-    def compass_callback(self, msg):
-        self.compass_angle = float(msg.data)
+    def imu_callback(self, msg):
+        self.imuData = ImuData.fromRosMessage(msg)
+        self.compass_angle = (self.imuData.yaw) % 360
 
     def gps_callback(self, msg):
         self.position = Waypoint.from_msg(msg)
@@ -148,16 +150,12 @@ class Navigation(Node):
 
         no_go_zone_center = self.wind_angle
         turning_right = (self.compass_angle - target_angle) % 360 < 180
-        no_go_zone_right = ((self.wind_angle + self.compass_angle) - no_go_zone_center) % 360 < 180
-        no_go_distance = boatMath.degrees_between((self.wind_angle + self.compass_angle), no_go_zone_center)
+        is_no_go_zone_right = ((self.wind_angle + self.compass_angle) - no_go_zone_center) % 360 < 180
+        no_go_distance = boatMath.degrees_between(self.compass_angle, no_go_zone_center)
         distance_to_target = boatMath.degrees_between(self.compass_angle, target_angle)
 
-        self.logging.info(str((turning_right, no_go_zone_right, no_go_distance, distance_to_target)))
-
-        need_to_tack = turning_right and no_go_zone_right and distance_to_target > no_go_distance
-        need_to_tack = need_to_tack or (not turning_right and not no_go_zone_right and distance_to_target > no_go_distance)
-
-        self.logging.info(str((need_to_tack, self.allow_tacking)))
+        need_to_tack = turning_right and is_no_go_zone_right and distance_to_target > no_go_distance
+        need_to_tack = need_to_tack or (not turning_right and not is_no_go_zone_right and distance_to_target > no_go_distance)
 
         if (need_to_tack):
             # Shortest path to target is across the no-go-zone
@@ -222,6 +220,7 @@ class Navigation(Node):
         msg = Float32()
         msg.data = rudder_angle
         self.rudder_pub.publish(msg)
+        self.logging.debug("continuing tack")
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""

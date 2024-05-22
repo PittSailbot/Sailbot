@@ -68,14 +68,15 @@ class StationKeeping(Event):
         # SENSORS
         self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 2)
         self.position = Waypoint(0, 0)
-        self.windvane_sub = self.create_subscription(String, "windvane", self.windvane_callback, 10)
+        self.windvane_sub = self.create_subscription(String, "wind_angle", self.windvane_callback, 10)
         self.wind_angle = 0
 
     def gps_callback(self, msg):
         self.position = Waypoint.from_msg(msg)
 
     def windvane_callback(self, msg):
-        self.wind_angle = int(msg)
+        angle = float(msg.data)
+        self.relative_wind = angle
 
     def next_gps(self):
         """

@@ -43,9 +43,6 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "compass = sailbot.peripherals.compass:main",
-            "gps = sailbot.peripherals.GPS:main",
-            "windvane = sailbot.peripherals.windvane:main",
             "motorDrivers = sailbot.peripherals.motorDrivers:main",
             "transceiver = sailbot.peripherals.transceiver:main",
             "cameraServos = sailbot.peripherals.cameraServos:main",
