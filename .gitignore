@@ -11,3 +11,7 @@
 /.pytest_cache
 /venv
 *.code-workspace
+raspi-config_*.deb
+log/COLCON_IGNORE
+log/latest
+log/latest_build

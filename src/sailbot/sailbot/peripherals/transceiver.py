@@ -103,7 +103,7 @@ class Transceiver(Node):
         # TODO: try except to echo published non-protobuf error strings from Teensy
         teensy_data = self.read()
 
-        self.logging.info(str(teensy_data))
+        # self.logging.info(str(teensy_data))
 
         if teensy_data == None:
             return
