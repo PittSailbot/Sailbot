@@ -43,7 +43,7 @@ void loop () {
     enablePumps()
   }*/
 
-  pwm_val = (pwm_val + 1) % pwm_peak;
+  pwm_val = (pwm_val + 10) % pwm_peak;
   analogWrite(13, pwm_val);
   if (pi_data.has_imu && pi_data.has_rc_data && pi_data.has_windvane){ // steady blue light if all usb sensors are working
     digitalWrite(20, HIGH);
