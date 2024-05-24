@@ -85,26 +85,37 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable='dummyEvent',
-                name="node_DummyEvent",
+                executable="cameraServos",
+                name="node_cameraServos",
                 arguments=[
                     "--ros-args",
                     "--log-level",
                     LaunchConfiguration("log_level"),
                 ],
-                parameters=[config],
             ),
-            Node(
-                package="sailbot",
-                namespace="",
-                executable="website",
-                name="node_Website",
-                arguments=[
-                    "--ros-args",
-                    "--log-level",
-                    LaunchConfiguration("log_level"),
-                ]
-            ),
+            # Node(
+            #     package="sailbot",
+            #     namespace="boat",
+            #     executable='dummyEvent',
+            #     name="node_DummyEvent",
+            #     arguments=[
+            #         "--ros-args",
+            #         "--log-level",
+            #         LaunchConfiguration("log_level"),
+            #     ],
+            #     parameters=[config],
+            # ),
+            # Node(
+            #     package="sailbot",
+            #     namespace="",
+            #     executable="website",
+            #     name="node_Website",
+            #     arguments=[
+            #         "--ros-args",
+            #         "--log-level",
+            #         LaunchConfiguration("log_level"),
+            #     ]
+            # ),
             
         ]
     )
