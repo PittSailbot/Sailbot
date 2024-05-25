@@ -41,8 +41,7 @@ class Transceiver(Node):
     def __init__(self):
         super().__init__("transceiver")
         self.logging = self.get_logger()
-
-        self.pub = self.create_publisher(String, "transceiver", 10)
+        
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         self.sail_offset_last_message_value = None
@@ -104,10 +103,10 @@ class Transceiver(Node):
         # TODO: try except to echo published non-protobuf error strings from Teensy
         teensy_data = self.read()
 
+        self.logging.info(str(teensy_data))
+
         if teensy_data == None:
             return
-
-        self.logging.info(f"Received {teensy_data}")
 
         self.publish_controller(teensy_data.rc_data)
         # TODO: if null, don't pub

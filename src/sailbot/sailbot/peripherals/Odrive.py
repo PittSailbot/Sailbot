@@ -59,7 +59,7 @@ class Odrive:
 
         self.KVRating = int(c.config["ODRIVE"]["motorKV"])
         self.current_limit = int(c.config["ODRIVE"]["currentLimit"])
-        # self.axis.motor.config.current_lim = 10  # [A] current lim not being set to motor?
+        self.axis.motor.config.current_lim = 20  # [A] current lim not being set to motor?
 
         self.axis.controller.config.enable_overspeed_error = False
         self.od.config.brake_resistance = float(c.config["ODRIVE"]["odrivebreakresistor"])
