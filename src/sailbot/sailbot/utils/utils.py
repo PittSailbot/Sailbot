@@ -154,7 +154,7 @@ class EventLaunchDescription:
 
 class ImuData:
     def __init__(self, qx, qy, qz, qw = None):
-        # yaw, pitch roll is using euler
+        # yaw, pitch, roll is using euler
         self.qx = float(qx)
         self.qy = float(qy)
         self.qz = float(qz)
