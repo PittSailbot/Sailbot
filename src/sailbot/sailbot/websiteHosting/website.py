@@ -27,7 +27,7 @@ from dateutil import parser
 
 import sailbot.constants as c
 from sailbot.utils.utils import DummyObject, Waypoint, ControlState, CameraServoState, EventLaunchDescription, create_directory_if_not_exists, ImuData
-from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calculateCoordinates
+from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calculateCoordinates, remap
 
 import os
 
@@ -454,7 +454,7 @@ def dataJSON():
         'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": DATA.rudder_angle,
+        "rudder_angle": remap(DATA.rudder_angle, 0, 100, 90, -90),
         'speed': DATA.gps.velocity,
         'polygon_coords': get_no_go_zone_polygon(),
         'heading_polyline_coords': get_heading_coords(),
