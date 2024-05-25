@@ -44,7 +44,7 @@ int setupIMU() {
   }
 
   if (!init_sensors()) {
-    // Serial.println("Failed to find IMU");
+    Serial.println("Failed to find IMU");
     return 1;
   }
   
