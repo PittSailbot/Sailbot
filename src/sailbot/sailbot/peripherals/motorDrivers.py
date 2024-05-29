@@ -12,6 +12,7 @@ from std_msgs.msg import String, Float32
 from sailbot import constants as c
 from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
+import atexit
 
 class MotorDriver(Node):
     """Driver interface for rudder
@@ -32,6 +33,7 @@ class MotorDriver(Node):
         self.logging.info("Initializing motor driver")
 
         self.rudder_odrive = Odrive(preset="rudder")
+        atexit.register(cleanupMotors)
         self.rudder_set = False
         self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
         self.rudder_offset_sub = self.create_subscription(Float32, "offset_rudder", self.rudder_offset_callback, 10)
@@ -76,6 +78,9 @@ class MotorDriver(Node):
         
         self.sail_odrive.offset += messageVal
         self.logging.debug(f"Changing Sail offset by: {messageVal}%")
+
+def cleanupMotors():
+    Odrive.cleanup()
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/motorDrivers"

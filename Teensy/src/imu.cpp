@@ -94,8 +94,9 @@ bool readIMU(IMU* imu) {
                 accel.acceleration.x, accel.acceleration.y, accel.acceleration.z, 
                 mag.magnetic.x, mag.magnetic.y, mag.magnetic.z);
 
-  // Return boat's orientation in quaternion format (pitch/roll/yaw, but better)
-  filter.getQuaternion(&(imu->qw), &(imu->qx), &(imu->qy), &(imu->qz));
+  imu->roll = filter.getRoll();
+  imu->pitch = filter.getPitch();
+  imu->yaw = filter.getYaw();
 
   return true;
 }

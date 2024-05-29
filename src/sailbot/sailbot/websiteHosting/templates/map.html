@@ -992,7 +992,7 @@
                     sailText = document.getElementById('sailText');
                     sailText.innerHTML = `Sail angle: ${sailAngle.toFixed(2)}`
 
-                    if (windDirection > 180){
+                    if (windDirection < 180){
                         sailOrientationImage.style.display = 'none';
                         sailOrientationImageFlipped.style.display = 'block';
                         sailOrientationImageFlipped.style.transform = `translate(-50%, -50%) rotate(${-90+sailAngle}deg)`;

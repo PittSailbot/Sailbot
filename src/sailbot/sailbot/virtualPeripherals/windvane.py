@@ -11,6 +11,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from sailbot import constants as c
+from sailbot.utils.utils import ImuData
 
 
 class WindVane(Node):
@@ -25,7 +26,7 @@ class WindVane(Node):
         super().__init__("WindVane")
         self.logging = self.get_logger()
 
-        self.wind_source_angle = 0.0
+        self.wind_source_angle = 270.0
         self.compass_yaw = 0.0
 
         self.pub = self.create_publisher(String, "wind_angle", 10)
@@ -33,19 +34,14 @@ class WindVane(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.compass_subscription = self.create_subscription(
-            String, "compass", self.ROS_compassCallback, 10
+            String, "imu", self.ROS_compassCallback, 10
         )
 
         self._angle = 0
 
     def ROS_compassCallback(self, string):
-        string = string.data
-        if string == "None,None":
-            self.compass_yaw = 0.0
-            return
-
-        angle = string.replace("(", "").replace(")", "")
-        self.compass_yaw = float(angle)
+        data = ImuData.fromRosMessage(string)
+        self.compass_yaw = data.yaw
 
     def timer_callback(self):
 

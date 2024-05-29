@@ -10,7 +10,7 @@ from rclpy.executors import ShutdownException, TimeoutException
 from std_msgs.msg import String, Bool
 
 from sailbot import constants as c
-from sailbot.utils.boatMath import distance_between
+from sailbot.utils.boatMath import distance_between, quaternion_to_euler
 
 @dataclass(slots=True)
 class Waypoint:
@@ -151,6 +151,38 @@ class EventLaunchDescription:
         else:
             file_path = None
         return EventLaunchDescription(data['eventExecutable'], file_path)
+
+class ImuData:
+    def __init__(self, qx, qy, qz, qw = None):
+        # yaw, pitch, roll is using euler
+        self.qx = float(qx)
+        self.qy = float(qy)
+        self.qz = float(qz)
+        
+        if qw:
+            self.qw = float(qw)
+            self.yaw, self.pitch, self.roll = quaternion_to_euler(self.qx, self.qy, self.qz, self.qw)
+        else:
+            self.yaw, self.pitch, self.roll = self.qx, self.qy, self.qz
+
+    def __repr__(self):
+        return F"IMU(pitch: {self.pitch}, roll: {self.roll}, yaw: {self.yaw})"
+
+    def toRosMessage(self):
+        msgData = {
+            'yaw': self.yaw,
+            'pitch': self.pitch,
+            'roll': self.roll,
+        }
+        msg = String()
+        msg.data = json.dumps(msgData)
+        
+        return msg
+    
+    @staticmethod
+    def fromRosMessage(message):
+        data = json.loads(message.data)
+        return ImuData(data['yaw'], data['pitch'], data['roll'])
 
 def create_directory_if_not_exists(file_path):
     directory = os.path.dirname(file_path)

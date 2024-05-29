@@ -18,7 +18,7 @@ from geometry_msgs.msg import Quaternion
 from sailbot import constants as c
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
-from sailbot.utils.utils import Waypoint, ControlState
+from sailbot.utils.utils import Waypoint, ControlState, ImuData
 
 
 class Transceiver(Node):
@@ -97,27 +97,38 @@ class Transceiver(Node):
         self.position_pub = self.create_publisher(String, "position", 1)
         self.speed_pub = self.create_publisher(String, "speed", 1)
 
+        self.imu_pub = self.create_publisher(String, "imu", 10)
+
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
         # TODO: try except to echo published non-protobuf error strings from Teensy
         teensy_data = self.read()
 
-        self.logging.info(str(teensy_data))
+        # self.logging.info(str(teensy_data))
 
         if teensy_data == None:
             return
 
-        self.publish_controller(teensy_data.rc_data)
-        # TODO: if null, don't pub
+        if teensy_data.HasField("rc_data"):
+            self.publish_controller(teensy_data.rc_data)
+        else:
+            self.logging.warning("No RC Control data")
+
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
-        # TODO: Fuse imu and gps into geopose
+
         if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.GPS.lat, teensy_data.GPS.lon).to_msg())
+            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
             msg = String()
-            msg.data = str(teensy_data.GPS.speed)
+            msg.data = str(teensy_data.gps.speed)
             self.speed_pub.publish(msg)
+
+        if teensy_data.HasField("imu"):
+            imu = teensy_data.imu
+            msg = ImuData(imu.yaw, imu.pitch, imu.roll).toRosMessage()
+            self.imu_pub.publish(msg)
+            self.logging.debug('Publishing: "%s"' % msg.data)
 
     def send(self, data):
         self.ser.write(str(data).encode())

@@ -9,6 +9,7 @@ import traceback
 from time import sleep
 
 import odrive
+from odrive.enums import *
 import odrive.utils as ut
 from rclpy.node import Node
 import rclpy
@@ -39,6 +40,7 @@ class Odrive:
                 - Supports either 'sail' or 'rudder'
             calibrate (bool): whether to start the odrive in calibration mode
         """
+        self.axis = None
         self._node = Node(f"odrive_{preset}")
         self.logging = self._node.get_logger()
         self.logging.debug(f"Initializing ODrive with preset: {preset}")
@@ -46,8 +48,13 @@ class Odrive:
 
         if self.od == None:
             self.od = odrive.find_any()
+            self.od.clear_errors()
+            
             
         self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
+
+        if calibrate:
+            self.calibrate()
 
         self.offset = 0
 
@@ -85,12 +92,18 @@ class Odrive:
         else:
             raise ValueError(f"Trying to load an undefined preset: {preset}")
 
-        if calibrate:
-            self.calibrate()
-
-        self.axis.requested_state = 8
+        self.axis.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL 
         ut.dump_errors(self.od)
         sleep(0.1)
+
+    def cleanup():
+        if Odrive.od:
+            od = Odrive.od
+        else:
+            od = odrive.find_any()
+        
+        od.axis0.requested_state = AXIS_STATE_IDLE
+        od.axis1.requested_state = AXIS_STATE_IDLE
 
     def reboot(self):
         """Reboots both sail and rudder"""
@@ -103,11 +116,19 @@ class Odrive:
         self.__init__(preset=self.preset)
 
     def calibrate(self):
-        self.logging.info("Calibrating")
-        self.reboot()
-        self.axis.requested_state = 3
-        sleep(15)
+        self.logging.warning("Calibrating")
+        
+        self.axis.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE
+        count = 0
+        sleep(5)
+        while self.axis.current_state != AXIS_STATE_IDLE:
+            sleep(0.5)
+            count += 1
+            if count > 40:
+                self.logging.warning("Odrive is taking a long time to calibrate the motors")
+                count = 0
         ut.dump_errors(self.od)
+        sleep(1)
 
     @property
     def pos(self):

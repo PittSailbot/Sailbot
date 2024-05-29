@@ -4,6 +4,7 @@ import sys
 import time
 from threading import Thread
 import platform
+import os
 
 RUN_COMMAND   = ""
 # Script assumes chat server is launched with the command:
@@ -14,7 +15,8 @@ NETWORK_NAME  = "SailNet"
 IP_BASE       = "172.30.100."
 
 OS_PI = "Raspberry Pi"
-OS_NOT_PI = "Not Pi"
+OS_LINUX = "Not Pi"
+OS_WINDOWS = "Windows"
 
 WARNING = '\033[93m'
 FAIL = '\033[91m'
@@ -28,9 +30,9 @@ def get_os():
         if "raspi" in release or 'raspberry' in release or 'rpi' in release:
             return OS_PI
         else:
-            return OS_NOT_PI
+            return OS_LINUX
     else:
-        return OS_NOT_PI
+        return OS_WINDOWS
 
 def line_exists_in_file(file_path, text_to_find):
     try:
@@ -56,9 +58,11 @@ def get_args(argv):
 
     parser_init = subparsers.add_parser('run', description='Initialize Docker container')
     parser_init.add_argument('-nd', action='store_true', help="prevent the docker container from being deleted when closed")
+    parser_init.add_argument('--copy', action='store_true', help="copy the sailbot folder rather than mount it")
     # parser_init.add_argument('--name', help="name the docker container")
     # parser_init.add_argument('--id', help="id of the docker container, used for ip address assignment")
     parser_init.add_argument('--image', help="name the docker image to use")
+    
     parser_init.set_defaults(func=init_container)
 
     parser_connect = subparsers.add_parser('connect', description='connect to Docker container')
@@ -109,15 +113,18 @@ def init_container(args):
     name = F'\"{name}_{id}\"'
 
     use_privileged_desktop = False
-    if not line_exists_in_file('/etc/udev/rules.d/99-serial.rules', 'KERNEL=="ttyACM[0-9]*",MODE="0666"'):
+    if get_os() != OS_WINDOWS and not line_exists_in_file('/etc/udev/rules.d/99-serial.rules', 'KERNEL=="ttyACM[0-9]*",MODE="0666"'):
         print(F"{WARNING}You do not appear to have rules configured for allowing access to the USB, instructions for setting this up can be found here: https://www.losant.com/blog/how-to-access-serial-devices-in-docker{ENDC}")
         use_privileged_desktop = True
 
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""
     # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
-    enviroment_var = "IS_PI_DOCKER=true" if get_os() == OS_PI else "IS_DOCKER=true"
-    cmd_str = F"docker create -e {enviroment_var} {privileged} -v /dev:/dev -t -it --network host -p {ports} --name {name} {image} "
+    enviroment_var = "-e IS_PI_DOCKER=true" if get_os() == OS_PI else "-e IS_DOCKER=true"
+    volume = "" if args.copy else F"-v {os.getcwd()}:/workspace"
+    volume += "" if get_os() == OS_WINDOWS else " -v /dev:/dev"
+    network = "" if get_os() == OS_WINDOWS else "-t --network host"
+    cmd_str = F"docker create {enviroment_var} {privileged} {volume} -it {network} -p {ports} --name {name} {image} "
 
     subprocess.run(cmd_str, shell=True)
     #subprocess.Popen(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -125,8 +132,17 @@ def init_container(args):
     cmd_str = F"docker start {name}"
     subprocess.run(cmd_str, shell=True)
 
-    cmd_str = F"docker cp ./ {name}:/workspace/"
-    subprocess.run(cmd_str, shell=True)
+    if args.copy:
+        cmd_str = F"docker cp ./ {name}:/workspace/"
+        subprocess.run(cmd_str, shell=True)
+        if get_os() == OS_WINDOWS:
+            cmd_str = F'docker exec {name} dos2unix dos2unixConvert.bash'
+            subprocess.run(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            cmd_str = F'docker exec {name} bash /workspace/dos2unixConvert.bash'
+            subprocess.run(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    elif get_os() == OS_WINDOWS:
+        print(F"{WARNING}You appear to be using windows, it is recommended to use the --copy option so that files can be converted from windows to linux format. Without this you may get errors{ENDC}")
 
     print("type: 'exit' to close connection")
 

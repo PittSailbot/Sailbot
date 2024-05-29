@@ -10,6 +10,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32
 from sailbot import constants as c
+from sailbot.utils.utils import ImuData
 
 
 class Compass(Node):
@@ -30,7 +31,7 @@ class Compass(Node):
         self.rudder_angle = 0
         self.velocity = 0.0
         self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
-        self.pub = self.create_publisher(String, "compass", 10)
+        self.pub = self.create_publisher(String, "imu", 10)
         self.gps_subscription = self.create_subscription(
             String, "GPS", self.ROS_GPSCallback, 10
         )
@@ -50,9 +51,8 @@ class Compass(Node):
         if abs(self.rudder_angle) > float(c.config["RUDDER"]["acceptable_error"]):
             self.compassAngle -= (self.rudder_angle / 10) * self.velocity
             self.compassAngle %= 360
-            
-        msg = String()
-        msg.data = f"{self.angle}"
+
+        msg = ImuData(self.compassAngle, 0, 0).toRosMessage()
         self.pub.publish(msg)
         self.logging.debug('Publishing: "%s"' % msg.data)
 
