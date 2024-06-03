@@ -20,7 +20,7 @@ void setup() {
   // while (!Serial) {}
   setupTransceiver();
   setupWindVane();
-  // setupGPS();
+  setupGPS();
   setupIMU();
   setupWaterSensors();
   //setupPumps();

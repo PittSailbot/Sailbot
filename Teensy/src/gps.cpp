@@ -63,7 +63,7 @@ bool readGPS (GPSData* gps) {
   // gps->fix = GPS.fix;
   // gps->altitude = GPS.altitude;
 
-  return false;
+  return true;
 }
 
 void printDebug() {
