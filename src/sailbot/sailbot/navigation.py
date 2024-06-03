@@ -92,7 +92,7 @@ class Navigation(Node):
         if self.control_state == None or self.control_state.rudder_manual or target is None:
             return
 
-        if utils.has_reached_waypoint(target):
+        if boatMath.distance_between(self.position, self.target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}")
             self.latest_waypoint = None
             self.sail_pub.publish(0)

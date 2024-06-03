@@ -189,14 +189,6 @@ def create_directory_if_not_exists(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-# TODO: make function use ROS to resolve circulat import error
-def has_reached_waypoint(waypoint, distance=float(c.config["CONSTANTS"]["reached_waypoint_distance"])):
-    """Returns true/false if the boat is close enough to the waypoint"""
-    # a = GPS()
-    # boat_gps = Waypoint(a.latitude, a.longitude)
-    # return distance_between(boat_gps, waypoint) < distance
-    return None
-
 
 def ros_spin_some(node, executor=None, timeout_sec=0, wait_condition=lambda: False):
     """
