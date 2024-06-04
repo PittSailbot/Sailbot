@@ -66,12 +66,12 @@ class Navigation(Node):
 
     @property
     def manualSails(self):
-        return self.control_state == None or self.control_state.sail != ControlState.AUTO 
-    
+        return self.control_state == None or self.control_state.sail != ControlState.AUTO
+
     @property
     def manualRudder(self):
         return self.control_state == None or self.control_state.rudder != ControlState.AUTO or self.latest_waypoint is None
-            
+
 
     def next_gps_callback(self, msg):
         next_gps = Waypoint.from_msg(msg)
@@ -103,9 +103,9 @@ class Navigation(Node):
 
         if target == None or (self.manualRudder and not self.calculate_autonomy_always):
             return
-        
-        if utils.has_reached_waypoint(target):
-            self.logging.info(f"Reached {target}")
+
+        if boatMath.distance_between(self.position, self.target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
+            self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
             self.auto_sail_pub.publish(Float32(data=0.0))
             self.auto_rudder_pub.publish(Float32(data=0.0))
@@ -198,11 +198,11 @@ class Navigation(Node):
             self.logging.debug(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees")
             rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
-        if abs(rudder_angle) > 90:
-            self.logging.warning(F"Navigation suggested rudder angle is very large ({rudder_angle})")
+        if abs(rudder_angle) > 100 or abs(rudder_angle) < 0:
+            self.logging.warning(F"Navigation suggested rudder angle outside of normal bounds ({rudder_angle})")
         
-        rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
-        rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
+            rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
+            rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
 
         msg = Float32()
         msg.data = rudder_angle
@@ -244,8 +244,8 @@ class Navigation(Node):
         self.logging.debug("continuing tack")
 
     def auto_adjust_sail(self):
-        """Adjusts the sail to the optimal angle for speed""" 
-        
+        """Adjusts the sail to the optimal angle for speed"""
+
         if self.manualSails and not self.calculate_autonomy_always:
             return
 
