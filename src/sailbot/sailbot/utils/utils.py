@@ -39,6 +39,9 @@ class Waypoint:
             return Waypoint(-1, -1)
         
         gpsJson = json.loads(jsonString.data)
+        if gpsJson['lat'] == None and gpsJson['lon'] == None:
+            return None
+        
         return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 
     def add_meters(self, dx, dy):
