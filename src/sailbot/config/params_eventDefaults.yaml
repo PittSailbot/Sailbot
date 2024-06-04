@@ -1,7 +1,33 @@
 boat: # declare the namespace
   node_DummyEvent: # declare the name of the node to apply the parameters to
-    ros__parameters: # boilerplate requirement 
-      Waypoint1: [42.85039, -70.985734] # parameter name: value
-      Waypoint2: [42.848564, -70.982044]
-      Waypoint3: [42.850138, -70.979619]
-      Waypoint4: [42.851239, -70.982494]
+    ros__parameters: # boilerplate requirement
+      # parameter name: value
+      Waypoints: [
+      [42.85039, -70.985734]
+      ]
+
+  node_endurance:
+    ros__parameters:
+      top_left: [ 42.85039, -70.985734 ]
+      top_right: [ 42.848564, -70.982044 ]
+      bottom_left: [ 42.850138, -70.979619 ]
+      bottom_right: [ 42.851239, -70.982494 ]
+
+  node_precision_navigation:
+    ros__parameters:
+      start_left: [ 42.85039, -70.985734 ]
+      start_right: [ 42.848564, -70.982044 ]
+      buoy1: [ 42.850138, -70.979619 ]
+      buoy2: [ 42.851239, -70.982494 ]
+
+  node_search:
+    ros__parameters:
+      center: [ 42.85039, -70.985734 ]
+      search_radius: 100
+
+  node_station_keeping:
+    ros__parameters:
+      top_left: [ 42.85039, -70.985734 ]
+      top_right: [ 42.848564, -70.982044 ]
+      bottom_left: [ 42.850138, -70.979619 ]
+      bottom_right: [ 42.851239, -70.982494 ]
