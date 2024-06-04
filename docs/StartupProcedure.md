@@ -20,7 +20,9 @@ Before plugging in the batteries ensure the following are plugged in:
 
 - Make sure the Power switch is in the `Off` position, try and move both switches together, they are taped together to make this easier. 
 
-- If there is nothing else to plug in you can plug in the batteries, if you later realize there is something else you forgot to plug in you must unplug the batteries.
+- Plug the batteries into the BMS, match the etape colors.
+
+- If there is nothing else to plug in you can plug the BMS output into the PCB, if you later realize there is something else you forgot to plug in you must unplug the batteries.
 
 ![Wiring Diagram](./images/PCB%20wiring.png)
 

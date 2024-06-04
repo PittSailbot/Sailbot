@@ -77,4 +77,12 @@ RUN cat /tmp/arch.txt | grep -q 'aarch64' && pip install RPi.GPIO || echo "Not a
 
 RUN pip install --no-cache-dir -r /workspace/requirements-dev.txt
 
+# WORKDIR ~
+# USER root
+# RUN sudo apt-get install libusb-1.0-0-dev
+# RUN git clone https://github.com/mvp/uhubctl
+# WORKDIR ~/uhubctl
+# RUN cd ~/uhubctl && make
+# RUN sudo make install
+
 WORKDIR /workspace/

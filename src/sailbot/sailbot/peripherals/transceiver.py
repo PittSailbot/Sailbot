@@ -13,6 +13,7 @@ import smbus2 as smbus
 from rclpy.node import Node
 from std_msgs.msg import String, Float32
 from geometry_msgs.msg import Quaternion
+from time import sleep
 # from geographic_msgs.msg import GeoPose, GeoPoint
 
 from sailbot import constants as c
@@ -48,37 +49,9 @@ class Transceiver(Node):
         self.rudder_offset_last_message_value = None
         self.last_motor_offset_state = None
 
-        found_ports, found_descriptions, found_hwids = self.listPorts()
-
-        for i, port in enumerate(found_ports):
-            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
-
-                if i == len(found_ports) - 1:
-                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-                    debug_str = "Found ports are: \n"
-                    for i in range(len(found_ports)):
-                        debug_str += F"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
-                    debug_str += F'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
-                    self.logging.warning(debug_str)
-                    raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-                else:
-                    continue
-            try:
-                # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
-                # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
-                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
-
-                assert self.readRaw() is not None
-                self.last_successful_message = time.time()
-
-            except Exception as e:
-                self.logging.error(f"Failed to read from port: {port}")
-                self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-                raise RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-
-            else:
-                self.logging.info(f"Transceiver initialized with port: {port}")
-                break
+        error = self.setupComs()
+        if error:
+            raise error
 
         # self.I2Cbus = smbus.SMBus(1)
 
@@ -99,11 +72,57 @@ class Transceiver(Node):
 
         self.imu_pub = self.create_publisher(String, "imu", 10)
 
+        self.usbReset_pub = self.create_publisher(
+            String, "usbReset", 1
+        )
+
+    def setupComs(self):
+        found_ports, found_descriptions, found_hwids = self.listPorts()
+
+        for i, port in enumerate(found_ports):
+            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
+
+                if i == len(found_ports) - 1:
+                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                    debug_str = "Found ports are: \n"
+                    for i in range(len(found_ports)):
+                        debug_str += F"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
+                    debug_str += F'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
+                    self.logging.warning(debug_str)
+                    return RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                else:
+                    continue
+            try:
+                # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
+                # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
+                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
+
+                assert self.readRaw() is not None
+                self.last_successful_message = time.time()
+
+            except Exception as e:
+                self.logging.error(f"Failed to read from port: {port}")
+                self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                return e
+
+            else:
+                self.logging.info(f"Transceiver initialized with port: {port}")
+                break
+
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
         # TODO: try except to echo published non-protobuf error strings from Teensy
-        teensy_data = self.read()
+        try:
+            teensy_data = self.read()
+        except Exception as e:
+            self.logging.error(F"Error while reading teensy: {e}")
+            self.timer.cancel()
+            self.setupComs()
+            sleep(1)
+            self.timer.reset()
+
+            return
 
         self.logging.debug(str(teensy_data))
 
@@ -154,9 +173,12 @@ class Transceiver(Node):
             # self.logging.warning(F"Exception: [{e}] raised when processing: {msg}")
             pass
 
+        if (time.time() - self.last_successful_message) > 10:
+            usbReset_pub.publish(String(data=""))
+            self.logging.error("Resetting transceiver", throttle_duration_sec=1)
+
         if (time.time() - self.last_successful_message) > 1: #seconds
-            self.logging.error("No valid message recived in awhile, check transceiver")
-            self.last_successful_message = time.time()
+            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
         return None
         
     def readRaw(self):

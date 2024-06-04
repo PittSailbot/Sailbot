@@ -33,7 +33,7 @@ bool readWaterSensors(WaterSensors* water_sensors) {
   }
   if (WATER_SENSOR2_INSTALLED){
     water_sensors->sensor2_is_wet = digitalRead(WATER_SENSOR2);
-    water_sensors->has_sensor3_is_wet = true;
+    water_sensors->has_sensor2_is_wet = true;
   }
   if (WATER_SENSOR3_INSTALLED){
     water_sensors->sensor3_is_wet = digitalRead(WATER_SENSOR3);

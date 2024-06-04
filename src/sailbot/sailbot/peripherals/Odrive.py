@@ -7,6 +7,7 @@ Documentation: https://docs.odriverobotics.com/v/latest/index.html
 import sys
 import traceback
 from time import sleep
+import time
 
 import odrive
 from odrive.enums import *
@@ -48,6 +49,7 @@ class Odrive:
 
         if self.od == None:
             self.od = odrive.find_any()
+            self.last_connect_time = time.time()
             self.od.clear_errors()
             
             
@@ -129,6 +131,14 @@ class Odrive:
                 count = 0
         ut.dump_errors(self.od)
         sleep(1)
+
+    def reconnect(self, preset):
+        if (time.time() - self.last_connect_time > 1):
+            self.logging.warning("Odrive Reconnecting")
+            self.od = odrive.find_any()
+            self.last_connect_time = time.time()
+            self.preset = preset        
+            self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
 
     @property
     def pos(self):
