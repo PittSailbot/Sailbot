@@ -42,17 +42,30 @@ class HeaveTo(Event):
         self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
         self.control_state = None
 
+        self.start_time = time.time()
+
     def control_state_timer_callback(self):
         self.event_control_state.publish(Int32(data = ControlState.EXTERNAL_CONTROL))
 
     def control_state_callback(self, msg):
         self.control_state = ControlState.fromRosMessage(msg)
 
+        if not self.control_state.full_auto:
+            self.start_time = time.time()
+
     def next_gps(self):
         if self.control_state and self.control_state.full_auto:
-            self.sail_pub.publish(Float32(data=0.0))
-            self.rudder_pub.publish(Float32(data=100.0))
+            if time.time() > (self.start_time + 290):
+                self.logging.info("Leaving")
+                self.sail_pub.publish(Float32(data=0.0))
+                self.rudder_pub.publish(Float32(data=50.0))
+            else:
+                self.logging.info(f"Heaving for {time.time() - self.start_time}s. {(self.start_time + 290) - time.time()}s left.")
+                self.sail_pub.publish(Float32(data=0.0))
+                self.rudder_pub.publish(Float32(data=100.0))
+
         return Waypoint(None, None)
+
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/main"
