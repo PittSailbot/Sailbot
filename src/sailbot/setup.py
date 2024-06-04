@@ -54,6 +54,7 @@ setup(
             "rosTest = sailbot.rosTest:main",
             'networkLogger = sailbot.utils.NetworkLogger:main',
             'dummyEvent = sailbot.events.DummyEvent:main',
+            'heaveTo = sailbot.events.heaveTo:main',
             'navigation = sailbot.navigation:main',
             'actionManager = sailbot.ActionManager:main'
         ],

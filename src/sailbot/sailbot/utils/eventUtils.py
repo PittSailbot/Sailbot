@@ -4,10 +4,10 @@ Event blueprint class and common utility functions used in events
 from abc import abstractmethod
 import configparser
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 
 from sailbot import constants as c
-from sailbot.utils.utils import Waypoint
+from sailbot.utils.utils import Waypoint, ControlState
 
 EVENT_DICT_INITIALIZED = False
 
@@ -32,6 +32,10 @@ class Event(Node):
         super().__init__(self.__class__.__name__)
         self.logging = self.get_logger()
 
+        self.event_control_state = self.create_publisher(Int32, "/boat/event_control_state", 1)
+        timer_period = 1.0  # seconds
+        self.control_state_timer = self.create_timer(timer_period, self.control_state_timer_callback)
+
         self.logging.info(f"Initializing {self.__class__.__name__}")
 
         for key in self.required_args:
@@ -51,7 +55,7 @@ class Event(Node):
             String, "event_shutdown", self.event_stop_callback, 10
         )
         self.pub = self.create_publisher(String, "next_gps", 10)
-        timer_period = 5.0  # seconds
+        timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def event_stop_callback(self, msg):
@@ -67,7 +71,10 @@ class Event(Node):
             target.data = ""
 
         self.pub.publish(target)
-        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {waypoint}")
+        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {target.data}")
+
+    def control_state_timer_callback(self):
+        self.event_control_state.publish(Int32(data = ControlState.AUTO))
 
     @abstractmethod
     def next_gps(self):
