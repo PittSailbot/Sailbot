@@ -60,7 +60,9 @@ int setupIMU() {
 }
 
 void updateIMU(){
-  unsigned long int start = micros();
+  if (!found_transceiver){
+    return;
+  }
   
 
   float gx, gy, gz;
