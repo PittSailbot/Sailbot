@@ -80,7 +80,7 @@ class Transceiver(Node):
                 self.logging.info(f"Transceiver initialized with port: {port}")
                 break
 
-        self.I2Cbus = smbus.SMBus(1)
+        # self.I2Cbus = smbus.SMBus(1)
 
         # self.controller_pub = self.create_publisher(String, "controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
