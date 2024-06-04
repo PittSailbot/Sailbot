@@ -39,6 +39,9 @@ class Waypoint:
             return Waypoint(-1, -1)
         
         gpsJson = json.loads(jsonString.data)
+        if gpsJson['lat'] == None and gpsJson['lon'] == None:
+            return None
+        
         return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
 
     def add_meters(self, dx, dy):
@@ -183,6 +186,27 @@ class ImuData:
     def fromRosMessage(message):
         data = json.loads(message.data)
         return ImuData(data['yaw'], data['pitch'], data['roll'])
+
+class UsbResetCmd:
+    def __init__(self, hub, port):
+        # yaw, pitch, roll is using euler
+        self.hub = hub
+        self.port = port
+
+    def toRosMessage(self):
+        msgData = {
+            'hub': self.hub,
+            'port': self.port
+        }
+        msg = String()
+        msg.data = json.dumps(msgData)
+        
+        return msg
+    
+    @staticmethod
+    def fromRosMessage(message):
+        data = json.loads(message.data)
+        return UsbResetCmd(data['hub'], data['port'])
 
 def create_directory_if_not_exists(file_path):
     directory = os.path.dirname(file_path)

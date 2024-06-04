@@ -50,7 +50,10 @@ class MotorDriver(Node):
         rotations = boatMath.remap(angle, 0, 100, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
         
         if self.rudder_set:
-            self.rudder_odrive.pos = rotations
+            try:
+                self.rudder_odrive.pos = rotations
+            except:
+                self.rudder_odrive.reconnect("rudder")
         else:
             self.rudder_odrive.offset = self.rudder_odrive.pos - rotations
             self.rudder_set = True
@@ -68,7 +71,11 @@ class MotorDriver(Node):
         rotations = boatMath.remap(angle, 0, 100, -self.sail_odrive.max_rotations / 2, self.sail_odrive.max_rotations / 2)
 
         if self.sail_set:
-            self.sail_odrive.pos = rotations
+            try:
+                self.sail_odrive.pos = rotations
+            except Exception as e:
+                self.logging.error(F"odrive error: {e}")
+                self.sail_odrive.reconnect("sail")
         else:
             self.sail_odrive.offset = self.sail_odrive.pos - rotations
             self.sail_set = True
