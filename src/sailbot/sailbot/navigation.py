@@ -95,8 +95,8 @@ class Navigation(Node):
         if boatMath.distance_between(self.position, self.target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}")
             self.latest_waypoint = None
-            self.sail_pub.publish(0)
-            self.rudder_pub.publish(0)
+            self.sail_pub.publish(Float32(data=0.0))
+            self.rudder_pub.publish(Float32(data=50.0))
             return
 
         target_angle = boatMath.angleToPoint(self.position.lat, self.position.lon, target.lat, target.lon)
@@ -143,9 +143,7 @@ class Navigation(Node):
         """
         if boatMath.is_within_angle(target_angle, (self.compass_angle - self.ACCEPTABLE_ERROR) % 360, (self.compass_angle + self.ACCEPTABLE_ERROR) % 360):
             self.logging.debug(f"Holding boat at {target_angle} degrees")
-            msg = Float32()
-            msg.data = 0.0
-            self.rudder_pub.publish(msg)
+            self.rudder_pub.publish(Float32(data=0.0))
             return
 
         no_go_zone_center = self.wind_angle
@@ -181,15 +179,13 @@ class Navigation(Node):
             self.logging.debug(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees")
             rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
-        if abs(rudder_angle) > 90:
-            self.logging.warning(F"Navigation suggested rudder angle is very large ({rudder_angle})")
+        if abs(rudder_angle) > 100 or abs(rudder_angle) < 0:
+            self.logging.warning(F"Navigation suggested rudder angle outside of normal bounds ({rudder_angle})")
         
-        rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
-        rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
+            rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
+            rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
 
-        msg = Float32()
-        msg.data = rudder_angle
-        self.rudder_pub.publish(msg)
+        self.rudder_pub.publish(Float32(data=rudder_angle))
 
     def complete_tack(self):
         no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
@@ -217,9 +213,7 @@ class Navigation(Node):
             else:
                 rudder_angle = float(c.config['RUDDER']['min_angle'])
 
-        msg = Float32()
-        msg.data = rudder_angle
-        self.rudder_pub.publish(msg)
+        self.rudder_pub.publish(Float32(data=rudder_angle))
         self.logging.debug("continuing tack")
 
     def auto_adjust_sail(self):
@@ -234,9 +228,7 @@ class Navigation(Node):
 
         sail_angle = max(min(wind_angle / 2, 90), 3)
 
-        msg = Float32()
-        msg.data = float(sail_angle)
-        self.sail_pub.publish(msg)
+        self.sail_pub.publish(Float32(data=sail_angle))
 
 
 def main(args=None):
