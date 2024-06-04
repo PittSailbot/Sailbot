@@ -80,7 +80,7 @@ class Transceiver(Node):
                 self.logging.info(f"Transceiver initialized with port: {port}")
                 break
 
-        self.I2Cbus = smbus.SMBus(1)
+        # self.I2Cbus = smbus.SMBus(1)
 
         # self.controller_pub = self.create_publisher(String, "controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -105,7 +105,7 @@ class Transceiver(Node):
         # TODO: try except to echo published non-protobuf error strings from Teensy
         teensy_data = self.read()
 
-        # self.logging.info(str(teensy_data))
+        self.logging.debug(str(teensy_data))
 
         if teensy_data == None:
             return
@@ -113,7 +113,7 @@ class Transceiver(Node):
         if teensy_data.HasField("rc_data"):
             self.publish_controller(teensy_data.rc_data)
         else:
-            self.logging.warning("No RC Control data")
+            self.logging.warning("No RC Control data", throttle_duration_sec=3)
 
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
@@ -155,7 +155,7 @@ class Transceiver(Node):
             pass
 
         if (time.time() - self.last_successful_message) > 1: #seconds
-            self.logging.warning("No valid message recived in awhile, check transceiver")
+            self.logging.error("No valid message recived in awhile, check transceiver")
             self.last_successful_message = time.time()
         return None
         
