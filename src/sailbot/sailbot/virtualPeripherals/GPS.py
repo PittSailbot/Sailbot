@@ -71,7 +71,7 @@ class GPS(Node):
         self.compass_yaw = data.yaw
 
     def timer_callback(self):
-        self.control_state_pub.publish(ControlState(False, False).toRosMessage())
+        self.control_state_pub.publish(ControlState(ControlState.AUTO, ControlState.AUTO).toRosMessage())
         
         optAngle = max(min(self.relative_wind / 2, 90), 3)
         self.sail_angle = optAngle

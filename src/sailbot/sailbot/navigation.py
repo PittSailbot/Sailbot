@@ -50,7 +50,9 @@ class Navigation(Node):
         self.windvane_sub = self.create_subscription(String, "/boat/wind_angle", self.windvane_callback, 2)
         self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
 
+        self.auto_sail_pub = self.create_publisher(Float32, "/boat/cmd_auto_sail", 10)
         self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
+        self.auto_rudder_pub = self.create_publisher(Float32, "/boat/cmd_auto_rudder", 10)
         self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
 
         self.go_to_gps_timer = self.create_timer(0.2, self.go_to_gps)
@@ -60,6 +62,16 @@ class Navigation(Node):
         self.control_state = None
         self.allow_tacking = True
         self.tack = None
+        self.calculate_autonomy_always = True
+
+    @property
+    def manualSails(self):
+        return self.control_state == None or self.control_state.sail != ControlState.AUTO 
+    
+    @property
+    def manualRudder(self):
+        return self.control_state == None or self.control_state.rudder != ControlState.AUTO or self.latest_waypoint is None
+            
 
     def next_gps_callback(self, msg):
         next_gps = Waypoint.from_msg(msg)
@@ -89,14 +101,17 @@ class Navigation(Node):
         """
         target = self.latest_waypoint
 
-        if self.control_state == None or self.control_state.rudder != ControlState.AUTO or target is None:
+        if target == None or (self.manualRudder and not self.calculate_autonomy_always):
             return
-
+        
         if utils.has_reached_waypoint(target):
             self.logging.info(f"Reached {target}")
             self.latest_waypoint = None
-            self.sail_pub.publish(0)
-            self.rudder_pub.publish(0)
+            self.auto_sail_pub.publish(Float32(data=0.0))
+            self.auto_rudder_pub.publish(Float32(data=0.0))
+            if not self.manualRudder:
+                self.sail_pub.publish(Float32(data=0.0))
+                self.rudder_pub.publish(Float32(data=0.0))
             return
 
         target_angle = boatMath.angleToPoint(self.position.lat, self.position.lon, target.lat, target.lon)
@@ -145,7 +160,9 @@ class Navigation(Node):
             self.logging.debug(f"Holding boat at {target_angle} degrees")
             msg = Float32()
             msg.data = 0.0
-            self.rudder_pub.publish(msg)
+            self.auto_rudder_pub.publish(msg)
+            if not self.manualRudder:
+                self.rudder_pub.publish(msg)
             return
 
         no_go_zone_center = self.wind_angle
@@ -189,7 +206,9 @@ class Navigation(Node):
 
         msg = Float32()
         msg.data = rudder_angle
-        self.rudder_pub.publish(msg)
+        self.auto_rudder_pub.publish(msg)
+        if not self.manualRudder:
+            self.rudder_pub.publish(msg)
 
     def complete_tack(self):
         no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
@@ -213,20 +232,23 @@ class Navigation(Node):
 
         else:
             if self.tack == TACK_TO_WIND_STARBOARD:
-                rudder_angle = float(c.config['RUDDER']['max_angle'])
+                rudder_angle = float(c.config['RUDDER']['max_angle']) * 0.66
             else:
-                rudder_angle = float(c.config['RUDDER']['min_angle'])
+                rudder_angle = float(c.config['RUDDER']['min_angle']) * 0.66
 
         msg = Float32()
         msg.data = rudder_angle
-        self.rudder_pub.publish(msg)
+        self.auto_rudder_pub.publish(msg)
+        if not self.manualRudder:
+            self.rudder_pub.publish(msg)
         self.logging.debug("continuing tack")
 
     def auto_adjust_sail(self):
-        """Adjusts the sail to the optimal angle for speed"""
-        if self.control_state == None or self.control_state.sail != ControlState.AUTO:
-            return 
+        """Adjusts the sail to the optimal angle for speed""" 
         
+        if self.manualSails and not self.calculate_autonomy_always:
+            return
+
         if self.wind_angle > 180:
             wind_angle = 180 - (self.wind_angle - 180)
         else:
@@ -236,7 +258,9 @@ class Navigation(Node):
 
         msg = Float32()
         msg.data = float(sail_angle)
-        self.sail_pub.publish(msg)
+        self.auto_sail_pub.publish(msg)
+        if not self.manualSails:
+            self.sail_pub.publish(msg)
 
 
 def main(args=None):

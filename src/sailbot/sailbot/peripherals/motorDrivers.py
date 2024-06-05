@@ -14,6 +14,12 @@ from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
 import atexit
 
+RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
+RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
+
+SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
+SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
+
 class MotorDriver(Node):
     """Driver interface for rudder
     Listens to:
@@ -21,11 +27,7 @@ class MotorDriver(Node):
         - /cmd_rudder_offset (String): Shifts the default angle
     """
 
-    RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
-    RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
-
-    SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
-    SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
+    
 
     def __init__(self):
         super().__init__("motorDriver")
@@ -47,7 +49,7 @@ class MotorDriver(Node):
         angle = float(msg.data)
         self.logging.debug(f"Moving rudder to {angle}")
         
-        rotations = boatMath.remap(angle, 0, 100, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
+        rotations = boatMath.remap(angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
         
         if self.rudder_set:
             try:
@@ -68,7 +70,7 @@ class MotorDriver(Node):
         angle = float(msg.data)
         self.logging.debug(f"Moving sail to {angle}")
         
-        rotations = boatMath.remap(angle, 0, 100, self.sail_odrive.max_rotations / 2, -self.sail_odrive.max_rotations / 2)
+        rotations = boatMath.remap(angle, SAIL_MIN_ANGLE, SAIL_MAX_ANGLE, self.sail_odrive.max_rotations / 2, -self.sail_odrive.max_rotations / 2)
 
         if self.sail_set:
             try:

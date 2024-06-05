@@ -6,6 +6,7 @@ import os
 
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 from sailbot.utils import boatMath
+from sailbot.utils.boatMath import remap
 import rclpy
 from rcl_interfaces.msg import ParameterDescriptor
 from rcl_interfaces.msg import ParameterType
@@ -23,6 +24,11 @@ from sailbot import constants as c
 # Compile .proto with `protoc teensy.proto --python_out=./`
 from sailbot.utils.utils import Waypoint, ControlState, ImuData
 
+RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
+RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
+
+SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
+SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
 
 class Transceiver(Node):
     """Handles all communication between the boat and shore. Also publishes all sensors on the Teensy.
@@ -193,11 +199,11 @@ class Transceiver(Node):
             pass
 
         if (time.time() - self.last_successful_message) > 10:
-            usbReset_pub.publish(String(data=""))
+            self.usbReset_pub.publish(String(data=""))
             self.logging.error("Resetting transceiver", throttle_duration_sec=1)
 
         if (time.time() - self.last_successful_message) > 1: #seconds
-            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
+            self.logging.error("No valid message received in awhile, check transceiver", throttle_duration_sec=1)
         return None
         
     def readRaw(self):
@@ -229,7 +235,7 @@ class Transceiver(Node):
 
         if sail_manual == ControlState.MANUAL:
             sailMsg = Float32()
-            sailMsg.data = float(controller.left_analog_y)
+            sailMsg.data = float(remap(controller.left_analog_y, 0, 100, SAIL_MIN_ANGLE, SAIL_MAX_ANGLE))
             self.sail_pub.publish(sailMsg)
 
             if motor_offset_mode == 0:
@@ -244,7 +250,7 @@ class Transceiver(Node):
 
         if rudder_manual == ControlState.MANUAL:
             rudderMsg = Float32()
-            rudderMsg.data = float(controller.right_analog_x)
+            rudderMsg.data = float(remap(controller.right_analog_x, 0, 100, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE))
             self.rudder_pub.publish(rudderMsg)
 
             

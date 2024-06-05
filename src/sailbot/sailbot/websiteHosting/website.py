@@ -59,6 +59,12 @@ log.setLevel(logging.ERROR)
 
 TIMEZONE = 'America/New_York'
 
+RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
+RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
+
+SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
+SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
+
 class LogDatabase:
     def __init__(self, parent, db_path='log_database.db'):
         self.db_path = db_path
@@ -222,6 +228,8 @@ class Website(Node):
         self.relative_wind = None
         self.sail_angle = 0.0
         self.rudder_angle = 0.0
+        self.auto_sail_angle = 0.0
+        self.auto_rudder_angle = 0.0
         self.imu = None
 
         self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
@@ -255,6 +263,8 @@ class Website(Node):
         )
         self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
         self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()
@@ -384,6 +394,12 @@ class Website(Node):
     def ROS_rudderCmd_callback(self, msg):
         self.rudder_angle = float(msg.data)
 
+    def ROS_sailAutoCmd_callback(self, msg):
+        self.auto_sail_angle = float(msg.data)
+
+    def ROS_rudderAutoCmd_callback(self, msg):
+        self.auto_rudder_angle = float(msg.data)
+
 @app.route("/", methods=["GET", "POST"])
 def default():
     return redirect('/map')
@@ -455,10 +471,12 @@ def dataJSON():
         'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": remap(DATA.rudder_angle, 0, 100, 90, -90),
+        "rudder_angle": remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
         'speed': DATA.gps.velocity,
         'polygon_coords': get_no_go_zone_polygon(),
         'heading_polyline_coords': get_heading_coords(),
+        'auto_sail' : DATA.auto_sail_angle,
+        'auto_rudder' : DATA.auto_rudder_angle,
     }
     return jsonDict
 
@@ -684,7 +702,7 @@ def ros_main():
     DATA.logging.info(F"Website available at https://localhost:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem')) # debug true causes the process to fork which causes problems
+    app.run(debug=False, host="0.0.0.0", port=PORT) # debug true causes the process to fork which causes problems
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians
