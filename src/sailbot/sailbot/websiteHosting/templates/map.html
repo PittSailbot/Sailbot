@@ -315,9 +315,14 @@
             <div id="sailText">
                 Sail angle:
             </div>
-            <br>
             <div id="rudderText">
                 Rudder angle:
+            </div>
+            <div id="autoSailText">
+                Auto Sail desired angle:
+            </div>
+            <div id="autoRudderText">
+                Auto Rudder desired angle:
             </div>
             <br>
             <div id="speedText">
@@ -991,6 +996,16 @@
                     sailOrientationImageFlipped = document.getElementById('sailOrientationImageFlipped');
                     sailText = document.getElementById('sailText');
                     sailText.innerHTML = `Sail angle: ${sailAngle.toFixed(2)}`
+
+                    // update auto Sail text
+                    autoSailAngle = json.auto_sail
+                    autoSailText = document.getElementById('autoSailText');
+                    autoSailText.innerHTML = `Auto Sail desired angle: ${autoSailAngle.toFixed(2)}`
+
+                    // Update auto Rudder text
+                    autoRudderAngle = json.auto_rudder
+                    autoRudderText = document.getElementById('autoRudderText');
+                    autoRudderText.innerHTML = `Auto Rudder desired angle: ${autoRudderAngle.toFixed(2)}`
 
                     if (windDirection < 180){
                         sailOrientationImage.style.display = 'none';

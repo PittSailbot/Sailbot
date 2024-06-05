@@ -58,11 +58,11 @@ class HeaveTo(Event):
             if time.time() > (self.start_time + 290):
                 self.logging.info("Leaving")
                 self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=50.0))
+                self.rudder_pub.publish(Float32(data=0.0))
             else:
                 self.logging.info(f"Heaving for {time.time() - self.start_time}s. {(self.start_time + 290) - time.time()}s left.")
                 self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=100.0))
+                self.rudder_pub.publish(Float32(data=c.config['RUDDER']['max_angle']))
 
         return Waypoint(None, None)
 

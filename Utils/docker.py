@@ -119,7 +119,7 @@ def init_container(args):
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""
     # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
-    enviroment_var = "-e IS_PI_DOCKER=true" if get_os() == OS_PI else "-e IS_DOCKER=true"
+    enviroment_var = ("-e IS_PI_DOCKER=true" if get_os() == OS_PI else "-e IS_DOCKER=true") + F" -e PORTS={ports}"
     volume = "" if args.copy else F"-v {os.getcwd()}:/workspace"
     volume += "" if get_os() == OS_WINDOWS else " -v /dev:/dev"
     network = "" if get_os() == OS_WINDOWS else "-t --network host"
