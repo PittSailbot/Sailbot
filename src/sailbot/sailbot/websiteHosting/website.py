@@ -702,7 +702,7 @@ def ros_main():
     DATA.logging.info(F"Website available at https://localhost:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-    app.run(debug=False, host="0.0.0.0", port=PORT) # debug true causes the process to fork which causes problems
+    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem')) # debug true causes the process to fork which causes problems
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians

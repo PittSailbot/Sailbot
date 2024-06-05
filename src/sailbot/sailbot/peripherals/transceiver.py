@@ -129,7 +129,7 @@ class Transceiver(Node):
 
             else:
                 self.logging.info(f"Transceiver initialized with port: {port}")
-                break
+                return
 
         raise Exception("Should be unreachable")
 
