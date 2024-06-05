@@ -7,6 +7,8 @@ import os
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 from sailbot.utils import boatMath
 import rclpy
+from rcl_interfaces.msg import ParameterDescriptor
+from rcl_interfaces.msg import ParameterType
 import serial
 from serial.tools import list_ports
 import smbus2 as smbus
@@ -67,8 +69,8 @@ class Transceiver(Node):
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
-        self.position_pub = self.create_publisher(String, "position", 1)
-        self.speed_pub = self.create_publisher(String, "speed", 1)
+        # self.position_pub = self.create_publisher(String, "position", 1)
+        # self.speed_pub = self.create_publisher(String, "speed", 1)
 
         self.imu_pub = self.create_publisher(String, "imu", 10)
 
@@ -78,6 +80,8 @@ class Transceiver(Node):
 
         self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
+
+        self.print_proto_data = False
 
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
@@ -130,7 +134,8 @@ class Transceiver(Node):
 
             return
 
-        self.logging.debug(str(teensy_data))
+        if self.print_proto_data:
+            self.logging.info(str(teensy_data))
 
         if teensy_data == None:
             return
@@ -143,11 +148,11 @@ class Transceiver(Node):
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
 
-        if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-            msg = String()
-            msg.data = str(teensy_data.gps.speed)
-            self.speed_pub.publish(msg)
+        # if teensy_data.HasField("gps"):
+        #     self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
+        #     msg = String()
+        #     msg.data = str(teensy_data.gps.speed)
+        #     self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
             imu = teensy_data.imu

@@ -43,6 +43,14 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
+                executable="gps",
+                name="node_Gps",
+                arguments=["--ros-args","--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
                 executable="motorDrivers",
                 name="node_motorDrivers",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],

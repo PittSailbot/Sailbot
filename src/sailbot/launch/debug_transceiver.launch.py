@@ -24,15 +24,15 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("INFO"))),
 
             Node(
                 package="sailbot",
                 namespace="boat",
                 executable="transceiver",
                 name="node_Transceiver",
-                arguments=["--ros-args","--log-level", LaunchConfiguration("log_level")],
-                parameters=[config],
+                arguments=["--ros-args","--log-level", LaunchConfiguration("log_level") ],
+                parameters=[config, "print_data:=True"],
             ),
             
         ]
