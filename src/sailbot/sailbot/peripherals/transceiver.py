@@ -160,6 +160,7 @@ class Transceiver(Node):
             self.logging.warning("No RC Control data", throttle_duration_sec=3)
 
         if teensy_data.HasField("windvane"):
+            # Relative to boat. 0 means headwind, 90 and 270 perpendicular, 180 backwind
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
 
         # if teensy_data.HasField("gps"):
