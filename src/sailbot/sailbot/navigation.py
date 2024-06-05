@@ -48,7 +48,7 @@ class Navigation(Node):
         self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
         self.imu_sub = self.create_subscription(String, "/boat/imu", self.imu_callback, 2)
         self.windvane_sub = self.create_subscription(String, "/boat/wind_angle", self.windvane_callback, 2)
-        self.control_state_pub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
+        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
 
         self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
         self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
@@ -89,7 +89,7 @@ class Navigation(Node):
         """
         target = self.latest_waypoint
 
-        if self.control_state == None or self.control_state.rudder_manual or target is None:
+        if self.control_state == None or self.control_state.rudder != ControlState.AUTO or target is None:
             return
 
         if utils.has_reached_waypoint(target):
@@ -224,7 +224,7 @@ class Navigation(Node):
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
-        if self.control_state == None or self.control_state.sail_manual:
+        if self.control_state == None or self.control_state.sail != ControlState.AUTO:
             return 
         
         if self.wind_angle > 180:

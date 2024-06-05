@@ -7,11 +7,13 @@ import os
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 from sailbot.utils import boatMath
 import rclpy
+from rcl_interfaces.msg import ParameterDescriptor
+from rcl_interfaces.msg import ParameterType
 import serial
 from serial.tools import list_ports
 import smbus2 as smbus
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Int32
 from geometry_msgs.msg import Quaternion
 from time import sleep
 # from geographic_msgs.msg import GeoPose, GeoPoint
@@ -68,14 +70,22 @@ class Transceiver(Node):
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
-        self.position_pub = self.create_publisher(String, "position", 1)
-        self.speed_pub = self.create_publisher(String, "speed", 1)
+        # self.position_pub = self.create_publisher(String, "position", 1)
+        # self.speed_pub = self.create_publisher(String, "speed", 1)
 
         self.imu_pub = self.create_publisher(String, "imu", 10)
 
         self.usbReset_pub = self.create_publisher(
             String, "usbReset", 1
         )
+
+        self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
+        self.event_control_state = ControlState.AUTO
+
+        self.print_proto_data = False
+
+    def event_control_state_callback(self, msg):
+        self.event_control_state = msg.data
 
     def setupComs(self):
         found_ports, found_descriptions, found_hwids = self.listPorts()
@@ -132,7 +142,8 @@ class Transceiver(Node):
 
             return
 
-        self.logging.debug(str(teensy_data))
+        if self.print_proto_data:
+            self.logging.info(str(teensy_data))
 
         if teensy_data == None:
             return
@@ -145,11 +156,11 @@ class Transceiver(Node):
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
 
-        if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-            msg = String()
-            msg.data = str(teensy_data.gps.speed)
-            self.speed_pub.publish(msg)
+        # if teensy_data.HasField("gps"):
+        #     self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
+        #     msg = String()
+        #     msg.data = str(teensy_data.gps.speed)
+        #     self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
             imu = teensy_data.imu
@@ -209,15 +220,14 @@ class Transceiver(Node):
         top_right_switch    - TODO: Software reset (hold up 5s)  # Reset switch broken so disabled ;(
         potentiometer       - Sail/Rudder offsets
         """
-        rudder_manual = True if controller.front_left_switch1 <= 1 else False
-        sail_manual = True if controller.front_left_switch1 == 0 else False
-
+        rudder_manual = ControlState.MANUAL if controller.front_left_switch1 <= 1 else self.event_control_state
+        sail_manual = ControlState.MANUAL if controller.front_left_switch1 == 0 else self.event_control_state
         rcMsg = ControlState(rudder_manual, sail_manual).toRosMessage()
         self.control_state_pub.publish(rcMsg)
 
         motor_offset_mode = controller.front_right_switch
 
-        if sail_manual:
+        if sail_manual == ControlState.MANUAL:
             sailMsg = Float32()
             sailMsg.data = float(controller.left_analog_y)
             self.sail_pub.publish(sailMsg)
@@ -232,7 +242,7 @@ class Transceiver(Node):
 
                 self.sail_offset_last_message_value = controller.potentiometer
 
-        if rudder_manual:
+        if rudder_manual == ControlState.MANUAL:
             rudderMsg = Float32()
             rudderMsg.data = float(controller.right_analog_x)
             self.rudder_pub.publish(rudderMsg)

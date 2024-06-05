@@ -56,19 +56,17 @@ COPY requirements-pi.txt /workspace/
 
 ENV ROS_DOMAIN_ID 0
 
-ENV USER ubuntu
-
 RUN apt-get install -y net-tools iproute2
 
 
-RUN apt-get install -y ros-humble-camera-ros
+# RUN apt-get install -y ros-humble-camera-ros
 RUN apt-get install -y pkg-config python3-yaml python3-ply python3-jinja2 openssl libyaml-dev libssl-dev libudev-dev libatomic1 meson
 
-RUN git clone https://github.com/christianrauch/camera_ros.git /camera_ws/src/camera_ros
-RUN pip install colcon-meson
-RUN /bin/bash -c "cd /camera_ws/ && \
-                  source /opt/ros/humble/setup.bash && \
-                  colcon build"
+# RUN git clone https://github.com/christianrauch/camera_ros.git /camera_ws/src/camera_ros
+# RUN pip install colcon-meson
+# RUN /bin/bash -c "cd /camera_ws/ && \
+#                   source /opt/ros/humble/setup.bash && \
+#                   colcon build"
 
 # Install the GPIO library if running on the Pi (assumed that Pi is only aarch64 cpu used)
 RUN uname -m > /tmp/arch.txt
@@ -84,5 +82,13 @@ RUN pip install --no-cache-dir -r /workspace/requirements-dev.txt
 # WORKDIR ~/uhubctl
 # RUN cd ~/uhubctl && make
 # RUN sudo make install
+
+# GPS requirement
+WORKDIR /libgpiod/
+RUN sudo apt-get install -y python3-pip python3
+RUN pip install build
+RUN pip install adafruit-blinka
+RUN sudo apt install -y python3-libgpiod
+RUN pip install adafruit-circuitpython-gps
 
 WORKDIR /workspace/

@@ -93,7 +93,7 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 # Generate your SSL context
 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 context.check_hostname = False
-context.load_cert_chain(certfile="/home/sailbot/sailbot/cert.pem", keyfile="/home/sailbot/sailbot/key.pem")
+context.load_cert_chain(certfile="/home/sailbot/Sailbot/cert.pem", keyfile="/home/sailbot/Sailbot/key.pem")
 
 picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))

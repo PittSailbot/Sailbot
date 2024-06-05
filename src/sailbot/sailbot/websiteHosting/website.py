@@ -31,7 +31,7 @@ from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calcu
 
 import os
 
-MY_IP = '192.168.8.225'
+MY_IP = '192.168.8.11'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"

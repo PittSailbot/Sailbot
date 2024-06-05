@@ -11,17 +11,26 @@
 #include "imu.h"
 #include "water_sensors.h"
 #include "receiveCmds.h"
+#include <Wire.h>
+#include <IntervalTimer.h>
 
 int pwm_val = 0;
 int pwm_peak = 150;
 
+IntervalTimer filterTimer;
+
 void setup() {
   Serial.begin(115200);
+  Wire.begin();
+  Wire.setClock(400000);
   // while (!Serial) {}
   setupTransceiver();
   setupWindVane();
   // setupGPS();
   setupIMU();
+  if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
+    Serial.println("Failed to start filter timer");
+  }
   setupWaterSensors();
   //setupPumps();
   setupReceiver();
@@ -63,6 +72,6 @@ void loop () {
     Serial.print("ERROR: ");
     Serial.println(stream.errmsg);
   }
-  
+
   delay(100);
 }
