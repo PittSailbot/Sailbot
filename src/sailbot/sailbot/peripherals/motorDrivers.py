@@ -68,7 +68,7 @@ class MotorDriver(Node):
         angle = float(msg.data)
         self.logging.debug(f"Moving sail to {angle}")
         
-        rotations = boatMath.remap(angle, 0, 100, -self.sail_odrive.max_rotations / 2, self.sail_odrive.max_rotations / 2)
+        rotations = boatMath.remap(angle, 0, 100, self.sail_odrive.max_rotations / 2, -self.sail_odrive.max_rotations / 2)
 
         if self.sail_set:
             try:

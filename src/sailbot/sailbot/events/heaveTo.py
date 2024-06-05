@@ -66,6 +66,7 @@ class HeaveTo(Event):
 
         return Waypoint(None, None)
 
+
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/main"
     rclpy.init(args=args)
