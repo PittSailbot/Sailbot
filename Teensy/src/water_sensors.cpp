@@ -25,19 +25,19 @@ void setupPumps() {
   Serial.println("Started Pumps");
 }
 
-bool readWaterSensors(WaterSensors* water_sensors) {
+bool readWaterSensors(JsonObject water_sensors) {
 
   if (WATER_SENSOR1_INSTALLED){
-    water_sensors->sensor1_is_wet = digitalRead(WATER_SENSOR1);
-    water_sensors->has_sensor1_is_wet = true;
+    water_sensors["sensor1_is_wet"] = digitalRead(WATER_SENSOR1);
+    // water_sensors->has_sensor1_is_wet = true;
   }
   if (WATER_SENSOR2_INSTALLED){
-    water_sensors->sensor2_is_wet = digitalRead(WATER_SENSOR2);
-    water_sensors->has_sensor2_is_wet = true;
+    water_sensors["sensor2_is_wet"] = digitalRead(WATER_SENSOR2);
+    // water_sensors->has_sensor2_is_wet = true;
   }
   if (WATER_SENSOR3_INSTALLED){
-    water_sensors->sensor3_is_wet = digitalRead(WATER_SENSOR3);
-    water_sensors->has_sensor3_is_wet = true;
+    water_sensors["sensor3_is_wet"] = digitalRead(WATER_SENSOR3);
+    // water_sensors->has_sensor3_is_wet = true;
   }
   
   return WATER_SENSOR1_INSTALLED || WATER_SENSOR2_INSTALLED || WATER_SENSOR3_INSTALLED;
