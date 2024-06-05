@@ -112,10 +112,8 @@ def init_container(args):
 
     name = F'\"{name}_{id}\"'
 
-    use_privileged_desktop = False
     if get_os() != OS_WINDOWS and not line_exists_in_file('/etc/udev/rules.d/99-serial.rules', 'KERNEL=="ttyACM[0-9]*",MODE="0666"'):
         print(F"{WARNING}You do not appear to have rules configured for allowing access to the USB, instructions for setting this up can be found here: https://www.losant.com/blog/how-to-access-serial-devices-in-docker{ENDC}")
-        use_privileged_desktop = True
 
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""

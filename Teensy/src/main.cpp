@@ -35,13 +35,10 @@ void loop () {
   Data pi_data = Data_init_default;
   pi_data.has_rc_data = readControllerState(&pi_data.rc_data);
   pi_data.has_windvane = readWindVane(&pi_data.windvane);
-  pi_data.has_gps = readGPS(&pi_data.gps);
+  // pi_data.has_gps = readGPS(&pi_data.gps);
   pi_data.has_imu = readIMU(&pi_data.imu);
   pi_data.has_water_sensors = readWaterSensors(&pi_data.water_sensors);
-
-  /*if (pi_data.water_sensors.sensor1_is_wet || pi_data.water_sensors.sensor2_is_wet || pi_data.water_sensors.sensor3_is_wet) {
-    enablePumps()
-  }*/
+  pumpOnSensors();
 
   pwm_val = (pwm_val + 10) % pwm_peak;
   analogWrite(13, pwm_val);

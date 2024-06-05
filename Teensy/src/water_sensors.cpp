@@ -43,10 +43,20 @@ bool readWaterSensors(WaterSensors* water_sensors) {
   return WATER_SENSOR1_INSTALLED || WATER_SENSOR2_INSTALLED || WATER_SENSOR3_INSTALLED;
 }
 
+void pumpOnSensors(){
+  digitalWrite(PUMP1, digitalRead(WATER_SENSOR1));
+  digitalWrite(PUMP2, digitalRead(WATER_SENSOR2));
+  digitalWrite(PUMP3, digitalRead(WATER_SENSOR3));
+}
+
 void enablePumps() {
   digitalWrite(PUMP1, HIGH);
+  digitalWrite(PUMP2, HIGH);
+  digitalWrite(PUMP3, HIGH);
 }
 
 void disablePumps() {
   digitalWrite(PUMP1, LOW);
+  digitalWrite(PUMP2, LOW);
+  digitalWrite(PUMP3, LOW);
 }

@@ -49,6 +49,7 @@ class Transceiver(Node):
         self.rudder_offset_last_message_value = None
         self.last_motor_offset_state = None
 
+        self.ser = None
         error = self.setupComs()
         if error:
             raise error
@@ -79,9 +80,12 @@ class Transceiver(Node):
     def setupComs(self):
         found_ports, found_descriptions, found_hwids = self.listPorts()
 
+        if len(found_ports) == 0:
+            raise Exception("No connected devices found")
+
         for i, port in enumerate(found_ports):
             if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
-
+                self.logging.info(str(found_hwids[i]))
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
                     debug_str = "Found ports are: \n"
@@ -93,11 +97,13 @@ class Transceiver(Node):
                 else:
                     continue
             try:
+                self.logging.info("match " + str(found_hwids[i]))
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
                 assert self.readRaw() is not None
+                self.logging.info("ser setup")
                 self.last_successful_message = time.time()
 
             except Exception as e:
@@ -108,6 +114,8 @@ class Transceiver(Node):
             else:
                 self.logging.info(f"Transceiver initialized with port: {port}")
                 break
+
+        raise Exception("Should be unreachable")
 
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics

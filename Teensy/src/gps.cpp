@@ -53,17 +53,18 @@ bool readGPS (GPSData* gps) {
       return false; // we can fail to parse a sentence in which case we should just wait for another
   }
 
-  if (!GPS.fix){
-    return false;
-  }
-
+  // if (!GPS.fix){
+  //   Serial.println("no fix");
+  //   return false;
+  // }
+  Serial.println(GPS.latitudeDegrees);
   gps->lat = GPS.latitudeDegrees;
   gps->lon = GPS.longitudeDegrees;
   gps->speed = GPS.speed * 0.5144; // knots -> m/s
   // gps->fix = GPS.fix;
   // gps->altitude = GPS.altitude;
 
-  return false;
+  return true;
 }
 
 void printDebug() {

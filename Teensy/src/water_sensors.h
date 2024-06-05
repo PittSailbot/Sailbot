@@ -8,5 +8,6 @@ extern bool readWaterSensors(WaterSensors*);
 extern void setupPumps();
 extern void enablePumps();
 extern void disablePumps();
+extern void pumpOnSensors();
 
 #endif
