@@ -4,10 +4,10 @@ Reads and sends data from the connected USB transceiver
 import time
 import os
 import json
+import json
 
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 from sailbot.utils import boatMath
-from sailbot.utils.boatMath import remap
 import rclpy
 from rcl_interfaces.msg import ParameterDescriptor
 from rcl_interfaces.msg import ParameterType
@@ -25,11 +25,6 @@ from sailbot import constants as c
 # Compile .proto with `protoc teensy.proto --python_out=./`
 from sailbot.utils.utils import Waypoint, ControlState, ImuData
 
-RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
-RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
-
-SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
-SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
 
 class Transceiver(Node):
     """Handles all communication between the boat and shore. Also publishes all sensors on the Teensy.
@@ -89,7 +84,7 @@ class Transceiver(Node):
         self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
 
-        self.print_proto_data = False
+        self.print_proto_data = True
 
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
@@ -157,6 +152,8 @@ class Transceiver(Node):
 
         if 'rc_data' in teensy_data:
             self.publish_controller(teensy_data['rc_data'])
+        if 'rc_data' in teensy_data:
+            self.publish_controller(teensy_data['rc_data'])
         else:
             self.logging.warning("No RC Control data", throttle_duration_sec=3)
 
@@ -170,8 +167,8 @@ class Transceiver(Node):
         #     self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
-            imu = teensy_data['imu']
-            msg = ImuData(imu['yaw'], imu['pitch'], imu['roll']).toRosMessage()
+            imu = teensy_data.imu
+            msg = ImuData(imu.yaw, imu.pitch, imu.roll).toRosMessage()
             self.imu_pub.publish(msg)
             self.logging.debug('Publishing: "%s"' % msg.data)
 
@@ -200,11 +197,11 @@ class Transceiver(Node):
             pass
 
         if (time.time() - self.last_successful_message) > 10:
-            self.usbReset_pub.publish(String(data=""))
+            usbReset_pub.publish(String(data=""))
             self.logging.error("Resetting transceiver", throttle_duration_sec=1)
 
         if (time.time() - self.last_successful_message) > 1: #seconds
-            self.logging.error("No valid message received in awhile, check transceiver", throttle_duration_sec=1)
+            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
         return None
         
     def readRaw(self):

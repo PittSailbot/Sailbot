@@ -64,6 +64,8 @@ class Navigation(Node):
         self.tack = None
         self.calculate_autonomy_always = True
 
+        self.rudderMult = -0.66
+
     @property
     def manualSails(self):
         return self.control_state == None or self.control_state.sail != ControlState.AUTO
@@ -158,7 +160,7 @@ class Navigation(Node):
         if boatMath.is_within_angle(target_angle, (self.compass_angle - self.ACCEPTABLE_ERROR) % 360, (self.compass_angle + self.ACCEPTABLE_ERROR) % 360):
             self.logging.debug(f"Holding boat at {target_angle} degrees")
             msg = Float32()
-            msg.data = 0.0
+            msg.data = 0.0 * self.rudderMult
             self.auto_rudder_pub.publish(msg)
             if not self.manualRudder:
                 self.rudder_pub.publish(msg)
@@ -201,7 +203,7 @@ class Navigation(Node):
         rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
         
         msg = Float32()
-        msg.data = rudder_angle
+        msg.data = rudder_angle * self.rudderMult
         self.auto_rudder_pub.publish(msg)
         if not self.manualRudder:
             self.rudder_pub.publish(msg)
@@ -229,12 +231,12 @@ class Navigation(Node):
 
         else:
             if self.tack == TACK_TO_WIND_STARBOARD:
-                rudder_angle = float(c.config['RUDDER']['max_angle']) * 0.66
+                rudder_angle = float(c.config['RUDDER']['max_angle'])
             else:
-                rudder_angle = float(c.config['RUDDER']['min_angle']) * 0.66
+                rudder_angle = float(c.config['RUDDER']['min_angle'])
 
         msg = Float32()
-        msg.data = rudder_angle
+        msg.data = rudder_angle * self.rudderMult
         self.auto_rudder_pub.publish(msg)
         if not self.manualRudder:
             self.rudder_pub.publish(msg)
