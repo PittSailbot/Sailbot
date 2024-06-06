@@ -20,7 +20,7 @@ NO_GO_MAX = 360 - NO_GO_MIN
 
 MAX_VEL = 1.5 #m/s
 MAX_ACCEL = 0.01 #m/s^2
-MAX_DECCEL = 0.05
+MAX_DECCEL = 0.02
 
 class GPS(Node):
     """

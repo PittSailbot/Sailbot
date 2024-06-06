@@ -471,7 +471,7 @@ def dataJSON():
         'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
+        "rudder_angle": DATA.rudder_angle, #remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
         'speed': DATA.gps.velocity,
         'polygon_coords': get_no_go_zone_polygon(),
         'heading_polyline_coords': get_heading_coords(),

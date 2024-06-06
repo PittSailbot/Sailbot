@@ -100,11 +100,10 @@ class Navigation(Node):
             target (Waypoint): the GPS point to go to
         """
         target = self.latest_waypoint
-
         if target == None or (self.manualRudder and not self.calculate_autonomy_always):
             return
-
-        if boatMath.distance_between(self.position, self.target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
+        
+        if boatMath.distance_between(self.position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
             self.auto_sail_pub.publish(Float32(data=0.0))
@@ -120,11 +119,10 @@ class Navigation(Node):
             delta_angle -= 360
 
         # Boat can't sail straight upwind; snap angle to the closest allowed no_go_zone bound if target angle is in irons
-        # TODO take into account angular velocity
-        no_go_zone_left_bound = (self.wind_angle - float(c.config["WINDVANE"]["no_go_range"])) % 360
-        no_go_zone_right_bound = (self.wind_angle + float(c.config["WINDVANE"]["no_go_range"])) % 360
+        # # TODO take into account angular velocity
+        no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
 
-        if self.tack is None and boatMath.is_within_angle(0, no_go_zone_left_bound, no_go_zone_right_bound):
+        if self.tack is None and boatMath.is_within_angle(self.compass_angle, no_go_zone_left_bound, no_go_zone_right_bound):
             self.logging.warning("Unexpectedly in irons, turning to nearest edge")
             
             if boatMath.degrees_between(target_angle, no_go_zone_left_bound) < boatMath.degrees_between(target_angle, no_go_zone_right_bound):
@@ -199,12 +197,9 @@ class Navigation(Node):
             self.logging.debug(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees")
             rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
-        if abs(rudder_angle) > 100 or abs(rudder_angle) < 0:
-            self.logging.warning(F"Navigation suggested rudder angle outside of normal bounds ({rudder_angle})")
+        rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
+        rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
         
-            rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
-            rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
-
         msg = Float32()
         msg.data = rudder_angle
         self.auto_rudder_pub.publish(msg)
