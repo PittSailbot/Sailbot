@@ -45,7 +45,7 @@ class GPS(Node):
 
         self.gps.send_command(b"PMTK220,1000")
 
-        self.pub = self.create_publisher(String, "GPS", 10)
+        self.pub = self.create_publisher(String, "/boat/GPS", 10)
 
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -61,6 +61,7 @@ class GPS(Node):
                             'track_angle': self.gps.track_angle_deg,
                             'velocity': self.gps.speed_knots})
             )
+            self.logging.info(str(msg.data))
             self.pub.publish(msg)
             self.logging.debug(F'GPS Publishing: "{msg.data}"')
 

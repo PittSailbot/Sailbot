@@ -187,8 +187,8 @@ class LogDatabase:
         coords = []
         for log in logs:
             if log['msg'].startswith("GPS Publishing:"):
-                gps_data = log['msg'].split(":", 1)[1].replace('"', '').split(",")
-                coords.append(Waypoint(gps_data[0], gps_data[1]))
+                gps_data = json.loads(log['msg'])
+                coords.append(Waypoint(gps_data['lat'], gps_data['lon']))
 
         return coords
 
