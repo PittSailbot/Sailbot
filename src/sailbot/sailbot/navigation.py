@@ -65,7 +65,7 @@ class Navigation(Node):
         self.calculate_autonomy_always = True
         self.emergency_tack = False
 
-        self.rudderMult = 0.66
+        self.rudderMult = 0.33
 
         self.jibe_angle_increase = 75 # (degrees)
 
