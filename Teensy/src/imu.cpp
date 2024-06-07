@@ -95,9 +95,13 @@ bool readIMU(JsonObject imu) {
     return false;
   }
 
+  if ((millis() - timestamp) > (1000 / FILTER_UPDATE_RATE_HZ)) {
+    updateIMU();
+  }
+
   imu["roll"] = filter.getRoll();
   imu["pitch"] = filter.getPitch();
   imu["yaw"] = filter.getYaw();
-
+  
   return true;
 }
