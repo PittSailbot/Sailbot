@@ -76,6 +76,8 @@ class Transceiver(Node):
         # self.speed_pub = self.create_publisher(String, "speed", 1)
 
         self.imu_pub = self.create_publisher(String, "imu", 10)
+        self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 10)
+        self.compass_offset = 0
 
         self.usbReset_pub = self.create_publisher(
             String, "usbReset", 1
@@ -85,6 +87,9 @@ class Transceiver(Node):
         self.event_control_state = ControlState.AUTO
 
         self.print_proto_data = True
+
+    def compass_offset_callback(self, msg):
+        self.compass_offset = float(msg.data)
 
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
@@ -150,9 +155,7 @@ class Transceiver(Node):
         if teensy_data == None:
             return
 
-        if 'rc_data' in teensy_data:
-            self.publish_controller(teensy_data['rc_data'])
-        if 'rc_data' in teensy_data:
+        if 'rc_data' in teensy_data and teensy_data['rc_data'] != {}:
             self.publish_controller(teensy_data['rc_data'])
         else:
             self.logging.warning("No RC Control data", throttle_duration_sec=3)
@@ -166,9 +169,10 @@ class Transceiver(Node):
         #     msg.data = str(teensy_data.gps.speed)
         #     self.speed_pub.publish(msg)
 
-        if teensy_data.HasField("imu"):
-            imu = teensy_data.imu
-            msg = ImuData(imu.yaw, imu.pitch, imu.roll).toRosMessage()
+        if "imu" in teensy_data:
+            imu = teensy_data["imu"]
+            msg = ImuData((imu["yaw"] + self.compass_offset) % 360, imu["pitch"], imu["roll"]).toRosMessage()
+            print(f"YAW: {imu['yaw']}")
             self.imu_pub.publish(msg)
             self.logging.debug('Publishing: "%s"' % msg.data)
 

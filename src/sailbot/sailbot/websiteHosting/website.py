@@ -31,7 +31,7 @@ from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calcu
 
 import os
 
-MY_IP = '192.168.8.11'
+MY_IP = '192.168.8.246'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"
@@ -210,7 +210,7 @@ class Website(Node):
         }
 
         self.logDB = LogDatabase(self)
-        self.displayedBreadcrumbs = self.logDB.get_breadcrumbs_from_logs()
+        self.displayedBreadcrumbs = []#self.logDB.get_breadcrumbs_from_logs()
         
 
         self.waypoints = [
@@ -233,6 +233,7 @@ class Website(Node):
         self.imu = None
 
         self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
+        self.compass_offset_pub = self.create_publisher(Float32, "/boat/offset_compass", 10)
         self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
         self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
 
@@ -417,6 +418,15 @@ def camera():
         DATA.camera_servo_pub.publish(msg)
 
     return render_template("camera.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
+
+@app.route("/offset_compass", methods=["GET", "POST"])
+def compass_offset():
+    if request.method == 'POST':
+        offset = request.form['offset_compass']
+        msg = Float32(data=offset)
+        DATA.compass_offset_pub.publish(msg)
+
+    return render_template("compass.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
 
 @app.route("/mode/<mode>", methods=["GET", "POST"])
 def setMode(mode):

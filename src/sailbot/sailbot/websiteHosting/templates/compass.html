@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+
+<script src="{{ url_for('static', filename='js/htmx.js') }}"></script>
+
+<div class="home">
+    <div class="Compass">
+        <h2>Compass Offset</h2>
+        <form action="/offset_compass" method="post">
+            <label for="compass_offset">Compass Offset:</label><br>
+            <input type="text" id="compass_offset" name="offset"><br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
