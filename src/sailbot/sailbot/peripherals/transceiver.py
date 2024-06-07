@@ -172,7 +172,6 @@ class Transceiver(Node):
         if "imu" in teensy_data:
             imu = teensy_data["imu"]
             msg = ImuData((imu["yaw"] + self.compass_offset) % 360, imu["pitch"], imu["roll"]).toRosMessage()
-            print(f"YAW: {imu['yaw']}")
             self.imu_pub.publish(msg)
             self.logging.debug('Publishing: "%s"' % msg.data)
 
