@@ -2,6 +2,7 @@
 *.out
 *.log
 *.vs
+*.pio
 /build
 /install
 /logs
