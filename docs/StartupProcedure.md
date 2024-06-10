@@ -44,7 +44,7 @@ Before plugging in the batteries ensure the following are plugged in:
     - Option 1: I don't remember the name of the file but its a python file in the Utils folder that is names something like odriveSetup.py. It can be run using the following command (replace the file name with the correct one) If you type `./Utils/` (after running the cd command) and the double tap `tab` it will list the files in that folder.
     ```bash
     cd ~/Sailbot
-    python3 ./Utils/<odriveSetup.py>
+    python3 ./Utils/odriveCalibrate.py
     ```
     - Option 2
     ```bash
@@ -68,6 +68,16 @@ python3 ./Utils/docker.py run
 ros2 launch sailbot boat_all.launch.py
 ```
 11. You should now be able to control the rudder and sail using the controller (make sure its turned on by holding the power button for a couple seconds)
+
+## Connecting to the Site
+1. Connect to Pi5 (192.168.8.225)
+```bash
+cd Sailbot
+python3 ./Utils/docker.py run
+. compileDocker.sh
+ros2 run sailbot website
+```
+2. Connect to https://192.168.8.225:5001
 
 ## Adjusting the Sail and Rudder Zero position
 1. On the right side of the controller there is a switch labled with sail/rudder offset, move this switch to the appropriate location

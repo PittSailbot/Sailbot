@@ -55,6 +55,13 @@ class DummyEvent(Event):
             String, "set_event_target", self.ROS_setEventCallback, 10
         )
 
+        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
+
+        self.position = None
+
+    def gps_callback(self, msg):
+        self.position = Waypoint.from_msg(msg)
+
     def configureParameters(self):
         descriptor = ParameterDescriptor(
             type=ParameterType.PARAMETER_DOUBLE_ARRAY,
@@ -80,6 +87,8 @@ class DummyEvent(Event):
                 raise Exception(F"{self.__class__.__name__} parameters invalid!")
 
     def next_gps(self):
+        if self.position and distance_between(self.position, self.target) < 3:
+            self.target = self.queuedWaypoints.pop(0)
         return self.target
     
     def publish_queued_waypoints(self):

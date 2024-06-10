@@ -31,7 +31,7 @@ from sailbot.utils.boatMath import get_no_go_zone_bounds, is_within_angle, calcu
 
 import os
 
-MY_IP = '192.168.8.225'
+MY_IP = '192.168.8.246'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"
@@ -58,6 +58,12 @@ log.setLevel(logging.ERROR)
 
 
 TIMEZONE = 'America/New_York'
+
+RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
+RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
+
+SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
+SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
 
 class LogDatabase:
     def __init__(self, parent, db_path='log_database.db'):
@@ -181,8 +187,8 @@ class LogDatabase:
         coords = []
         for log in logs:
             if log['msg'].startswith("GPS Publishing:"):
-                gps_data = log['msg'].split(":", 1)[1].replace('"', '').split(",")
-                coords.append(Waypoint(gps_data[0], gps_data[1]))
+                gps_data = json.loads(log['msg'])
+                coords.append(Waypoint(gps_data['lat'], gps_data['lon']))
 
         return coords
 
@@ -204,7 +210,7 @@ class Website(Node):
         }
 
         self.logDB = LogDatabase(self)
-        self.displayedBreadcrumbs = self.logDB.get_breadcrumbs_from_logs()
+        self.displayedBreadcrumbs = []#self.logDB.get_breadcrumbs_from_logs()
         
 
         self.waypoints = [
@@ -222,9 +228,12 @@ class Website(Node):
         self.relative_wind = None
         self.sail_angle = 0.0
         self.rudder_angle = 0.0
+        self.auto_sail_angle = 0.0
+        self.auto_rudder_angle = 0.0
         self.imu = None
 
         self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
+        self.compass_offset_pub = self.create_publisher(Float32, "/boat/offset_compass", 10)
         self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
         self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
 
@@ -255,6 +264,8 @@ class Website(Node):
         )
         self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
         self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()
@@ -384,6 +395,12 @@ class Website(Node):
     def ROS_rudderCmd_callback(self, msg):
         self.rudder_angle = float(msg.data)
 
+    def ROS_sailAutoCmd_callback(self, msg):
+        self.auto_sail_angle = float(msg.data)
+
+    def ROS_rudderAutoCmd_callback(self, msg):
+        self.auto_rudder_angle = float(msg.data)
+
 @app.route("/", methods=["GET", "POST"])
 def default():
     return redirect('/map')
@@ -401,6 +418,15 @@ def camera():
         DATA.camera_servo_pub.publish(msg)
 
     return render_template("camera.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
+
+@app.route("/offset_compass", methods=["GET", "POST"])
+def compass_offset():
+    if request.method == 'POST':
+        offset = request.form['offset_compass']
+        msg = Float32(data=offset)
+        DATA.compass_offset_pub.publish(msg)
+
+    return render_template("compass.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
 
 @app.route("/mode/<mode>", methods=["GET", "POST"])
 def setMode(mode):
@@ -455,10 +481,12 @@ def dataJSON():
         'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": remap(DATA.rudder_angle, 0, 100, 90, -90),
+        "rudder_angle": DATA.rudder_angle, #remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
         'speed': DATA.gps.velocity,
         'polygon_coords': get_no_go_zone_polygon(),
         'heading_polyline_coords': get_heading_coords(),
+        'auto_sail' : DATA.auto_sail_angle,
+        'auto_rudder' : DATA.auto_rudder_angle,
     }
     return jsonDict
 

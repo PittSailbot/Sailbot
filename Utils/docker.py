@@ -59,6 +59,7 @@ def get_args(argv):
     parser_init = subparsers.add_parser('run', description='Initialize Docker container')
     parser_init.add_argument('-nd', action='store_true', help="prevent the docker container from being deleted when closed")
     parser_init.add_argument('--copy', action='store_true', help="copy the sailbot folder rather than mount it")
+    parser_init.add_argument('--no-connect', action='store_true', help="Start the container without connecting to it via terminal")
     # parser_init.add_argument('--name', help="name the docker container")
     # parser_init.add_argument('--id', help="id of the docker container, used for ip address assignment")
     parser_init.add_argument('--image', help="name the docker image to use")
@@ -112,15 +113,13 @@ def init_container(args):
 
     name = F'\"{name}_{id}\"'
 
-    use_privileged_desktop = False
     if get_os() != OS_WINDOWS and not line_exists_in_file('/etc/udev/rules.d/99-serial.rules', 'KERNEL=="ttyACM[0-9]*",MODE="0666"'):
         print(F"{WARNING}You do not appear to have rules configured for allowing access to the USB, instructions for setting this up can be found here: https://www.losant.com/blog/how-to-access-serial-devices-in-docker{ENDC}")
-        use_privileged_desktop = True
 
     # cmd_str = F"docker create -p 5000:5000 -t -it --name {name} sailbot"
     privileged = "--privileged" #if get_os() == OS_PI or use_privileged_desktop else ""
     # cmd_str = F"docker create -t -it  --network {NETWORK_NAME} --ip {container_ip(id)} -p {ports} --name {name} {image}"
-    enviroment_var = "-e IS_PI_DOCKER=true" if get_os() == OS_PI else "-e IS_DOCKER=true"
+    enviroment_var = ("-e IS_PI_DOCKER=true" if get_os() == OS_PI else "-e IS_DOCKER=true") + F" -e PORTS={ports}"
     volume = "" if args.copy else F"-v {os.getcwd()}:/workspace"
     volume += "" if get_os() == OS_WINDOWS else " -v /dev:/dev"
     network = "" if get_os() == OS_WINDOWS else "-t --network host"
@@ -146,11 +145,12 @@ def init_container(args):
 
     print("type: 'exit' to close connection")
 
-    cmd_str = F"docker exec -e PORTS={ports} -it {name} bash"
-    subprocess.run(cmd_str, shell=True)
+    if not args.no_connect:
+        cmd_str = F"docker exec -e PORTS={ports} -it {name} bash"
+        subprocess.run(cmd_str, shell=True)
 
-    if not args.nd:
-        cleanup(args)
+        if not args.nd:
+            cleanup(args)
 
 def connect_container(args):
     name = 'sailbot_client' #args.name if args.name else 'sailbot_client'

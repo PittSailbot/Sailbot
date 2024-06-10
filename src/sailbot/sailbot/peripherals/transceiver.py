@@ -3,15 +3,19 @@ Reads and sends data from the connected USB transceiver
 """
 import time
 import os
+import json
+import json
 
 from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
 from sailbot.utils import boatMath
 import rclpy
+from rcl_interfaces.msg import ParameterDescriptor
+from rcl_interfaces.msg import ParameterType
 import serial
 from serial.tools import list_ports
 import smbus2 as smbus
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Int32
 from geometry_msgs.msg import Quaternion
 from time import sleep
 # from geographic_msgs.msg import GeoPose, GeoPoint
@@ -49,6 +53,7 @@ class Transceiver(Node):
         self.rudder_offset_last_message_value = None
         self.last_motor_offset_state = None
 
+        self.ser = None
         error = self.setupComs()
         if error:
             raise error
@@ -67,21 +72,37 @@ class Transceiver(Node):
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
-        self.position_pub = self.create_publisher(String, "position", 1)
-        self.speed_pub = self.create_publisher(String, "speed", 1)
+        # self.position_pub = self.create_publisher(String, "position", 1)
+        # self.speed_pub = self.create_publisher(String, "speed", 1)
 
         self.imu_pub = self.create_publisher(String, "imu", 10)
+        self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 10)
+        self.compass_offset = 0
 
         self.usbReset_pub = self.create_publisher(
             String, "usbReset", 1
         )
 
+        self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
+        self.event_control_state = ControlState.AUTO
+
+        self.print_proto_data = True
+
+    def compass_offset_callback(self, msg):
+        self.compass_offset = float(msg.data)
+
+    def event_control_state_callback(self, msg):
+        self.event_control_state = msg.data
+
     def setupComs(self):
         found_ports, found_descriptions, found_hwids = self.listPorts()
 
+        if len(found_ports) == 0:
+            raise Exception("No connected devices found")
+
         for i, port in enumerate(found_ports):
             if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
-
+                self.logging.info(str(found_hwids[i]))
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
                     debug_str = "Found ports are: \n"
@@ -93,11 +114,13 @@ class Transceiver(Node):
                 else:
                     continue
             try:
+                self.logging.info("match " + str(found_hwids[i]))
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
 
                 assert self.readRaw() is not None
+                self.logging.info("ser setup")
                 self.last_successful_message = time.time()
 
             except Exception as e:
@@ -107,7 +130,9 @@ class Transceiver(Node):
 
             else:
                 self.logging.info(f"Transceiver initialized with port: {port}")
-                break
+                return
+
+        raise Exception("Should be unreachable")
 
     def timer_callback(self):
         """Publishes all data received from the teensy onto the relevant topics
@@ -124,28 +149,29 @@ class Transceiver(Node):
 
             return
 
-        self.logging.debug(str(teensy_data))
+        if self.print_proto_data:
+            self.logging.info(str(teensy_data))
 
         if teensy_data == None:
             return
 
-        if teensy_data.HasField("rc_data"):
-            self.publish_controller(teensy_data.rc_data)
+        if 'rc_data' in teensy_data and teensy_data['rc_data'] != {}:
+            self.publish_controller(teensy_data['rc_data'])
         else:
             self.logging.warning("No RC Control data", throttle_duration_sec=3)
 
-        if teensy_data.HasField("windvane"):
-            self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
+        if 'windvane' in teensy_data:
+            self.wind_angle_pub.publish(String(data=str(teensy_data['windvane']['wind_angle'])))
 
-        if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-            msg = String()
-            msg.data = str(teensy_data.gps.speed)
-            self.speed_pub.publish(msg)
+        # if teensy_data.HasField("gps"):
+        #     self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
+        #     msg = String()
+        #     msg.data = str(teensy_data.gps.speed)
+        #     self.speed_pub.publish(msg)
 
-        if teensy_data.HasField("imu"):
-            imu = teensy_data.imu
-            msg = ImuData(imu.yaw, imu.pitch, imu.roll).toRosMessage()
+        if "imu" in teensy_data:
+            imu = teensy_data["imu"]
+            msg = ImuData((imu["yaw"] + self.compass_offset) % 360, imu["pitch"], imu["roll"]).toRosMessage()
             self.imu_pub.publish(msg)
             self.logging.debug('Publishing: "%s"' % msg.data)
 
@@ -162,8 +188,8 @@ class Transceiver(Node):
             _ = self.ser.read(self.ser.in_waiting)
         # self.logging.warning(msg)
         try:
-            message = teensy_pb2.Data()
-            retVal = message.ParseFromString(msg)
+            message = json.loads(msg)#teensy_pb2.Data()
+            # retVal = message.ParseFromString(msg)
             # self.logging.warning("retVal:" + str(retVal))
 
             if str(message).strip() != '':
@@ -201,45 +227,44 @@ class Transceiver(Node):
         top_right_switch    - TODO: Software reset (hold up 5s)  # Reset switch broken so disabled ;(
         potentiometer       - Sail/Rudder offsets
         """
-        rudder_manual = True if controller.front_left_switch1 <= 1 else False
-        sail_manual = True if controller.front_left_switch1 == 0 else False
-
+        rudder_manual = ControlState.MANUAL if controller['front_left_switch1'] <= 1 else self.event_control_state
+        sail_manual = ControlState.MANUAL if controller['front_left_switch1'] == 0 else self.event_control_state
         rcMsg = ControlState(rudder_manual, sail_manual).toRosMessage()
         self.control_state_pub.publish(rcMsg)
 
-        motor_offset_mode = controller.front_right_switch
+        motor_offset_mode = controller['front_right_switch']
 
-        if sail_manual:
+        if sail_manual == ControlState.MANUAL:
             sailMsg = Float32()
-            sailMsg.data = float(controller.left_analog_y)
+            sailMsg.data = float(controller['left_analog_y'])
             self.sail_pub.publish(sailMsg)
 
             if motor_offset_mode == 0:
                 if self.last_motor_offset_state == 0:
-                    offsetChange = (controller.potentiometer - self.sail_offset_last_message_value) / 200
+                    offsetChange = (controller['potentiometer'] - self.sail_offset_last_message_value) / 200
 
                     sailOffsetMsg = Float32()
                     sailOffsetMsg.data = float(offsetChange)
                     self.sail_offset_pub.publish(sailOffsetMsg)
 
-                self.sail_offset_last_message_value = controller.potentiometer
+                self.sail_offset_last_message_value = controller['potentiometer']
 
-        if rudder_manual:
+        if rudder_manual == ControlState.MANUAL:
             rudderMsg = Float32()
-            rudderMsg.data = float(controller.right_analog_x)
+            rudderMsg.data = float(controller['right_analog_x'])
             self.rudder_pub.publish(rudderMsg)
 
             
 
             if motor_offset_mode == 2:
                 if self.last_motor_offset_state == 2:
-                    offsetChange = (controller.potentiometer - self.rudder_offset_last_message_value) / 200
+                    offsetChange = (controller['potentiometer'] - self.rudder_offset_last_message_value) / 200
 
                     rudderOffsetMsg = Float32()
                     rudderOffsetMsg.data = float(offsetChange)
                     self.rudder_offset_pub.publish(rudderOffsetMsg)
 
-                self.rudder_offset_last_message_value = controller.potentiometer
+                self.rudder_offset_last_message_value = controller['potentiometer']
                 
         self.last_motor_offset_state = motor_offset_mode
 

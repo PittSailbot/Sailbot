@@ -71,23 +71,29 @@ class DummyObject:
         pass
 
 class ControlState:
+    MANUAL = 1
+    AUTO = 2
+    EXTERNAL_CONTROL = 3
+    def __init__(self, rudder, sail):
+        self.rudder = rudder
+        self.sail = sail
 
-    def __init__(self, rudder_manual: bool, sail_manual: bool):
-        self.rudder_manual = rudder_manual
-        self.sail_manual = sail_manual
+    @property
+    def full_auto(self):
+        return self.rudder != self.MANUAL and self.sail != self.MANUAL
 
     def __repr__(self) -> str:
-        if self.sail_manual and self.rudder_manual:
+        if self.sail == self.MANUAL and self.rudder == self.MANUAL:
             return "RC Control"
-        elif self.rudder_manual:
+        elif self.rudder == self.MANUAL:
             return "Auto Sail"
         else:
             return "Autonomous"
 
     def toRosMessage(self):
         msgData = {
-            'rudder_manual': self.rudder_manual,
-            'sail_manual': self.sail_manual
+            'rudder': self.rudder,
+            'sail': self.sail
         }
         msg = String()
         msg.data = json.dumps(msgData)
@@ -97,7 +103,7 @@ class ControlState:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        return ControlState(data['rudder_manual'], data['sail_manual'])
+        return ControlState(data['rudder'], data['sail'])
 
 class CameraServoState:
     def __init__(self, horizonal_pos: int, vertical_pos: int):

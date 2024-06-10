@@ -26,7 +26,7 @@ class WindVane(Node):
         super().__init__("WindVane")
         self.logging = self.get_logger()
 
-        self.wind_source_angle = 270.0
+        self.wind_source_angle = 0.0
         self.compass_yaw = 0.0
 
         self.pub = self.create_publisher(String, "wind_angle", 10)

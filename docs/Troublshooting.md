@@ -18,6 +18,6 @@ The batteries are plugged in but nothing is lighting up
 
 
 ## Odrive Setup
-- Unbalanced Phases: This seems to happen with axis1 sometimes, just swap the 3 motor wires around so they connect to a different female connector. You may have to try several different options before it works, run the calibration sequence with each try. It is ok to unplug and replug these wires if and only if the motors calibration sequence failed for the axis you are unplugging AND you have not reset the axis using odrv0.clear_errors() 
+- Unbalanced Phases: This seems to happen with axis1 sometimes, just swap the 3 motor wires (on the actual motor) around so they connect to a different female connector. You may have to try several different options before it works, run the calibration sequence with each try. It is ok to unplug and replug these wires (hotswap) if and only if the motors calibration sequence failed for the axis you are unplugging AND you have not reset the axis using odrv0.clear_errors() 
 - Encoder CPR mismatch: This happens somewhat randomly, make sure the wires are plugged all the way in and the encoders are firmly connected to the motor. Spin the motor a little and make sure there is not too much resistance (if there is spray some wd40 or something) Even still this happens on occasion, just run the calibration again. 
 - These are the only two common errors, if anything else comes up while running the calibration try asking chatGPT for help. 

@@ -1,0 +1,2 @@
+docker restart osm_server
+docker restart nginx_proxy
