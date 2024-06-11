@@ -1,0 +1,81 @@
+site_name: Pitt Sailbot
+site_url: https://pitt_sailbot.io
+site_description: Documentation for Pitt's Sailbot team!
+site_author: Pitt Sailbot
+repo_url: https://github.com/PittSailbot/Sailbot
+edit_uri: /PittSailbot/Sailbot/blob/main/docs
+#remote_branch: site
+repo_name: Pitt Sailbot
+
+# Website Structure
+nav:
+  - Home: "index.md"
+  - Getting Started:
+    - Installation: "Getting Started.md"
+    - Code Overview: "Code Overview.md"
+  - Resources:
+    - ROS2: "ROS2.md"
+    - Cheat Sheets:
+      - Pi Cheat Sheet: "Pi Cheat Sheet.md"
+      - Code Shortcuts: "Shortcuts.md"
+    - Shell Commands: "Shell Commands.md"
+  - Starting the Boat: "Starting the Boat.md"
+  - Troubleshooting: "Troubleshooting.md"
+  - Workshops:
+      - Github: "Github Workshop.md"
+  - Test:
+      - Test: "test.md"
+
+theme:
+  name: material
+  # custom_dir: docs/overrides
+  # logo: https://github.com/ultralytics/assets/raw/main/logo/Ultralytics_Logotype_Reverse.svg
+  favicon: assets/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Helvetica
+    code: Roboto Mono
+
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      # primary: grey
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      # primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    # - announce.dismiss
+    - content.action.edit
+    # - content.code.annotate
+    - content.code.copy
+    # - content.tooltips
+    - search.highlight
+    # - search.share
+    # - search.suggest
+    # - toc.follow
+    - toc.integrate
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    # - navigation.expand
+    - navigation.footer
+    # - navigation.tracking
+    - navigation.instant
+    - navigation.indexes
+    - content.tabs.link  # all code tabs change simultaneously
+
+markdown_extensions:
+  - sane_lists
+
+plugins:
+  - search
+  - git-revision-date-localized
+  - mkdocstrings
