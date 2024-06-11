@@ -1,9 +1,7 @@
-# Sensors
-- camera: RGB sensor. Also supports object detection and gps estimation.
-- compass: heading, acceleration and gyroscopic orientation of the boat
-- GPS: position of the boat (also supports speed?)
-- transceiver: antenna for relaying information between the boat and shore
-- windvane: measures the direction of the wind
-# Controls
-- cameraServos: controls the yaw and pitch of the camera
-- Odrive: motors used to control the rudder and sail trim
+# Peripherals
+This folder contains all the sensors/controls that are connected to the Raspberry Pi. This is not ALL
+of our sensors. The rest of our sensors are connected to the Teensy and their code is located in src/teensy.
+
+- **transceiver.py** - Reads serialized data from the Teensy, which includes the RC controller and misc sensors
+- **camera.py** - RGB pan-tilt camera
+- **Odrive.py/motorDrivers.py** - Controls for the sail and rudder motors
