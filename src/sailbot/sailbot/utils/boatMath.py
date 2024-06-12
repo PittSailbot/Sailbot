@@ -56,13 +56,13 @@ def angle_between(waypoint1, waypoint2) -> float:
 def angleToPoint(lat1, lon1, lat2, lon2):
     """
     Calculate the compass angle (bearing) between two GPS coordinates.
-    
+
     Args:
     lat1 (float): Latitude of the first point in degrees.
     lon1 (float): Longitude of the first point in degrees.
     lat2 (float): Latitude of the second point in degrees.
     lon2 (float): Longitude of the second point in degrees.
-    
+
     Returns:
     float: Compass angle in degrees (0 to 360), relative to the north direction.
     """
@@ -71,17 +71,17 @@ def angleToPoint(lat1, lon1, lat2, lon2):
     lon1 = math.radians(lon1)
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
-    
+
     # Calculate the differences in longitudes and latitudes
     delta_lon = lon2 - lon1
     y = math.sin(delta_lon) * math.cos(lat2)
     x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(delta_lon)
-    
+
     # Calculate the compass angle (bearing)
     angle = math.atan2(y, x)
     angle = math.degrees(angle)
     angle = (angle + 360) % 360  # Normalize angle to be between 0 and 360 degrees
-    
+
     return angle
 
 
@@ -172,12 +172,12 @@ def degrees_between(angle1, angle2):
 #     t0 = +2.0 * (w * x + y * z)
 #     t1 = +1.0 - 2.0 * (x * x + y * y)
 #     roll_x = math.atan2(t0, t1)
-    
+
 #     t2 = +2.0 * (w * y - z * x)
 #     t2 = +1.0 if t2 > +1.0 else t2
 #     t2 = -1.0 if t2 < -1.0 else t2
 #     pitch_y = math.asin(t2)
-    
+
 #     t3 = +2.0 * (w * z + x * y)
 #     t4 = +1.0 - 2.0 * (y * y + z * z)
 #     yaw_z = math.atan2(t3, t4)
@@ -186,6 +186,7 @@ def degrees_between(angle1, angle2):
 #     pitch_y_degrees = pitch_y * (180 / math.pi)
 #     roll_x_degrees = roll_x * (180 / math.pi)
 #     return yaw_z_degrees, pitch_y_degrees, roll_x_degrees
+
 
 def quaternion_to_euler(x, y, z, w):
     ysqr = y * y
@@ -204,4 +205,3 @@ def quaternion_to_euler(x, y, z, w):
     Z = math.degrees(math.atan2(t3, t4))
 
     return Z, X, Y
-    

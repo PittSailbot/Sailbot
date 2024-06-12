@@ -136,10 +136,7 @@ class Camera(Node):
 
         return frame
 
-    def survey(self, num_images=3, pitch=70,
-               servo_range=180, context=True,
-               detect=False, annotate=False,
-               save=False) -> list[Frame]:
+    def survey(self, num_images=3, pitch=70, servo_range=180, context=True, detect=False, annotate=False, save=False) -> list[Frame]:
         """Takes a horizontal panaroma over the camera's field of view
             - Maximum boat FoV is ~242.2 degrees (not tested)
         # Args:
@@ -210,10 +207,7 @@ class Camera(Node):
             self.logging.info(f"Focusing on camera pixel detection")
             Cx, Cy = detection.x, detection.y
             Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
-            if (
-                Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
-            ):
+            if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]:
                 return
 
             """
@@ -237,10 +231,7 @@ class Camera(Node):
                     Cx / c.config["OBJECTDETECTION"]["camera_width"],
                     Cy / c.config["OBJECTDETECTION"]["camera_height"],
                 )
-                if (
-                    Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                    and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                ):
+                if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]:
                     break
 
                 # TERRIBLE LOGIC

@@ -9,12 +9,12 @@ od = odrive.find_any()
 axis = od.axis0
 delay_time = 3
 
+
 def move():
     target = 0
     start_time = datetime.now()
     while True:
-        
-        if (datetime.now()-start_time).total_seconds() > float(delay_time):
+        if (datetime.now() - start_time).total_seconds() > float(delay_time):
             target = (target + 1) % 2
             axis.controller.input_pos = target
             start_time = datetime.now()
@@ -26,26 +26,32 @@ def on_slider1_change(value):
     label1.config(text=f"pos_gain: {round(float(value), 2)}")
     axis.controller.config.pos_gain = value
 
+
 def on_slider2_change(value):
     label2.config(text=f"vel_gain: {round(float(value), 2)}")
     axis.controller.config.vel_gain = value
+
 
 def on_slider3_change(value):
     label3.config(text=f"vel_integrator_gain: {round(float(value), 2)}")
     axis.controller.config.vel_integrator_gain = value
 
+
 def on_slider4_change(value):
     label4.config(text=f"Current Limit: {round(float(value), 2)}")
     axis.motor.config.current_lim = value
+
 
 def on_slider5_change(value):
     label5.config(text=f"Max Vel: {round(float(value), 2)}")
     axis.controller.config.vel_limit = value
 
+
 def on_slider6_change(value):
     global delay_time
     label6.config(text=f"rotate delay: {round(float(value), 2)}")
     delay_time = value
+
 
 # Create the main window
 root = tk.Tk()
@@ -55,7 +61,14 @@ slider_width = 300
 # Create Slider 1
 label1 = ttk.Label(root, text="pos_gain")
 label1.pack(pady=10)
-slider1 = ttk.Scale(root, from_=0, to_=150, command=on_slider1_change, orient='horizontal', length=slider_width, )
+slider1 = ttk.Scale(
+    root,
+    from_=0,
+    to_=150,
+    command=on_slider1_change,
+    orient='horizontal',
+    length=slider_width,
+)
 slider1.set(axis.controller.config.pos_gain)
 slider1.pack(pady=10)
 

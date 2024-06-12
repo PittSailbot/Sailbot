@@ -1,7 +1,8 @@
 import socket
 import threading
 
-class NetworkLoggingServer():
+
+class NetworkLoggingServer:
     def __init__(self, host, port, callback=None) -> None:
         self.host = host
         self.port = port

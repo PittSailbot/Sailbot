@@ -19,6 +19,7 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
+
 class DummyEventSearch(Event):
     """
     Attributes:
@@ -37,7 +38,7 @@ class DummyEventSearch(Event):
 
         # Declare parameters and their default values
         self.configureParameters()
-        
+
         # Set data based on parameters
         target = self.get_parameter('Waypoint1').value
         self.target = Waypoint(target[0], target[1])
@@ -53,9 +54,7 @@ class DummyEventSearch(Event):
         timer_period = 10.0  # seconds
         self.timer = self.create_timer(timer_period, self.publish_queued_waypoints)
 
-        self.set_event_subscription = self.create_subscription(
-            String, "set_event_target", self.ROS_setEventCallback, 10
-        )
+        self.set_event_subscription = self.create_subscription(String, "set_event_target", self.ROS_setEventCallback, 10)
 
         self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
 
@@ -66,10 +65,7 @@ class DummyEventSearch(Event):
         self.position = Waypoint.from_msg(msg)
 
     def configureParameters(self):
-        descriptor = ParameterDescriptor(
-            type=ParameterType.PARAMETER_DOUBLE_ARRAY,
-            description='Latitude and longitude for the target waypoint'
-        )
+        descriptor = ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE_ARRAY, description='Latitude and longitude for the target waypoint')
         default_value = None
         self.declare_parameter('Waypoint1', default_value, descriptor)
         self.declare_parameter('Waypoint2', default_value, descriptor)
@@ -100,15 +96,15 @@ class DummyEventSearch(Event):
         if self.position and distance_between(self.position, self.target) < 3:
             self.target = self.queuedWaypoints.pop(0)
         return self.target
-    
+
     def publish_queued_waypoints(self):
         msg = String()
         msg.data = json.dumps({'Waypoints': [self.target.toJson()] + [wp.toJson() for wp in self.queuedWaypoints]})
         self.pub_queuedWaypoints.publish(msg)
-    
+
     def ROS_setEventCallback(self, msg):
         self.target = Waypoint.from_msg(msg)
-        
+
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/main"

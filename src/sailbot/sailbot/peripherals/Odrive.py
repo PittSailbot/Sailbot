@@ -51,8 +51,7 @@ class Odrive:
             self.od = odrive.find_any()
             self.last_connect_time = time.time()
             self.od.clear_errors()
-            
-            
+
         self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
 
         if calibrate:
@@ -94,7 +93,7 @@ class Odrive:
         else:
             raise ValueError(f"Trying to load an undefined preset: {preset}")
 
-        self.axis.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL 
+        self.axis.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
         ut.dump_errors(self.od)
         sleep(0.1)
 
@@ -103,7 +102,7 @@ class Odrive:
             od = Odrive.od
         else:
             od = odrive.find_any()
-        
+
         od.axis0.requested_state = AXIS_STATE_IDLE
         od.axis1.requested_state = AXIS_STATE_IDLE
 
@@ -119,7 +118,7 @@ class Odrive:
 
     def calibrate(self):
         self.logging.warning("Calibrating")
-        
+
         self.axis.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE
         count = 0
         sleep(5)
@@ -133,11 +132,11 @@ class Odrive:
         sleep(1)
 
     def reconnect(self, preset):
-        if (time.time() - self.last_connect_time > 1):
+        if time.time() - self.last_connect_time > 1:
             self.logging.warning("Odrive Reconnecting")
             self.od = odrive.find_any()
             self.last_connect_time = time.time()
-            self.preset = preset        
+            self.preset = preset
             self.axis = self.od.axis0 if self.preset == c.config["ODRIVE"]["m0"] else self.od.axis1
 
     @property

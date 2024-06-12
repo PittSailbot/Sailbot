@@ -2,7 +2,7 @@
 
 # run the exiting tileserver container with docker start <tile_server_name>
 # make a new tile server using: sudo docker run -p 8080:80 -v osm-data:/data/database -d overv/openstreetmap-tile-server run
-# see https://switch2osm.org/serving-tiles/using-a-docker-container/ 
+# see https://switch2osm.org/serving-tiles/using-a-docker-container/
 # when starting the server it will take awhile before you can see anything
 
 import os
@@ -65,6 +65,7 @@ RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
 SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
 SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
 
+
 class LogDatabase:
     def __init__(self, parent, db_path='log_database.db'):
         self.db_path = db_path
@@ -74,7 +75,8 @@ class LogDatabase:
     def create_table(self):
         with self.get_connection() as connection:
             cursor = connection.cursor()
-            cursor.execute('''
+            cursor.execute(
+                '''
                 CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     level INTEGER,
@@ -85,34 +87,30 @@ class LogDatabase:
                     function TEXT,
                     file TEXT
                 )
-            ''')
+            '''
+            )
             connection.commit()
             cursor.close()
 
     def insert_log(self, message):
-        
-        message_tuple = (
-            message['level'],
-            message['msg'],
-            message['name'],
-            message['timestamp'],
-            message['line'],
-            message['function'],
-            message['file']
-        )
+        message_tuple = (message['level'], message['msg'], message['name'], message['timestamp'], message['line'], message['function'], message['file'])
 
         max_retries = 10
         retry_count = 0
+
         def retry_callback():
             nonlocal retry_count
             nonlocal timer
             try:
                 with self.get_connection() as connection:
                     cursor = connection.cursor()
-                    cursor.execute('''
+                    cursor.execute(
+                        '''
                         INSERT INTO logs (level, msg, name, timestamp, line, function, file)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ''', message_tuple)
+                    ''',
+                        message_tuple,
+                    )
                     connection.commit()
                     cursor.close()
                 timer.cancel()
@@ -126,11 +124,11 @@ class LogDatabase:
                     raise
 
         timer = self.parent.create_timer(0.5, retry_callback)
-        
+
     def get_connection(self):
         return sqlite3.connect(self.db_path, check_same_thread=False)
-    
-    def get_all_logs(self, include_debug = False):
+
+    def get_all_logs(self, include_debug=False):
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute('SELECT * FROM logs WHERE level >= 20')
@@ -139,16 +137,7 @@ class LogDatabase:
 
         logs = []
         for row in rows:
-            log_dict = {
-                'id': row[0],
-                'level': row[1],
-                'msg': row[2],
-                'name': row[3],
-                'timestamp': row[4],
-                'line': row[5],
-                'function': row[6],
-                'file': row[7]
-            }
+            log_dict = {'id': row[0], 'level': row[1], 'msg': row[2], 'name': row[3], 'timestamp': row[4], 'line': row[5], 'function': row[6], 'file': row[7]}
             logs.append(log_dict)
 
         return logs
@@ -162,16 +151,7 @@ class LogDatabase:
 
         logs = []
         for row in rows:
-            log_dict = {
-                'id': row[0],
-                'level': row[1],
-                'msg': row[2],
-                'name': row[3],
-                'timestamp': row[4],
-                'line': row[5],
-                'function': row[6],
-                'file': row[7]
-            }
+            log_dict = {'id': row[0], 'level': row[1], 'msg': row[2], 'name': row[3], 'timestamp': row[4], 'line': row[5], 'function': row[6], 'file': row[7]}
             logs.append(log_dict)
 
         return logs
@@ -192,6 +172,7 @@ class LogDatabase:
 
         return coords
 
+
 class Website(Node):
     def __init__(self):
         super().__init__("Website")
@@ -199,7 +180,7 @@ class Website(Node):
         self.logging.info(F"WEBSITE STARTED on port: {PORT}")
         threading.Thread(target=rclpy.spin, args=[self]).start()
         self.notification = ""
-        
+
         self.createDummyObjs()
 
         self.dataDict = {
@@ -210,8 +191,7 @@ class Website(Node):
         }
 
         self.logDB = LogDatabase(self)
-        self.displayedBreadcrumbs = []#self.logDB.get_breadcrumbs_from_logs()
-        
+        self.displayedBreadcrumbs = []  # self.logDB.get_breadcrumbs_from_logs()
 
         self.waypoints = [
             {"name": "Waypoint 1", "lat": "42.849135", "lon": "-70.966314"},
@@ -238,30 +218,14 @@ class Website(Node):
         self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
 
         # subscriptions should be started as the last step of init
-        self.gps_subscription = self.create_subscription(
-            String, "/boat/GPS", self.ROS_GPSCallback, 10
-        )
-        self.imu_subscription = self.create_subscription(
-            String, "/boat/imu", self.ROS_imuCallback, 10
-        )
-        self.windvane_subscription = self.create_subscription(
-            String, "/boat/wind_angle", self.ROS_windvaneCallback, 10
-        )
-        self.odrive_subscription = self.create_subscription(
-            String, "/boat/odriveStatus", self.ROS_odriveCallback, 10
-        )
-        self.logMessages = self.create_subscription(
-            Log, "/rosout", self.ROS_LogCallback, 10 # all log messages are published to this topic
-        )
-        self.boat_state_subscription = self.create_subscription(
-            String, "/boat/next_gps", self.ROS_nextGpsCallback, 10
-        )
-        self.control_state_sub = self.create_subscription(
-            String, "/boat/control_state", self.ROS_controlStateCallback, 2
-        )
-        self.queued_waypoints_subscription = self.create_subscription(
-            String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10
-        )
+        self.gps_subscription = self.create_subscription(String, "/boat/GPS", self.ROS_GPSCallback, 10)
+        self.imu_subscription = self.create_subscription(String, "/boat/imu", self.ROS_imuCallback, 10)
+        self.windvane_subscription = self.create_subscription(String, "/boat/wind_angle", self.ROS_windvaneCallback, 10)
+        self.odrive_subscription = self.create_subscription(String, "/boat/odriveStatus", self.ROS_odriveCallback, 10)
+        self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
+        self.boat_state_subscription = self.create_subscription(String, "/boat/next_gps", self.ROS_nextGpsCallback, 10)
+        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.ROS_controlStateCallback, 2)
+        self.queued_waypoints_subscription = self.create_subscription(String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
         self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
         self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
         self.sail_sub = self.create_subscription(Float32, "/boat/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
@@ -313,11 +277,10 @@ class Website(Node):
         self.logDB.insert_log(messageDict)
 
     def publishModeChange(self, modeString, file_path=None):
-        
         try:
             msg = EventLaunchDescription(modeString, file_path).toRosMessage()
             self.setEventPub.publish(msg)
-            self.logging.debug('Publishing: "%s"' % modeString) 
+            self.logging.debug('Publishing: "%s"' % modeString)
         except Exception as e:
             self.logging.error(e)
 
@@ -361,12 +324,8 @@ class Website(Node):
             axis.velocity = axisData[3]
             axis.currentDraw = axisData[4]
 
-        self.dataDict[
-            "odrive_axis0"
-        ] = f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
-        self.dataDict[
-            "odrive_axis1"
-        ] = f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
+        self.dataDict["odrive_axis0"] = f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
+        self.dataDict["odrive_axis1"] = f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
 
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
@@ -380,7 +339,7 @@ class Website(Node):
 
     def ROS_controlStateCallback(self, msg):
         self.boat_controlState = ControlState.fromRosMessage(msg)
-  
+
     def ROS_queuedWaypointsCallback(self, string):
         string = string.data
         coords = json.loads(string)
@@ -401,13 +360,16 @@ class Website(Node):
     def ROS_rudderAutoCmd_callback(self, msg):
         self.auto_rudder_angle = float(msg.data)
 
+
 @app.route("/", methods=["GET", "POST"])
 def default():
     return redirect('/map')
 
+
 @app.route("/home", methods=["GET", "POST"])
 def home():
     return render_template("index.html", **DATA.dataDict)
+
 
 @app.route("/camera", methods=["GET", "POST"])
 def camera():
@@ -419,6 +381,7 @@ def camera():
 
     return render_template("camera.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
 
+
 @app.route("/offset_compass", methods=["GET", "POST"])
 def compass_offset():
     if request.method == 'POST':
@@ -427,6 +390,7 @@ def compass_offset():
         DATA.compass_offset_pub.publish(msg)
 
     return render_template("compass.html", video_url=F"https://{MY_IP}:8000/stream.mjpg")
+
 
 @app.route("/mode/<mode>", methods=["GET", "POST"])
 def setMode(mode):
@@ -459,17 +423,19 @@ def setMode(mode):
 
     return {}
 
+
 @app.route("/gps")
 def gps():
     return f"{DATA.gps.latitude}, {DATA.gps.longitude}"
+
 
 @app.route("/dataJSON")
 def dataJSON():
     target = DATA.boat_target
     jsonDict = {
-        "lat": DATA.gps.latitude, 
-        "lon": DATA.gps.longitude, 
-        "target_lat": target.lat, 
+        "lat": DATA.gps.latitude,
+        "lon": DATA.gps.longitude,
+        "target_lat": target.lat,
         "target_lon": target.lon,
         'warning_count': DATA.warning_count,
         "error_count": DATA.error_count,
@@ -481,17 +447,18 @@ def dataJSON():
         'pitch_dir': DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": DATA.rudder_angle, #remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
+        "rudder_angle": DATA.rudder_angle,  # remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
         'speed': DATA.gps.velocity,
         'polygon_coords': get_no_go_zone_polygon(),
         'heading_polyline_coords': get_heading_coords(),
-        'auto_sail' : DATA.auto_sail_angle,
-        'auto_rudder' : DATA.auto_rudder_angle,
+        'auto_sail': DATA.auto_sail_angle,
+        'auto_rudder': DATA.auto_rudder_angle,
     }
     return jsonDict
 
+
 @app.route("/logs")
-def logs(logMessages = None):
+def logs(logMessages=None):
     level_conversions = {
         10: "10-DEBUG",
         20: "20-INFO",
@@ -510,9 +477,11 @@ def logs(logMessages = None):
 
     return render_template("logs.html", logMessages=logMessages)
 
+
 @app.route('/log_search')
 def log_search():
     return render_template('logSearch.html')
+
 
 @app.route('/search_results', methods=['POST'])
 def search_results():
@@ -569,6 +538,7 @@ def search_results():
     # display the logs
     return logs(DATA.logDB.get_logs(query, params))
 
+
 @app.route("/breadcrumbs/<int:n>")
 def breadcrumbs(n):
     if n > 0:
@@ -578,10 +548,12 @@ def breadcrumbs(n):
     jsonDict = {"breadcrumbs": [wp.toJson() for wp in recent_breadcrumbs]}
     return jsonify(jsonDict)
 
+
 @app.route("/waypoints")
 def waypoints():
     jsonDict = {"waypoints": DATA.waypoints}
     return jsonDict
+
 
 @app.route('/addWaypoint', methods=['POST'])
 def add_waypoint():
@@ -594,7 +566,8 @@ def add_waypoint():
         DATA.waypoints.append({"lat": latitude, "lon": longitude, "name": name})
 
         return jsonify({'status': 'success', 'message': 'Waypoint added successfully'})
-    
+
+
 @app.route('/setEventTarget', methods=['POST'])
 def set_event_target():
     if request.method == 'POST':
@@ -606,6 +579,7 @@ def set_event_target():
         DATA.setEventTargetPub.publish(msg)
 
         return jsonify({'status': 'success', 'message': 'Set event published successfully'})
+
 
 @app.route('/addCircle', methods=['POST'])
 def add_circle():
@@ -619,26 +593,32 @@ def add_circle():
 
         return jsonify({'status': 'success', 'message': 'Circle added successfully'})
 
+
 @app.route("/circles")
 def circles():
     jsonDict = {"circles": DATA.circles}
     return jsonDict
 
+
 @app.route("/compass")
 def compass():
     return f"{DATA.compass.angle}"
+
 
 @app.route("/axis0")
 def axis0():
     return DATA.dataDict["odrive_axis0"]
 
+
 @app.route("/axis1")
 def axis1():
     return DATA.dataDict["odrive_axis1"]
 
+
 @app.route("/map")
 def websiteMap():
     return render_template("map.html", tileServer=TILE_SERVER)
+
 
 @app.route('/calculateDistance', methods=['GET'])
 def calculate_distance():
@@ -659,6 +639,7 @@ def calculate_distance():
     except:
         return jsonify({'status': 'failure'})
 
+
 @app.route("/Notification")
 def returnNotification():
     if DATA.notification != "":
@@ -672,9 +653,11 @@ def returnNotification():
         threading.Thread(target=resetNotifTimer).start()
     return DATA.notification
 
+
 @app.route("/map")
 def map():
     return render_template("map.html", tileServer=TILE_SERVER)
+
 
 def convert_to_datetime(rosStamp):
     time_msg = rosStamp
@@ -691,8 +674,8 @@ def convert_to_datetime(rosStamp):
 
     return dt_utc
 
-def convert_timestamp_to_local(timestamp_utc_str):
 
+def convert_timestamp_to_local(timestamp_utc_str):
     if timestamp_utc_str:
         # Convert timestamp string to datetime object
         timestamp_utc = parser.parse(timestamp_utc_str)
@@ -703,6 +686,7 @@ def convert_timestamp_to_local(timestamp_utc_str):
 
     return timestamp_local
 
+
 def ros_main():
     global DATA, app
 
@@ -712,7 +696,8 @@ def ros_main():
     DATA.logging.info(F"Website available at https://localhost:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem')) # debug true causes the process to fork which causes problems
+    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=('cert.pem', 'key.pem'))  # debug true causes the process to fork which causes problems
+
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians
@@ -720,22 +705,22 @@ def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
     lon1_rad = math.radians(lon1)
     lat2_rad = math.radians(lat2)
     lon2_rad = math.radians(lon2)
-    
+
     # Calculate the difference in longitude
     delta_lon = lon2_rad - lon1_rad
-    
+
     # Calculate the y and x components of the directional vector
     y = math.sin(delta_lon) * math.cos(lat2_rad)
     x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(delta_lon)
-    
+
     # Calculate the angle in radians
     angle_rad = math.atan2(y, x)
-    
+
     # Convert the angle from radians to degrees
     return math.degrees(angle_rad)
 
+
 def get_no_go_zone_polygon():
-    
     if DATA.relative_wind == None and DATA.compass.angle:
         return None
     try:
@@ -744,23 +729,20 @@ def get_no_go_zone_polygon():
         lx, ly = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, left_bound, 300)
         rx, ry = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, right_bound, 300)
 
-        coords = [
-            [DATA.gps.latitude, DATA.gps.longitude],
-            [lx, ly],
-            [rx, ry],
-            [DATA.gps.latitude, DATA.gps.longitude]
-        ]
+        coords = [[DATA.gps.latitude, DATA.gps.longitude], [lx, ly], [rx, ry], [DATA.gps.latitude, DATA.gps.longitude]]
 
         return coords
     except Exception as e:
         DATA.logging.warning(str(e))
         return None
-    
+
+
 def get_heading_coords():
     x, y = DATA.gps.latitude, DATA.gps.longitude
     hx, hy = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, DATA.compass.angle, 150)
 
-    return [[x,y], [hx, hy]]
+    return [[x, y], [hx, hy]]
+
 
 if __name__ == "__main__":
     # main()

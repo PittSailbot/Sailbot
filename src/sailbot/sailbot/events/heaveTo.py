@@ -19,6 +19,7 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
 
+
 class HeaveTo(Event):
     """
     Attributes:
@@ -45,7 +46,7 @@ class HeaveTo(Event):
         self.start_time = time.time()
 
     def control_state_timer_callback(self):
-        self.event_control_state.publish(Int32(data = ControlState.EXTERNAL_CONTROL))
+        self.event_control_state.publish(Int32(data=ControlState.EXTERNAL_CONTROL))
 
     def control_state_callback(self, msg):
         self.control_state = ControlState.fromRosMessage(msg)

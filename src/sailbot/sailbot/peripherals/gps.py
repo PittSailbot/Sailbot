@@ -24,9 +24,11 @@ from rclpy.node import Node
 from std_msgs.msg import String, Float32, Int32
 from geometry_msgs.msg import Quaternion
 from time import sleep
+
 # from geographic_msgs.msg import GeoPose, GeoPoint
 
 from sailbot import constants as c
+
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
 # from sailbot.utils.utils import Waypoint, ControlState, ImuData
@@ -52,15 +54,10 @@ class GPS(Node):
 
     def timer_callback(self):
         self.gps.update()
-        
+
         if self.gps.has_fix:
             msg = String()
-            msg.data = (
-                json.dumps({'lat': self.gps.latitude,
-                            'lon': self.gps.longitude,
-                            'track_angle': self.gps.track_angle_deg,
-                            'velocity': self.gps.speed_knots})
-            )
+            msg.data = json.dumps({'lat': self.gps.latitude, 'lon': self.gps.longitude, 'track_angle': self.gps.track_angle_deg, 'velocity': self.gps.speed_knots})
             self.logging.info(str(msg.data))
             self.pub.publish(msg)
             self.logging.debug(F'GPS Publishing: "{msg.data}"')
@@ -121,6 +118,7 @@ class GPS(Node):
     #             print("Horizontal dilution: {}".format(gps.horizontal_dilution))
     #         if gps.height_geoid is not None:
     #             print("Height geoid: {} meters".format(gps.height_geoid))'
+
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
