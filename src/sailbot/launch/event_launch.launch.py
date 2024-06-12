@@ -12,20 +12,14 @@ def generate_launch_description():
     os.environ["ROS_LOG_DIR"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
     os.environ["ROS_LOG_DIR_BASE"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
 
-    default = os.path.join(
-        get_package_share_directory('sailbot'),
-        'config',
-        'params_eventDefaults.yaml'
-        )
-    
+    default = os.path.join(get_package_share_directory('sailbot'), 'config', 'params_eventDefaults.yaml')
+
     eventExecutable = LaunchConfiguration('executable')
     paramsFile = LaunchConfiguration('paramsFile', default=default)
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "log_level", default_value=TextSubstitution(text=str("DEBUG"))
-            ),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
             Node(
                 package="sailbot",
                 namespace="boat",
@@ -37,6 +31,6 @@ def generate_launch_description():
                     LaunchConfiguration("log_level"),
                 ],
                 parameters=[paramsFile],
-            )
+            ),
         ]
     )

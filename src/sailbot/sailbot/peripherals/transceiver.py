@@ -18,9 +18,11 @@ from rclpy.node import Node
 from std_msgs.msg import String, Float32, Int32
 from geometry_msgs.msg import Quaternion
 from time import sleep
+
 # from geographic_msgs.msg import GeoPose, GeoPoint
 
 from sailbot import constants as c
+
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
 from sailbot.utils.utils import Waypoint, ControlState, ImuData
@@ -46,7 +48,7 @@ class Transceiver(Node):
     def __init__(self):
         super().__init__("transceiver")
         self.logging = self.get_logger()
-        
+
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         self.sail_offset_last_message_value = None
@@ -79,9 +81,7 @@ class Transceiver(Node):
         self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 10)
         self.compass_offset = 0
 
-        self.usbReset_pub = self.create_publisher(
-            String, "usbReset", 1
-        )
+        self.usbReset_pub = self.create_publisher(String, "usbReset", 1)
 
         self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
@@ -101,7 +101,7 @@ class Transceiver(Node):
             raise Exception("No connected devices found")
 
         for i, port in enumerate(found_ports):
-            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', ''). replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', ''). replace("'", ""):
+            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', '').replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', '').replace("'", ""):
                 self.logging.info(str(found_hwids[i]))
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
@@ -188,7 +188,7 @@ class Transceiver(Node):
             _ = self.ser.read(self.ser.in_waiting)
         # self.logging.warning(msg)
         try:
-            message = json.loads(msg)#teensy_pb2.Data()
+            message = json.loads(msg)  # teensy_pb2.Data()
             # retVal = message.ParseFromString(msg)
             # self.logging.warning("retVal:" + str(retVal))
 
@@ -203,10 +203,10 @@ class Transceiver(Node):
             usbReset_pub.publish(String(data=""))
             self.logging.error("Resetting transceiver", throttle_duration_sec=1)
 
-        if (time.time() - self.last_successful_message) > 1: #seconds
+        if (time.time() - self.last_successful_message) > 1:  # seconds
             self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
         return None
-        
+
     def readRaw(self):
         # self.send("?")  # transceiver is programmed to respond to '?' with its data
 
@@ -254,8 +254,6 @@ class Transceiver(Node):
             rudderMsg.data = float(controller['right_analog_x'])
             self.rudder_pub.publish(rudderMsg)
 
-            
-
             if motor_offset_mode == 2:
                 if self.last_motor_offset_state == 2:
                     offsetChange = (controller['potentiometer'] - self.rudder_offset_last_message_value) / 200
@@ -265,7 +263,7 @@ class Transceiver(Node):
                     self.rudder_offset_pub.publish(rudderOffsetMsg)
 
                 self.rudder_offset_last_message_value = controller['potentiometer']
-                
+
         self.last_motor_offset_state = motor_offset_mode
 
     def listPorts(self):
@@ -273,16 +271,16 @@ class Transceiver(Node):
         @brief Provide a list of names of serial ports that can be opened
         @return A tuple of the port list and a corresponding list of device descriptions, and hwids
         """
-        ports = list( list_ports.comports() )
+        ports = list(list_ports.comports())
 
         resultPorts = []
         descriptions = []
         hwids = []
         for port in ports:
             # if port.device:
-            resultPorts.append( port.device )
-            descriptions.append( str( port.description ) )
-            hwids.append( str( port.hwid ) )
+            resultPorts.append(port.device)
+            descriptions.append(str(port.description))
+            hwids.append(str(port.hwid))
 
         return (resultPorts, descriptions, hwids)
 

@@ -88,17 +88,13 @@ class Odrive:
         self.axis0.controller.config.enable_overspeed_error = False
         self.enc0.config.cpr = c.config["ODRIVE"]["odriveEncoderCPR0"]
         self.od.axis0.motor.config.pole_pairs = c.config["ODRIVE"]["odrivepolepairs0"]
-        self.od.axis0.motor.config.torque_constant = (
-            1  # read the getting started guide on this, to be changed later
-        )
+        self.od.axis0.motor.config.torque_constant = 1  # read the getting started guide on this, to be changed later
         self.od.axis0.motor.config.motor_type = 0
 
         self.axis0.controller.config.vel_limit = c.config["ODRIVE"]["velLimit0"]
         self.axis0.controller.config.pos_gain = c.config["ODRIVE"]["posGain0"]
         self.axis0.controller.config.vel_gain = c.config["ODRIVE"]["velGain0"]
-        self.axis0.controller.config.vel_integrator_gain = c.config["ODRIVE"][
-            "velIntegratorGain0"
-        ]
+        self.axis0.controller.config.vel_integrator_gain = c.config["ODRIVE"]["velIntegratorGain0"]
         self.current0 = c.config["ODRIVE"]["currentLimit"]
 
         self.axis1 = self.od.axis1
@@ -108,17 +104,13 @@ class Odrive:
         self.axis1.controller.config.enable_overspeed_error = False
         self.enc1.config.cpr = c.config["ODRIVE"]["odriveEncoderCPR1"]
         self.od.axis1.motor.config.pole_pairs = c.config["ODRIVE"]["odrivepolepairs1"]
-        self.od.axis1.motor.config.torque_constant = (
-            1  # read the getting started guide on this, to be changed later
-        )
+        self.od.axis1.motor.config.torque_constant = 1  # read the getting started guide on this, to be changed later
         self.od.axis1.motor.config.motor_type = 0
 
         self.axis1.controller.config.vel_limit = c.config["ODRIVE"]["velLimit1"]
         self.axis1.controller.config.pos_gain = c.config["ODRIVE"]["posGain1"]
         self.axis1.controller.config.vel_gain = c.config["ODRIVE"]["velGain1"]
-        self.axis1.controller.config.vel_integrator_gain = c.config["ODRIVE"][
-            "velIntegratorGain1"
-        ]
+        self.axis1.controller.config.vel_integrator_gain = c.config["ODRIVE"]["velIntegratorGain1"]
         self.current1 = c.config["ODRIVE"]["currentLimit"]
 
     @property
@@ -227,9 +219,7 @@ class Odrive:
         # self.torque = (8.27 * value / self.KVRAting)
         # self.logging.warning(F"Warning: Changing the current limit will affect the torque")
         if float(value) > 65:
-            raise Exception(
-                "Motor current limit should not be raised this high without verifying the motor can handle it"
-            )
+            raise Exception("Motor current limit should not be raised this high without verifying the motor can handle it")
         self.mo0.config.current_lim = value
 
     def getDemandedCurrent0(self):
@@ -270,9 +260,7 @@ class Odrive:
         # self.torque = (8.27 * value / self.KVRAting)
         # print(F"Warning: Changing the current limit will affect the torque")
         if float(value) > 65:
-            raise Exception(
-                "Motor current limit should not be raised this high without verifying the motor can handle it"
-            )
+            raise Exception("Motor current limit should not be raised this high without verifying the motor can handle it")
         self.mo1.config.current_lim = value
 
     def getDemandedCurrent1(self):

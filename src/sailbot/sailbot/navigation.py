@@ -16,20 +16,22 @@ from sailbot.utils.utils import Waypoint, ControlState, ImuData
 TACK_TO_WIND_STARBOARD = -1
 TACK_TO_WIND_PORT = 1
 
+
 # TODO: Implement Waypoint from serialized ROS message
 class Navigation(Node):
     """Autonomously navigates the boat to a desired GPS waypoint
-        Listens to:
-            - /next_gps (Waypoint): The next GPS point to navigate to
-            - /autonomy_enabled (bool??):
-            - /gps (String):
-            - /compass (String):
-            - /windvane (String):
-            - /control_state (Bool):
-        Publishes to:
-            - /cmd_rudder (String)
-            - /cmd_sail (String)
+    Listens to:
+        - /next_gps (Waypoint): The next GPS point to navigate to
+        - /autonomy_enabled (bool??):
+        - /gps (String):
+        - /compass (String):
+        - /windvane (String):
+        - /control_state (Bool):
+    Publishes to:
+        - /cmd_rudder (String)
+        - /cmd_sail (String)
     """
+
     ACCEPTABLE_ERROR = float(c.config["RUDDER"]["acceptable_error"])
     SMOOTHING_CONSTANT = float(c.config["RUDDER"]["smooth_const"])
 
@@ -41,7 +43,7 @@ class Navigation(Node):
         self.compass_angle = 0
         self.wind_angle = 0
         self.imuData = None
-        self.boat_speed = float('inf') # change this to boat speed once available
+        self.boat_speed = float('inf')  # change this to boat speed once available
         self.aborted_tacks = 0
 
         self.next_gps_sub = self.create_subscription(String, "/boat/next_gps", self.next_gps_callback, 2)
@@ -67,7 +69,7 @@ class Navigation(Node):
 
         self.rudderMult = 0.33
 
-        self.jibe_angle_increase = 75 # (degrees)
+        self.jibe_angle_increase = 75  # (degrees)
 
     @property
     def manualSails(self):
@@ -76,7 +78,6 @@ class Navigation(Node):
     @property
     def manualRudder(self):
         return self.control_state == None or self.control_state.rudder != ControlState.AUTO or self.latest_waypoint is None
-
 
     def next_gps_callback(self, msg):
         next_gps = Waypoint.from_msg(msg)
@@ -107,7 +108,7 @@ class Navigation(Node):
         target = self.latest_waypoint
         if target == None or (self.manualRudder and not self.calculate_autonomy_always):
             return
-        
+
         if boatMath.distance_between(self.position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
@@ -138,7 +139,7 @@ class Navigation(Node):
         elif self.tack is None and boatMath.is_within_angle(target_angle, no_go_zone_left_bound, no_go_zone_right_bound):
             # Need to go upwind
             # Stick to the closest angle until we can sail directly to target
-            
+
             if boatMath.degrees_between(self.compass_angle, no_go_zone_left_bound) < boatMath.degrees_between(self.compass_angle, no_go_zone_right_bound):
                 target_angle = no_go_zone_left_bound
             else:
@@ -184,13 +185,13 @@ class Navigation(Node):
         self.logging.info(str((turning_left, is_no_go_zone_left, distance_to_target, no_go_distance)))
         self.logging.info(str(need_to_tack))
 
-        if (need_to_tack):
+        if need_to_tack:
             # Shortest path to target is across the no-go-zone
             self.tack = TACK_TO_WIND_STARBOARD if turning_left else TACK_TO_WIND_PORT
             tack_or_jibe = "Tack" if self.allow_tacking else "Jibe"
             self.logging.info(F"Starting {tack_or_jibe}: {self.tack}")
             return self.complete_tack()
-        
+
         no_go_zone_left_bound, no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
         if boatMath.degrees_between(self.compass_angle, no_go_zone_left_bound) < boatMath.degrees_between(self.compass_angle, no_go_zone_right_bound):
             target_angle = no_go_zone_left_bound
@@ -206,7 +207,7 @@ class Navigation(Node):
 
         rudder_angle = min(rudder_angle, float(c.config['RUDDER']['max_angle']))
         rudder_angle = max(rudder_angle, float(c.config['RUDDER']['min_angle']))
-        
+
         msg = Float32()
         msg.data = rudder_angle * self.rudderMult
         self.auto_rudder_pub.publish(msg)
@@ -224,8 +225,7 @@ class Navigation(Node):
         else:
             closest = TACK_TO_WIND_PORT
 
-        if self.allow_tacking or self.emergency_tack:   
-                 
+        if self.allow_tacking or self.emergency_tack:
             if self.boat_speed <= float(c.config['NAVIGATION']['tack_min_continue_speed']) and self.tack != closest:
                 # abort tack
                 self.logging.warning("Speed dropped too rapidly, aborting tack")

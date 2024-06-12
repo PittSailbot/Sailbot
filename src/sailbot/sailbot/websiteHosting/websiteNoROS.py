@@ -2,7 +2,7 @@
 
 # run the exiting tileserver container with docker start <tile_server_name>
 # make a new tile server using: sudo docker run -p 8080:80 -v osm-data:/data/database -d overv/openstreetmap-tile-server run
-# see https://switch2osm.org/serving-tiles/using-a-docker-container/ 
+# see https://switch2osm.org/serving-tiles/using-a-docker-container/
 # when starting the server it will take awhile before you can see anything
 
 import os
@@ -17,6 +17,7 @@ from geopy.distance import geodesic
 import socket
 from sailbot.sailbot.websiteHosting.networkLoggingServer import NetworkLoggingServer
 
+
 def get_local_ip():
     # Create a socket to get the local IP address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -25,15 +26,17 @@ def get_local_ip():
     local_ip = s.getsockname()[0]
     s.close()
     return local_ip
-    
+
+
 TILE_SERVER = 'http://' + get_local_ip() + ':8080/tile/{z}/{x}/{y}.png'
 
 app = Flask(__name__)
-CORS(app) # not safe, should not be used on devices connected to the internet
+CORS(app)  # not safe, should not be used on devices connected to the internet
 
 
 class DummyObject:
     pass
+
 
 class Coordinate:
     def __init__(self, lat, lon):
@@ -42,12 +45,13 @@ class Coordinate:
 
     def initFromGPS(gpsObj):
         return Coordinate(gpsObj.latitude, gpsObj.longitude)
-    
+
     def __repr__(self) -> str:
         return F"Coordinate: ({self.lat},{self.lon})"
-    
+
     def toJson(self):
         return {"lat": self.lat, "lon": self.lon}
+
 
 class WebsiteData:
     def __init__(self):
@@ -96,9 +100,7 @@ class WebsiteData:
         self.notification = ''
 
     def addLogMessage(self, message):
-        level_conversions = {
-            '20': "INFO"
-        }
+        level_conversions = {'20': "INFO"}
         parts = message.split(',')
         parts[0] = parts[0].split('(')[1]
         parts[-1] = parts[-1].replace(")", '')
@@ -114,21 +116,22 @@ class WebsiteData:
         self.loggedMessages.append(jsonizedMessage)
         print("added message", jsonizedMessage)
 
+
 DATA = WebsiteData()
+
 
 @app.route("/")
 def home():
     return render_template("index.html", **DATA.dataDict)
 
+
 @app.route("/gps")
 def gps():
     return f"{DATA.gps.latitude}, {DATA.gps.longitude}"
 
+
 @app.route("/dataJSON")
 def dataJSON():
-
-    
-
     DATA.gps.longitude += 0.00001
     if DATA.gps.longitude > -70.972903:
         DATA.gps.longitude = -70.986314
@@ -142,24 +145,29 @@ def dataJSON():
     DATA.displayedBreadcrumbs.append(Coordinate(jsonDict['lat'], jsonDict['lon']))
     return jsonDict
 
+
 @app.route("/logs")
 def logs():
     print(DATA.loggedMessages)
     return render_template("logs.html", logMessages=DATA.loggedMessages)
 
+
 @app.route("/test")
 def test():
     return render_template("test.html", tileServer=TILE_SERVER)
+
 
 @app.route("/breadcrumbs")
 def breadcrumbs():
     jsonDict = {"breadcrumbs": [wp.toJson() for wp in DATA.displayedBreadcrumbs]}
     return jsonDict
 
+
 @app.route("/waypoints")
 def waypoints():
     jsonDict = {"waypoints": DATA.waypoints}
     return jsonDict
+
 
 @app.route('/addWaypoint', methods=['POST'])
 def add_waypoint():
@@ -173,6 +181,7 @@ def add_waypoint():
 
         return jsonify({'status': 'success', 'message': 'Waypoint added successfully'})
 
+
 @app.route('/addCircle', methods=['POST'])
 def add_circle():
     if request.method == 'POST':
@@ -185,18 +194,22 @@ def add_circle():
 
         return jsonify({'status': 'success', 'message': 'Circle added successfully'})
 
+
 @app.route("/circles")
 def circles():
     jsonDict = {"circles": DATA.circles}
     return jsonDict
 
+
 @app.route("/compass")
 def compass():
     return f"{DATA.compass.angle}"
 
+
 @app.route("/map")
 def map():
     return render_template("map.html", tileServer=TILE_SERVER)
+
 
 @app.route('/calculateDistance', methods=['GET'])
 def calculate_distance():
@@ -217,6 +230,7 @@ def calculate_distance():
         return jsonify({'status': 'success', 'distance': distance})
     except:
         return jsonify({'status': 'failure'})
+
 
 @app.route("/Notification")
 def returnNotification():

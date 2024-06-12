@@ -50,10 +50,7 @@ class Event(Node):
             if key not in self.required_args and key not in self.base_required_args:
                 self.logging.warning(f"Found unused key in {self.__class__.__name__}: {key}")
 
-
-        self.node_shutdown_sub = self.create_subscription(
-            String, "event_shutdown", self.event_stop_callback, 10
-        )
+        self.node_shutdown_sub = self.create_subscription(String, "event_shutdown", self.event_stop_callback, 10)
         self.pub = self.create_publisher(String, "next_gps", 10)
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -74,7 +71,7 @@ class Event(Node):
         self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {target.data}")
 
     def control_state_timer_callback(self):
-        self.event_control_state.publish(Int32(data = ControlState.AUTO))
+        self.event_control_state.publish(Int32(data=ControlState.AUTO))
 
     @abstractmethod
     def next_gps(self):
@@ -115,9 +112,7 @@ def __generateEventDict():
 
     eventDict = {
         c.config["MODES"]["MOD_RC"]: lambda *args: None,
-        c.config["MODES"][
-            "MOD_PRECISION_NAVIGATE"
-        ]: precisionNavigation.PrecisionNavigation,
+        c.config["MODES"]["MOD_PRECISION_NAVIGATE"]: precisionNavigation.PrecisionNavigation,
         c.config["MODES"]["MOD_ENDURANCE"]: endurance.Endurance,
         c.config["MODES"]["MOD_STATION_KEEPING"]: stationKeeping.StationKeeping,
         c.config["MODES"]["MOD_SEARCH"]: search.Search,
@@ -131,6 +126,7 @@ class EventDefaults:
     """
     defaults are stored as a class variable so that they are only initialized once
     """
+
     defaults = configparser.ConfigParser()
     defaults.read(f"{c.root_dir}/eventDefaults.ini")
 

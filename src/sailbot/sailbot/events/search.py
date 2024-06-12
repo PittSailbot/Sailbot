@@ -164,8 +164,10 @@ class Search(Event):
                 self.best_chunk = self.heatmap.get_highest_confidence_chunk()
 
                 if self.best_chunk.sum_confidence > self.divert_confidence_threshold:
-                    self.logging.info(f"""SEARCHING: This bitch definitely a buoy! 
-                            Bookmarking position and moving towards buoy at {self.best_chunk.average_gps}.""")
+                    self.logging.info(
+                        f"""SEARCHING: This bitch definitely a buoy! 
+                            Bookmarking position and moving towards buoy at {self.best_chunk.average_gps}."""
+                    )
                     self.state = "TRACKING"
                     self.waypoint_queue.insert(0, self.gps)
                     self.waypoint_queue.insert(0, self.best_chunk.average_gps)
@@ -185,8 +187,10 @@ class Search(Event):
                 try:
                     self.camera.focus(self.waypoint_queue[0])
                 except RuntimeError as e:
-                    self.logging.warning(f"""TRACKING: Exception raised: {e}\n
-                    Camera can't focus on target! Going towards last know position!""")
+                    self.logging.warning(
+                        f"""TRACKING: Exception raised: {e}\n
+                    Camera can't focus on target! Going towards last know position!"""
+                    )
                     return self.waypoint_queue[0]
 
                 frame = self.camera.capture(context=True, detect=True)
@@ -208,9 +212,7 @@ class Search(Event):
                         distance_from_center = distance_between(self.search_center, detection.GPS)
 
                         if distance_from_center > self.search_bounds:
-                            self.logging.info(
-                                f"TRACKING: Dropped buoy at: {detection.GPS}, {distance_from_center}m from center"
-                            )
+                            self.logging.info(f"TRACKING: Dropped buoy at: {detection.GPS}, {distance_from_center}m from center")
                             continue
 
                         self.logging.info(f"TRACKING: Buoy found at: {detection.gps}")
@@ -311,9 +313,7 @@ class Heatmap:
             if detection in chunk:
                 chunk.append(detection)
         else:
-            self.chunks.append(
-                HeatmapChunk(radius=self.chunk_radius, detection=detection)
-            )
+            self.chunks.append(HeatmapChunk(radius=self.chunk_radius, detection=detection))
 
     def get_highest_confidence_chunk(self):
         return max(self.chunks, key=lambda heatmap_chunk: heatmap_chunk.sum_confidence)

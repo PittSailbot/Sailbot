@@ -77,13 +77,14 @@ class CameraServos(Node):
         pos = CameraServoState.fromRosMessage(message)
         self.setPosition(pos)
 
+
 def main(args=None):
-    
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/cameraServos"
     rclpy.init(args=args)
 
     servos = CameraServos()
     rclpy.spin(servos)
+
 
 if __name__ == "__main__":
     main()
