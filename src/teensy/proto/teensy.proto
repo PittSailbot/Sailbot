@@ -2,7 +2,7 @@
 
 // RECOMPILE src/sailbot/sailbot/telemetry/protobuf/teensy_pb2.py IF THIS FILE IS CHANGED!
 // https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
-// Compile .proto with `protoc teensy.proto --python_out=./`
+// Compile .proto with `protoc src\teensy\proto\teensy.proto  --python_out=./`
 
 syntax = "proto3";
 
@@ -11,29 +11,15 @@ syntax = "proto3";
 message Data {
     // Optional fields have an implicit "Data.has_controller", etc.
     // Use to check if any field is null when parsing
-    optional Controller controller = 1;
+    optional RCData rc_data = 1;
     optional Command command = 2;
     optional WindVane windvane = 3;
     optional WaterSensors water_sensors = 4;
     optional GPSData gps = 5;
     optional IMU imu = 6;
-    optional RCData rc_data = 7;
 }
 
 // RC Controller State
-message Controller {
-    int32 left_analog_y = 1;
-    // int32 right_analog_x = 2;
-    // int32 right_analog_y = 3;
-    // int32 left_analog_x = 4;
-    // int32 front_left_switch1 = 5;
-    // int32 front_left_switch2 = 6;
-    // int32 front_right_switch = 7;
-    // int32 top_left_switch = 8;
-    // int32 top_right_switch = 9;
-    // int32 potentiometer = 10;
-}
-
 message RCData {
     int32 left_analog_y = 1;
     int32 right_analog_x = 2;
