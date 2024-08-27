@@ -30,8 +30,8 @@ extern void setupWindVane() {
     Serial.println("Started WindVane");
 }
 
-extern bool readWindVane(JsonObject windvane) {
-    windvane["wind_angle"] = map(encoderValue, 0, ENCODER_ROTATION, 0, 360);  // 0-360 degrees
+extern bool readWindVane(WindVane* windvane) {
+    windvane->wind_angle = map(encoderValue, 0, ENCODER_ROTATION, 0, 360);  // 0-360 degrees
     return hasChanged;
 }
 
