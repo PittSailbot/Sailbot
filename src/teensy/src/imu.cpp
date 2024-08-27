@@ -90,7 +90,7 @@ void updateIMU(){
 }
 
 
-bool readIMU(JsonObject imu) {
+bool readIMU(IMU* imu) {
   if (!found_transceiver){
     return false;
   }
@@ -99,9 +99,9 @@ bool readIMU(JsonObject imu) {
     updateIMU();
   }
 
-  imu["roll"] = filter.getRoll();
-  imu["pitch"] = filter.getPitch();
-  imu["yaw"] = filter.getYaw();
-  
+  imu->roll = filter.getRoll();
+  imu->pitch = filter.getPitch();
+  imu->yaw = filter.getYaw();
+
   return true;
 }
