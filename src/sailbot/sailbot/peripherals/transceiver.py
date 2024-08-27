@@ -6,7 +6,7 @@ import os
 import json
 import json
 
-from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
+from sailbot.protobuf import teensy_pb2
 from sailbot.utils import boatMath
 import rclpy
 from rcl_interfaces.msg import ParameterDescriptor
