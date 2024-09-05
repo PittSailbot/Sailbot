@@ -52,8 +52,7 @@ RUN chmod +x /ros_entrypoint.sh
 # Install ROS packages
 RUN sudo apt install ros-humble-geographic-msgs
 
-RUN apt update
-RUN apt install -y pip
+RUN apt-get update && apt-get install -y pip
 COPY requirements-dev.txt /workspace/
 COPY requirements-pi.txt /workspace/
 
