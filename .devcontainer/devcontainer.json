@@ -1,0 +1,50 @@
+// Works with Dockerfile to build a standardized developing enviroment for everyone
+
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+	"name": "Sailbot",
+	"dockerFile": "../Dockerfile",
+	"runArgs": [
+		"--privileged",
+		"--network=host"
+	],
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+	"workspaceFolder": "/workspace",
+	"mounts": [
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/vscode/.bash_history,type=bind"//,
+		//"source=${localWorkspaceFolder},target=/workspace,type=bind"
+	],
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {
+			"ppa": true,
+			"version": "os-provided"
+		}
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Uncomment the next line to run commands after the container is created.
+	// "postCreateCommand": "cat /etc/os-release",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {			
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"platformio.platformio-ide",
+				"ms-python.python",
+				"ms-vscode-remote.remote-ssh",
+				"ms-iot.vscode-ros",
+				"eamodio.gitlens"
+			]
+		}
+	}
+
+	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "devcontainer"
+}

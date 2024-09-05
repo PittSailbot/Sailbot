@@ -49,8 +49,7 @@ RUN echo 'source /opt/ros/humble/setup.bash' >> /ros_entrypoint.sh
 RUN echo 'exec "$@"' >> /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh
 
-RUN apt update
-RUN apt install -y pip
+RUN apt-get update && apt-get install -y pip
 COPY requirements-dev.txt /workspace/
 COPY requirements-pi.txt /workspace/
 
