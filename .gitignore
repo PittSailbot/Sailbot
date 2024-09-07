@@ -7,6 +7,7 @@
 /install
 /logs
 /log
+/ros_logs
 log_database.db
 /.vscode
 .ipynb_checkpoints
