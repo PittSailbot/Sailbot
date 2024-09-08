@@ -135,10 +135,10 @@ def init_container(args):
         cmd_str = F"docker cp ./ {name}:/workspace/"
         subprocess.run(cmd_str, shell=True)
         if get_os() == OS_WINDOWS:
-            cmd_str = F'docker exec {name} dos2unix dos2unixConvert.bash'
+            cmd_str = F'docker exec {name} dos2unix utils/dos2unixConvert.bash'
             subprocess.run(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            cmd_str = F'docker exec {name} bash /workspace/dos2unixConvert.bash'
+            cmd_str = F'docker exec {name} bash /workspace/utils/dos2unixConvert.bash'
             subprocess.run(cmd_str, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     elif get_os() == OS_WINDOWS:
         print(F"{WARNING}You appear to be using windows, it is recommended to use the --copy option so that files can be converted from windows to linux format. Without this you may get errors{ENDC}")
