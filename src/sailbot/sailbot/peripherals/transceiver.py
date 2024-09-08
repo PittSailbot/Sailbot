@@ -149,7 +149,7 @@ class Transceiver(Node):
 
             return
 
-        if self.print_proto_data:
+        if True or self.print_proto_data:
             self.logging.info(str(teensy_data))
 
         if teensy_data == None:
@@ -169,7 +169,7 @@ class Transceiver(Node):
         #     msg.data = str(teensy_data.gps.speed)
         #     self.speed_pub.publish(msg)
 
-        if "imu" in teensy_data:
+        if False and "imu" in teensy_data:
             imu = teensy_data["imu"]
             msg = ImuData((imu["yaw"] + self.compass_offset) % 360, imu["pitch"], imu["roll"]).toRosMessage()
             self.imu_pub.publish(msg)

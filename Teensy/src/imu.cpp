@@ -1,3 +1,4 @@
+
 // Reads the acceleration, gyroscope and magnometer from the IMU 
 
 // Full orientation sensing using NXP/Madgwick/Mahony and a range of 9-DoF
@@ -23,13 +24,15 @@ Adafruit_Sensor *accelerometer, *gyroscope, *magnetometer;
 // pick your filter! slower == better quality output
 Adafruit_NXPSensorFusion filter; // slowest
 //Adafruit_Madgwick filter;  // faster than NXP
-// Adafruit_Mahony filter;  // fastest/smalleset
+//Adafruit_Mahony filter;  // fastest/smalleset
 
 #if defined(ADAFRUIT_SENSOR_CALIBRATION_USE_EEPROM)
   Adafruit_Sensor_Calibration_EEPROM cal;
 #else
   Adafruit_Sensor_Calibration_SDFat cal;
 #endif
+
+#define FILTER_UPDATE_RATE_HZ 100
 
 uint32_t timestamp;
 bool found_transceiver = false;
@@ -54,18 +57,20 @@ int setupIMU() {
   filter.begin(FILTER_UPDATE_RATE_HZ);
   timestamp = millis();
 
-  found_transceiver = true;
-  Serial.println("Started IMU");
+  Wire.setClock(400000); // 400KHz
   return 0;
 }
 
-void updateIMU(){
-  if (!found_transceiver){
-    return;
-  }
-  
 
-  float gx, gy, gz;
+void readIMU(IMU* imu) {
+  if (!found_transceiver){
+    return false;
+  }
+
+  if ((millis() - timestamp) < (1000 / FILTER_UPDATE_RATE_HZ)) {
+    return false;
+  }
+  timestamp = millis();
 
   // Read the motion sensors
   sensors_event_t accel, gyro, mag;
@@ -76,28 +81,21 @@ void updateIMU(){
   cal.calibrate(mag);
   cal.calibrate(accel);
   cal.calibrate(gyro);
+
   // Gyroscope needs to be converted from Rad/s to Degree/s
-  // the rest are not unit-important
+  float gx, gy, gz;
   gx = gyro.gyro.x * SENSORS_RADS_TO_DPS;
   gy = gyro.gyro.y * SENSORS_RADS_TO_DPS;
   gz = gyro.gyro.z * SENSORS_RADS_TO_DPS;
 
   // Update the SensorFusion filter
-  filter.update(gx, gy, gz, 
+  filter.update(gx, gy, gz,
                 accel.acceleration.x, accel.acceleration.y, accel.acceleration.z, 
                 mag.magnetic.x, mag.magnetic.y, mag.magnetic.z);
 
-}
-
-
-bool readIMU(JsonObject imu) {
-  if (!found_transceiver){
-    return false;
-  }
-
+  // Return boat's orientation in quaternion format (pitch/roll/yaw, but better)
   imu["roll"] = filter.getRoll();
   imu["pitch"] = filter.getPitch();
   imu["yaw"] = filter.getYaw();
-
-  return true;
+  //filter.getQuaternion(&(imu->qw), &(imu->qx), &(imu->qy), &(imu->qz));
 }
