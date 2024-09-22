@@ -1,26 +1,26 @@
 """
 Reads and sends data from the connected USB transceiver
 """
-import time
-import os
 
-from sailbot.protobuf import teensy_pb2
-from sailbot.utils import boatMath
-import rclpy
-from rcl_interfaces.msg import ParameterDescriptor
-from rcl_interfaces.msg import ParameterType
-import serial
-from serial.tools import list_ports
-import smbus2 as smbus
-from rclpy.node import Node
-from std_msgs.msg import String, Float32, Int32
-from geometry_msgs.msg import Quaternion
+import os
+import time
 from time import sleep
 
-# from geographic_msgs.msg import GeoPose, GeoPoint
+import rclpy
+import serial
+import smbus2 as smbus
+from geometry_msgs.msg import Quaternion
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from rclpy.node import Node
+from serial.tools import list_ports
+from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
-from sailbot.utils.utils import Waypoint, ControlState, ImuData
+from sailbot.protobuf import teensy_pb2
+from sailbot.utils import boatMath
+from sailbot.utils.utils import ControlState, ImuData, Waypoint
+
+# from geographic_msgs.msg import GeoPose, GeoPoint
 
 
 class Transceiver(Node):
@@ -94,14 +94,14 @@ class Transceiver(Node):
             raise Exception("No connected devices found")
 
         for i, port in enumerate(found_ports):
-            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', '').replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', '').replace("'", ""):
+            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', "").replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', "").replace("'", ""):
                 self.logging.info(str(found_hwids[i]))
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
                     debug_str = "Found ports are: \n"
                     for i in range(len(found_ports)):
-                        debug_str += F"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
-                    debug_str += F'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
+                        debug_str += f"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
+                    debug_str += f'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
                     self.logging.warning(debug_str)
                     return RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
                 else:
@@ -134,7 +134,7 @@ class Transceiver(Node):
         try:
             teensy_data = self.read()
         except Exception as e:
-            self.logging.error(F"Error while reading teensy: {e}")
+            self.logging.error(f"Error while reading teensy: {e}")
             self.timer.cancel()
             self.setupComs()
             sleep(1)
@@ -183,7 +183,7 @@ class Transceiver(Node):
             retVal = message.ParseFromString(msg)
             # self.logging.warning("retVal:" + str(retVal))
 
-            if str(message).strip() != '':
+            if str(message).strip() != "":
                 self.last_successful_message = time.time()
                 return message
         except Exception as e:

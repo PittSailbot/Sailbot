@@ -1,10 +1,11 @@
 """
 Interface for reading wind angle
 """
+
+import json
+import os
 from threading import Lock, Thread
 from time import sleep
-import os
-import json
 
 import rclpy
 from rclpy.node import Node
@@ -47,7 +48,7 @@ class WindVane(Node):
         msg = String()
         msg.data = str(self.angle)
         self.pub.publish(msg)
-        self.logging.debug(F'Windvane Publishing: "{msg.data}"')
+        self.logging.debug(f'Windvane Publishing: "{msg.data}"')
 
     def map(self, x, min1, max1, min2, max2):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2

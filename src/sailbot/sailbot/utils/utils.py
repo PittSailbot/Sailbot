@@ -1,13 +1,14 @@
 """Very commonly used utility functions and classes"""
+
+import json
 import math
+import os
 from dataclasses import dataclass
 from datetime import datetime
-import json
-import os
 
 import rclpy
 from rclpy.executors import ShutdownException, TimeoutException
-from std_msgs.msg import String, Bool
+from std_msgs.msg import Bool, String
 
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between, quaternion_to_euler
@@ -40,10 +41,10 @@ class Waypoint:
             return Waypoint(-1, -1)
 
         gpsJson = json.loads(jsonString.data)
-        if gpsJson['lat'] == None and gpsJson['lon'] == None:
+        if gpsJson["lat"] == None and gpsJson["lon"] == None:
             return None
 
-        return Waypoint(float(gpsJson['lat']), float(gpsJson['lon']))
+        return Waypoint(float(gpsJson["lat"]), float(gpsJson["lon"]))
 
     def add_meters(self, dx, dy):
         """Updates the waypoint gps by adding meters to the latitude and longitude"""
@@ -56,11 +57,11 @@ class Waypoint:
         return json.dumps({"lat": self.lat, "lon": self.lon})
 
     def fromJson(json_data):
-        if str(json_data).upper() == 'NONE':
+        if str(json_data).upper() == "NONE":
             return None
 
         data = json.loads(json_data)
-        return Waypoint(data['lat'], data['lon'])
+        return Waypoint(data["lat"], data["lon"])
 
 
 class DummyObject:
@@ -95,7 +96,7 @@ class ControlState:
             return "Autonomous"
 
     def toRosMessage(self):
-        msgData = {'rudder': self.rudder, 'sail': self.sail}
+        msgData = {"rudder": self.rudder, "sail": self.sail}
         msg = String()
         msg.data = json.dumps(msgData)
 
@@ -104,7 +105,7 @@ class ControlState:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        return ControlState(data['rudder'], data['sail'])
+        return ControlState(data["rudder"], data["sail"])
 
 
 class CameraServoState:
@@ -113,7 +114,7 @@ class CameraServoState:
         self.vertical_pos = vertical_pos
 
     def toRosMessage(self):
-        msgData = {'horizonal_pos': self.horizonal_pos, 'vertical_pos': self.vertical_pos}
+        msgData = {"horizonal_pos": self.horizonal_pos, "vertical_pos": self.vertical_pos}
         msg = String()
         msg.data = json.dumps(msgData)
 
@@ -122,7 +123,7 @@ class CameraServoState:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        return CameraServoState(data['horizonal_pos'], data['vertical_pos'])
+        return CameraServoState(data["horizonal_pos"], data["vertical_pos"])
 
 
 class EventLaunchDescription:
@@ -131,15 +132,15 @@ class EventLaunchDescription:
         self.paramsFile = paramsFile
 
     def __repr__(self):
-        return F"EventLaunchDescription({self.eventExecutable}, {self.paramsFile if self.paramsFile else '<Default Params>'})"
+        return f"EventLaunchDescription({self.eventExecutable}, {self.paramsFile if self.paramsFile else '<Default Params>'})"
 
     def toRosMessage(self):
         file_contents = None
         if self.paramsFile:
-            with open(self.paramsFile, 'r') as file:
+            with open(self.paramsFile, "r") as file:
                 file_contents = file.read()
 
-        msgData = {'eventExecutable': self.eventExecutable, 'params_file_name': self.paramsFile.split('/')[-1] if self.paramsFile else None, 'params': file_contents}
+        msgData = {"eventExecutable": self.eventExecutable, "params_file_name": self.paramsFile.split("/")[-1] if self.paramsFile else None, "params": file_contents}
         msg = String()
         msg.data = json.dumps(msgData)
 
@@ -148,14 +149,14 @@ class EventLaunchDescription:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        if data['params_file_name']:
-            create_directory_if_not_exists('/uploadedParams/')
-            file_path = "/uploadedParams/" + data['params_file_name']
-            with open(file_path, 'w') as file:
-                file.write(data['params'])
+        if data["params_file_name"]:
+            create_directory_if_not_exists("/uploadedParams/")
+            file_path = "/uploadedParams/" + data["params_file_name"]
+            with open(file_path, "w") as file:
+                file.write(data["params"])
         else:
             file_path = None
-        return EventLaunchDescription(data['eventExecutable'], file_path)
+        return EventLaunchDescription(data["eventExecutable"], file_path)
 
 
 class ImuData:
@@ -172,13 +173,13 @@ class ImuData:
             self.yaw, self.pitch, self.roll = self.qx, self.qy, self.qz
 
     def __repr__(self):
-        return F"IMU(pitch: {self.pitch}, roll: {self.roll}, yaw: {self.yaw})"
+        return f"IMU(pitch: {self.pitch}, roll: {self.roll}, yaw: {self.yaw})"
 
     def toRosMessage(self):
         msgData = {
-            'yaw': self.yaw,
-            'pitch': self.pitch,
-            'roll': self.roll,
+            "yaw": self.yaw,
+            "pitch": self.pitch,
+            "roll": self.roll,
         }
         msg = String()
         msg.data = json.dumps(msgData)
@@ -188,7 +189,7 @@ class ImuData:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        return ImuData(data['yaw'], data['pitch'], data['roll'])
+        return ImuData(data["yaw"], data["pitch"], data["roll"])
 
 
 class UsbResetCmd:
@@ -198,7 +199,7 @@ class UsbResetCmd:
         self.port = port
 
     def toRosMessage(self):
-        msgData = {'hub': self.hub, 'port': self.port}
+        msgData = {"hub": self.hub, "port": self.port}
         msg = String()
         msg.data = json.dumps(msgData)
 
@@ -207,7 +208,7 @@ class UsbResetCmd:
     @staticmethod
     def fromRosMessage(message):
         data = json.loads(message.data)
-        return UsbResetCmd(data['hub'], data['port'])
+        return UsbResetCmd(data["hub"], data["port"])
 
 
 def create_directory_if_not_exists(file_path):

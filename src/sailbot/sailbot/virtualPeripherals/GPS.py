@@ -2,18 +2,17 @@
 interfaces with USB GPS sensor
 """
 
+import json
+import math
 import os
+import random
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import Float32, String
 
-from sailbot.utils.utils import DummyObject, ControlState, ImuData
 from sailbot.utils.boatMath import is_within_angle
-import random
-import math
-import json
-
+from sailbot.utils.utils import ControlState, DummyObject, ImuData
 
 NO_GO_MIN = 40
 NO_GO_MAX = 360 - NO_GO_MIN
@@ -83,9 +82,9 @@ class GPS(Node):
         noisyLat, noisyLon = self.computeNewCoordinate(self.gps.latitude, self.gps.longitude, self.getNoise(gpsNoise), self.getNoise(gpsNoise))
 
         msg = String()
-        msg.data = json.dumps({'lat': noisyLat, 'lon': noisyLon, 'track_angle': self.gps.track_angle_deg, 'velocity': self.velocity})
+        msg.data = json.dumps({"lat": noisyLat, "lon": noisyLon, "track_angle": self.gps.track_angle_deg, "velocity": self.velocity})
         self.pub.publish(msg)
-        self.logging.debug(F'GPS Publishing: "{msg.data}"')
+        self.logging.debug(f'GPS Publishing: "{msg.data}"')
 
     def __getattribute__(self, name):
         """

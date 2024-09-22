@@ -7,14 +7,14 @@
 
 import os
 import random
+import socket
 import threading
 import time
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
-
 from geopy.distance import geodesic
-import socket
+
 from sailbot.sailbot.websiteHosting.networkLoggingServer import NetworkLoggingServer
 
 
@@ -22,13 +22,13 @@ def get_local_ip():
     # Create a socket to get the local IP address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0.1)
-    s.connect(('10.255.255.255', 1))  # Connect to a known address
+    s.connect(("10.255.255.255", 1))  # Connect to a known address
     local_ip = s.getsockname()[0]
     s.close()
     return local_ip
 
 
-TILE_SERVER = 'http://' + get_local_ip() + ':8080/tile/{z}/{x}/{y}.png'
+TILE_SERVER = "http://" + get_local_ip() + ":8080/tile/{z}/{x}/{y}.png"
 
 app = Flask(__name__)
 CORS(app)  # not safe, should not be used on devices connected to the internet
@@ -47,7 +47,7 @@ class Coordinate:
         return Coordinate(gpsObj.latitude, gpsObj.longitude)
 
     def __repr__(self) -> str:
-        return F"Coordinate: ({self.lat},{self.lon})"
+        return f"Coordinate: ({self.lat},{self.lon})"
 
     def toJson(self):
         return {"lat": self.lat, "lon": self.lon}
@@ -55,7 +55,7 @@ class Coordinate:
 
 class WebsiteData:
     def __init__(self):
-        self.loggingServer = NetworkLoggingServer('0.0.0.0', 1234, callback=self.addLogMessage)
+        self.loggingServer = NetworkLoggingServer("0.0.0.0", 1234, callback=self.addLogMessage)
         self.gps = DummyObject()
         self.gps.latitude = 42.849135
         self.gps.longitude = -70.986314
@@ -97,18 +97,18 @@ class WebsiteData:
 
         self.loggedMessages = []
 
-        self.notification = ''
+        self.notification = ""
 
     def addLogMessage(self, message):
-        level_conversions = {'20': "INFO"}
-        parts = message.split(',')
-        parts[0] = parts[0].split('(')[1]
-        parts[-1] = parts[-1].replace(")", '')
+        level_conversions = {"20": "INFO"}
+        parts = message.split(",")
+        parts[0] = parts[0].split("(")[1]
+        parts[-1] = parts[-1].replace(")", "")
         jsonizedMessage = {}
         for part in parts:
-            key = part.split('=')[0].strip()
-            value = part.split('=')[1].strip()
-            if key == 'level' and str(value) in level_conversions:
+            key = part.split("=")[0].strip()
+            value = part.split("=")[1].strip()
+            if key == "level" and str(value) in level_conversions:
                 jsonizedMessage[key] = level_conversions[value]
             else:
                 jsonizedMessage[key] = value
@@ -142,7 +142,7 @@ def dataJSON():
         "lat": DATA.gps.latitude + (random.random() * randomOffset) - randomOffset / 2,
         "lon": DATA.gps.longitude + (random.random() * randomOffset) - randomOffset / 2,
     }
-    DATA.displayedBreadcrumbs.append(Coordinate(jsonDict['lat'], jsonDict['lon']))
+    DATA.displayedBreadcrumbs.append(Coordinate(jsonDict["lat"], jsonDict["lon"]))
     return jsonDict
 
 
@@ -169,30 +169,30 @@ def waypoints():
     return jsonDict
 
 
-@app.route('/addWaypoint', methods=['POST'])
+@app.route("/addWaypoint", methods=["POST"])
 def add_waypoint():
-    if request.method == 'POST':
+    if request.method == "POST":
         # Get form data from the request
-        latitude = request.form.get('latitude')
-        longitude = request.form.get('longitude')
-        name = request.form.get('name')
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
+        name = request.form.get("name")
 
         DATA.waypoints.append({"lat": latitude, "lon": longitude, "name": name})
 
-        return jsonify({'status': 'success', 'message': 'Waypoint added successfully'})
+        return jsonify({"status": "success", "message": "Waypoint added successfully"})
 
 
-@app.route('/addCircle', methods=['POST'])
+@app.route("/addCircle", methods=["POST"])
 def add_circle():
-    if request.method == 'POST':
+    if request.method == "POST":
         # Get form data from the request
-        latitude = request.form.get('latitude')
-        longitude = request.form.get('longitude')
-        radius = request.form.get('radius')
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
+        radius = request.form.get("radius")
 
         DATA.circles.append({"lat": latitude, "lon": longitude, "radius": radius})
 
-        return jsonify({'status': 'success', 'message': 'Circle added successfully'})
+        return jsonify({"status": "success", "message": "Circle added successfully"})
 
 
 @app.route("/circles")
@@ -211,25 +211,25 @@ def map():
     return render_template("map.html", tileServer=TILE_SERVER)
 
 
-@app.route('/calculateDistance', methods=['GET'])
+@app.route("/calculateDistance", methods=["GET"])
 def calculate_distance():
     print(request.args)
     try:
         # Get latitude and longitude of the selected waypoint
-        selected_lat = float(request.args.get('selectedLat'))
-        selected_lon = float(request.args.get('selectedLon'))
+        selected_lat = float(request.args.get("selectedLat"))
+        selected_lon = float(request.args.get("selectedLon"))
 
         # Get latitude and longitude of the target point
-        target_lat = float(request.args.get('targetLat'))
-        target_lon = float(request.args.get('targetLon'))
+        target_lat = float(request.args.get("targetLat"))
+        target_lon = float(request.args.get("targetLon"))
 
         # Calculate distance using the Haversine formula
         distance = geodesic((selected_lat, selected_lon), (target_lat, target_lon)).meters
 
         # You can replace the following line with your own logic to handle the calculated distance.
-        return jsonify({'status': 'success', 'distance': distance})
+        return jsonify({"status": "success", "distance": distance})
     except:
-        return jsonify({'status': 'failure'})
+        return jsonify({"status": "failure"})
 
 
 @app.route("/Notification")

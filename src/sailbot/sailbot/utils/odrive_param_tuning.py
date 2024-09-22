@@ -1,9 +1,10 @@
-import tkinter as tk
-from tkinter import ttk
-import odrive
-import time
 import threading
+import time
+import tkinter as tk
 from datetime import datetime
+from tkinter import ttk
+
+import odrive
 
 od = odrive.find_any()
 axis = od.axis0
@@ -66,7 +67,7 @@ slider1 = ttk.Scale(
     from_=0,
     to_=150,
     command=on_slider1_change,
-    orient='horizontal',
+    orient="horizontal",
     length=slider_width,
 )
 slider1.set(axis.controller.config.pos_gain)
@@ -75,28 +76,28 @@ slider1.pack(pady=10)
 # Create Slider 2
 label2 = ttk.Label(root, text="vel_gain")
 label2.pack(pady=10)
-slider2 = ttk.Scale(root, from_=0, to_=10, command=on_slider2_change, orient='horizontal', length=slider_width)
+slider2 = ttk.Scale(root, from_=0, to_=10, command=on_slider2_change, orient="horizontal", length=slider_width)
 slider2.set(axis.controller.config.vel_gain)
 slider2.pack(pady=10)
 
 # Create Slider 3
 label3 = ttk.Label(root, text="vel_integrator_gain")
 label3.pack(pady=10)
-slider3 = ttk.Scale(root, from_=0, to_=100, command=on_slider3_change, orient='horizontal', length=slider_width)
+slider3 = ttk.Scale(root, from_=0, to_=100, command=on_slider3_change, orient="horizontal", length=slider_width)
 slider3.set(axis.controller.config.vel_integrator_gain)
 slider3.pack(pady=10)
 
 # Create Slider 4
 label4 = ttk.Label(root, text="Current Limit")
 label4.pack(pady=10)
-slider4 = ttk.Scale(root, from_=0, to_=50, command=on_slider4_change, orient='horizontal', length=slider_width)
+slider4 = ttk.Scale(root, from_=0, to_=50, command=on_slider4_change, orient="horizontal", length=slider_width)
 slider4.set(axis.motor.config.current_lim)
 slider4.pack(pady=10)
 
 # Create Slider 5
 label5 = ttk.Label(root, text="Velocity Limit")
 label5.pack(pady=10)
-slider5 = ttk.Scale(root, from_=0, to_=10, command=on_slider5_change, orient='horizontal', length=slider_width)
+slider5 = ttk.Scale(root, from_=0, to_=10, command=on_slider5_change, orient="horizontal", length=slider_width)
 slider5.set(axis.controller.config.vel_limit)
 slider5.pack(pady=10)
 
@@ -104,7 +105,7 @@ slider5.pack(pady=10)
 label6 = ttk.Label(root, text="rotate delay")
 label6.pack(pady=10)
 
-slider6 = ttk.Scale(root, from_=0, to_=10, command=on_slider6_change, orient='horizontal', length=slider_width)
+slider6 = ttk.Scale(root, from_=0, to_=10, command=on_slider6_change, orient="horizontal", length=slider_width)
 slider6.set(delay_time)
 slider6.pack(pady=10)
 

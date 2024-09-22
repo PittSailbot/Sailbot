@@ -1,13 +1,15 @@
 """
 Event blueprint class and common utility functions used in events
 """
-from abc import abstractmethod
+
 import configparser
+from abc import abstractmethod
+
 from rclpy.node import Node
-from std_msgs.msg import String, Int32
+from std_msgs.msg import Int32, String
 
 from sailbot import constants as c
-from sailbot.utils.utils import Waypoint, ControlState
+from sailbot.utils.utils import ControlState, Waypoint
 
 EVENT_DICT_INITIALIZED = False
 
@@ -63,12 +65,12 @@ class Event(Node):
             waypoint = self.next_gps()
             target = waypoint.to_msg()
         except Exception as e:
-            self.logging.error(F"{self.__class__.__name__} failed to get next GPS with error: {e}")
+            self.logging.error(f"{self.__class__.__name__} failed to get next GPS with error: {e}")
             target = String()
             target.data = ""
 
         self.pub.publish(target)
-        self.logging.debug(F"{self.__class__.__name__} publishing next_GPS: {target.data}")
+        self.logging.debug(f"{self.__class__.__name__} publishing next_GPS: {target.data}")
 
     def control_state_timer_callback(self):
         self.event_control_state.publish(Int32(data=ControlState.AUTO))

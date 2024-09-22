@@ -1,12 +1,14 @@
 """
 Drivers and interface for camera servos
 """
+
+import os
+
 # Code adapted from https://github.com/ArduCAM/PCA9685
 import rclpy
+import smbus2 as smbus
 from rclpy.node import Node
 from std_msgs.msg import String
-import smbus2 as smbus
-import os
 
 from sailbot import constants as c
 from sailbot.utils.utils import CameraServoState

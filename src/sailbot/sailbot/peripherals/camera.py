@@ -1,6 +1,7 @@
 """
 Interface for camera
 """
+
 import math
 import os
 import time
@@ -11,9 +12,9 @@ from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.peripherals.cameraServos import CameraServos
 from sailbot.utils.boatMath import distance_between
 from sailbot.utils.utils import Waypoint
-from sailbot.peripherals.cameraServos import CameraServos
 
 
 class Frame:
