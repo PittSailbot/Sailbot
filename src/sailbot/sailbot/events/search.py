@@ -110,7 +110,7 @@ class Search(Event):
 
         # SENSORS
         self.camera = Camera()
-        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 2)
+        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 1)
         self.position = Waypoint(0, 0)
 
     def gps_callback(self, msg):

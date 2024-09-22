@@ -64,16 +64,16 @@ class Transceiver(Node):
         self.sail_pub = self.create_publisher(Float32, "cmd_sail", 1)
         self.rudder_pub = self.create_publisher(Float32, "cmd_rudder", 1)
 
-        self.sail_offset_pub = self.create_publisher(Float32, "offset_sail", 10)
-        self.rudder_offset_pub = self.create_publisher(Float32, "offset_rudder", 10)
+        self.sail_offset_pub = self.create_publisher(Float32, "offset_sail", 1)
+        self.rudder_offset_pub = self.create_publisher(Float32, "offset_rudder", 1)
 
         self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
 
         # self.position_pub = self.create_publisher(String, "position", 1)
         # self.speed_pub = self.create_publisher(String, "speed", 1)
 
-        self.imu_pub = self.create_publisher(String, "imu", 10)
-        self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 10)
+        self.imu_pub = self.create_publisher(String, "imu", 1)
+        self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 1)
         self.compass_offset = 0
 
         self.usbReset_pub = self.create_publisher(String, "usbReset", 1)

@@ -56,7 +56,7 @@ class DummyEventSearch(Event):
 
         self.set_event_subscription = self.create_subscription(String, "set_event_target", self.ROS_setEventCallback, 10)
 
-        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
+        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 1)
 
         self.position = None
         self.cameraLoc = 0

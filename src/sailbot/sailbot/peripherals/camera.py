@@ -66,8 +66,8 @@ class Camera(Node):
         self.path = os.getcwd()
         if c.config["MAIN"]["device"] == "pi":
             self.servos = CameraServos()
-            self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 2)
-            self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 2)
+            self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 1)
+            self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 1)
 
             self.position = None
             self.compass_angle = None

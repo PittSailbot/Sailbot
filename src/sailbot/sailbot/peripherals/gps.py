@@ -47,7 +47,7 @@ class GPS(Node):
 
         self.gps.send_command(b"PMTK220,1000")
 
-        self.pub = self.create_publisher(String, "/boat/GPS", 10)
+        self.pub = self.create_publisher(String, "/boat/GPS", 1)
 
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
