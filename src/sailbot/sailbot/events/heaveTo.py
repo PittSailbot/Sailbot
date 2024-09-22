@@ -1,19 +1,18 @@
 import importlib
+import json
 import math
 import os
-import time
 import threading
-import json
+import time
 
 import rclpy
-from rcl_interfaces.msg import ParameterDescriptor
-from rcl_interfaces.msg import ParameterType
-from std_msgs.msg import String, Float32, Int32
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between
 from sailbot.utils.eventUtils import Event, EventFinished
-from sailbot.utils.utils import Waypoint, has_reached_waypoint, ControlState
+from sailbot.utils.utils import ControlState, Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
@@ -63,7 +62,7 @@ class HeaveTo(Event):
             else:
                 self.logging.info(f"Heaving for {time.time() - self.start_time}s. {(self.start_time + 290) - time.time()}s left.")
                 self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=c.config['RUDDER']['max_angle']))
+                self.rudder_pub.publish(Float32(data=c.config["RUDDER"]["max_angle"]))
 
         return Waypoint(None, None)
 

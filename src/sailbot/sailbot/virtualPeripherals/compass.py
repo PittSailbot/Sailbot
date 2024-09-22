@@ -1,14 +1,16 @@
 """
 Handles interfacing with the I2C compass and accelerometer sensor
 """
-import math
-from time import sleep
-import os
+
 import json
+import math
+import os
+from time import sleep
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import Float32, String
+
 from sailbot import constants as c
 from sailbot.utils.utils import ImuData
 
@@ -40,7 +42,7 @@ class Compass(Node):
     def ROS_GPSCallback(self, string):
         string = string.data
         gpsJson = json.loads(string)
-        self.velocity = gpsJson['velocity']
+        self.velocity = gpsJson["velocity"]
 
     def rudder_callback(self, msg):
         self.rudder_angle = float(msg.data)

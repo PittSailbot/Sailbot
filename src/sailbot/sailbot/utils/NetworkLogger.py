@@ -1,10 +1,11 @@
-import rclpy
-from rclpy.node import Node
-from rcl_interfaces.msg import Log
-from launch import LaunchContext
 import logging
 import socket
 import threading
+
+import rclpy
+from launch import LaunchContext
+from rcl_interfaces.msg import Log
+from rclpy.node import Node
 
 
 class NetworkLogger(Node):
@@ -17,17 +18,17 @@ class NetworkLogger(Node):
         try:
             self.socket.connect((self.host, self.port))
         except Exception as e:
-            self.get_logger().error(F'Failed to connect to {self.host}:{self.port}')
+            self.get_logger().error(f"Failed to connect to {self.host}:{self.port}")
             raise e
 
         self.socket.settimeout(None)
 
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)
 
-        self.get_logger().info(F'Connected to {self.host}:{self.port}')
+        self.get_logger().info(f"Connected to {self.host}:{self.port}")
 
     def ROS_LogCallback(self, msg):
-        self.socket.sendall(str(msg).encode('utf-8'))
+        self.socket.sendall(str(msg).encode("utf-8"))
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
     DOCKER = True if DOCKER == "True" else False
 
     if DOCKER:
-        host = '172.30.100.1'
+        host = "172.30.100.1"
     else:
         raise Exception("Need to set up host ip for pi")
 

@@ -1,6 +1,7 @@
 """
 Interface for detecting buoys
 """
+
 import logging
 from dataclasses import dataclass
 

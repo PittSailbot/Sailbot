@@ -1,8 +1,10 @@
+import os
+import sys
+
 import rclpy
+import RPi.GPIO as GPIO
 from rclpy.node import Node
 from std_msgs.msg import String
-import RPi.GPIO as GPIO
-import sys, os
 
 
 class Test(Node):

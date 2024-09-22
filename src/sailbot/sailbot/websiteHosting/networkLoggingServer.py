@@ -32,7 +32,7 @@ class NetworkLoggingServer:
                 if not data:
                     break
 
-                log_message = data.decode('utf-8')
+                log_message = data.decode("utf-8")
                 self.callback(log_message)
 
     def stop_server(self):

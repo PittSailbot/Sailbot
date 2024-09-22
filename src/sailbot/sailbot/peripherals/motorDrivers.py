@@ -2,17 +2,17 @@
 Contains drivers for sail and rudder 
 """
 
+import atexit
 import os
 import time
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.peripherals.Odrive import Odrive
 from sailbot.utils import boatMath
-import atexit
 
 RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
 RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])

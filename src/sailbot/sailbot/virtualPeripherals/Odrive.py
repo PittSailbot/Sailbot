@@ -4,8 +4,8 @@ calibrates and default values for Odrive and handles interfacing between Odrive 
 
 from time import sleep
 
-from rclpy.node import Node
 import rclpy
+from rclpy.node import Node
 from std_msgs.msg import String
 
 import sailbot.constants as c

@@ -4,18 +4,19 @@ Run as a script to calibrate the presets. Running 'odrivetool' in cmd is also he
 
 Documentation: https://docs.odriverobotics.com/v/latest/index.html
 """
+
 import sys
+import threading
+import time
 import traceback
 from time import sleep
-import time
 
 import odrive
-from odrive.enums import *
 import odrive.utils as ut
-from rclpy.node import Node
 import rclpy
+from odrive.enums import *
+from rclpy.node import Node
 from std_msgs.msg import String
-import threading
 
 from sailbot import constants as c
 
