@@ -22,7 +22,7 @@ def distance_between(waypoint1, waypoint2) -> float:
     # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    a = (math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     distance = EARTH_RADIUS * c
@@ -53,7 +53,7 @@ def angle_between(waypoint1, waypoint2) -> float:
     return brng
 
 
-def angleToPoint(lat1, lon1, lat2, lon2):
+def angle_to_point(lat1, lon1, lat2, lon2):
     """
     Calculate the compass angle (bearing) between two GPS coordinates.
 
@@ -85,18 +85,6 @@ def angleToPoint(lat1, lon1, lat2, lon2):
     return angle
 
 
-def convertDegMinToDecDeg(degMin):
-    min = 0.0
-    decDeg = 0.0
-
-    min = math.fmod(degMin, 100.0)
-
-    degMin = int(degMin / 100)
-    decDeg = degMin + (min / 60)
-
-    return decDeg
-
-
 def remap(x, min1, max1, min2, max2):
     """Converts x from the range min1 <= x <= max1 to the proportional y from min2 <= y <= max2
     - Identical to arduino's map() function
@@ -116,19 +104,19 @@ def get_no_go_zone_bounds(wind_angle, compass_angle):
     return no_go_zone_left_bound, no_go_zone_right_bound
 
 
-def calculateCoordinates(x0, y0, angleInDegrees, distanceInMeters):
-    earthRadius = 6371000
+def calculateCoordinates(x0, y0, angle_in_degrees, distance_in_meters):
+    earth_radius = 6371000
 
-    angularDistance = distanceInMeters / earthRadius
-    angleInRadians = math.radians(angleInDegrees)
+    angular_distance = distance_in_meters / earth_radius
+    angle_in_radians = math.radians(angle_in_degrees)
 
-    newX = x0 + math.cos(angleInRadians) * angularDistance
-    newY = y0 + math.sin(angleInRadians) * angularDistance
+    new_x = x0 + math.cos(angle_in_radians) * angular_distance
+    new_y = y0 + math.sin(angle_in_radians) * angular_distance
 
-    return newX, newY
+    return new_x, new_y
 
 
-def is_within_angle(b, a, c):
+def is_within_angle(b, a, c) -> bool:
     """Checks if the angle b, is contained within angle AC. Used to check if boat is pointed within no-go-zone"""
     if a > c:
         b = b % 360
@@ -144,7 +132,7 @@ def is_within_angle(b, a, c):
     return False
 
 
-def degrees_between(angle1, angle2):
+def degrees_between(angle1, angle2) -> float:
     """
     Computes the number of degrees between two angles measured in degrees.
 
@@ -162,46 +150,31 @@ def degrees_between(angle1, angle2):
     return min(diff, 360 - diff)
 
 
-# def quaternion_to_euler(x, y, z, w):
-#     """
-#     Convert a quaternion into euler angles (roll, pitch, yaw)
-#     roll is rotation around x in radians (counterclockwise)
-#     pitch is rotation around y in radians (counterclockwise)
-#     yaw is rotation around z in radians (counterclockwise)
-#     """
-#     t0 = +2.0 * (w * x + y * z)
-#     t1 = +1.0 - 2.0 * (x * x + y * y)
-#     roll_x = math.atan2(t0, t1)
+def quaternion_to_euler(x, y, z, w) -> (float, float, float):
+    """Convert a quaternion oreintation into euler angles (roll, pitch, yaw)
 
-#     t2 = +2.0 * (w * y - z * x)
-#     t2 = +1.0 if t2 > +1.0 else t2
-#     t2 = -1.0 if t2 < -1.0 else t2
-#     pitch_y = math.asin(t2)
+    Returns:
+        tuple(float, float, float): roll, pitch and yaw in degrees (counterclockwise)
+    """
 
-#     t3 = +2.0 * (w * z + x * y)
-#     t4 = +1.0 - 2.0 * (y * y + z * z)
-#     yaw_z = math.atan2(t3, t4)
-
-#     yaw_z_degrees = yaw_z * (180 / math.pi)
-#     pitch_y_degrees = pitch_y * (180 / math.pi)
-#     roll_x_degrees = roll_x * (180 / math.pi)
-#     return yaw_z_degrees, pitch_y_degrees, roll_x_degrees
-
-
-def quaternion_to_euler(x, y, z, w):
     ysqr = y * y
 
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + ysqr)
-    X = math.degrees(math.atan2(t0, t1))
+    roll = math.degrees(math.atan2(t0, t1))
 
     t2 = +2.0 * (w * y - z * x)
     t2 = +1.0 if t2 > +1.0 else t2
     t2 = -1.0 if t2 < -1.0 else t2
-    Y = math.degrees(math.asin(t2))
+    pitch = math.degrees(math.asin(t2))
 
     t3 = +2.0 * (w * z + x * y)
     t4 = +1.0 - 2.0 * (ysqr + z * z)
-    Z = math.degrees(math.atan2(t3, t4))
+    yaw = math.degrees(math.atan2(t3, t4))
 
-    return Z, X, Y
+    # Radians -> Degrees
+    yaw = yaw * (180 / math.pi)
+    pitch = pitch * (180 / math.pi)
+    roll = roll * (180 / math.pi)
+
+    return roll, pitch, yaw

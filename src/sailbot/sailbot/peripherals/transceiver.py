@@ -51,7 +51,7 @@ class Transceiver(Node):
         self.last_motor_offset_state = None
 
         self.ser = None
-        error = self.setupComs()
+        error = self.setup_coms()
         if error:
             raise error
 
@@ -252,10 +252,10 @@ class Transceiver(Node):
 
         self.last_motor_offset_state = motor_offset_mode
 
-    def listPorts(self):
-        """!
-        @brief Provide a list of names of serial ports that can be opened
-        @return A tuple of the port list and a corresponding list of device descriptions, and hwids
+    def list_ports(self):
+        """Provides a list of names of serial ports that can be opened
+        Returns:
+            tuple: the port list and a corresponding list of device descriptions, and hwids
         """
         ports = list(list_ports.comports())
 
@@ -268,7 +268,7 @@ class Transceiver(Node):
             descriptions.append(str(port.description))
             hwids.append(str(port.hwid))
 
-        return (resultPorts, descriptions, hwids)
+        return resultPorts, descriptions, hwids
 
 
 def main(args=None):
