@@ -47,7 +47,7 @@ class Odrive:
         self.logging.debug(f"Initializing ODrive with preset: {preset}")
         self.preset = preset
 
-        if self.od == None:
+        if self.od is None:
             self.od = odrive.find_any()
             self.last_connect_time = time.time()
             self.od.clear_errors()

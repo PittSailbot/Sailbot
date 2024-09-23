@@ -48,7 +48,13 @@ class MotorDriver(Node):
         angle = float(msg.data)
         self.logging.debug(f"Moving rudder to {angle}")
 
-        rotations = boatMath.remap(angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -self.rudder_odrive.max_rotations / 2, self.rudder_odrive.max_rotations / 2)
+        rotations = boatMath.remap(
+            angle,
+            RUDDER_MIN_ANGLE,
+            RUDDER_MAX_ANGLE,
+            -self.rudder_odrive.max_rotations / 2,
+            self.rudder_odrive.max_rotations / 2,
+        )
 
         if self.rudder_set:
             try:
@@ -60,32 +66,38 @@ class MotorDriver(Node):
             self.rudder_set = True
 
     def rudder_offset_callback(self, msg):
-        messageVal = float(msg.data)
+        msg = float(msg.data)
 
-        self.rudder_odrive.offset += messageVal
-        self.logging.debug(f"Changing Rudder offset by: {messageVal}%")
+        self.rudder_odrive.offset += msg
+        self.logging.debug(f"Changing Rudder offset by: {msg}%")
 
     def sail_callback(self, msg):
         angle = float(msg.data)
         self.logging.debug(f"Moving sail to {angle}")
 
-        rotations = boatMath.remap(angle, SAIL_MIN_ANGLE, SAIL_MAX_ANGLE, self.sail_odrive.max_rotations / 2, -self.sail_odrive.max_rotations / 2)
+        rotations = boatMath.remap(
+            angle,
+            SAIL_MIN_ANGLE,
+            SAIL_MAX_ANGLE,
+            self.sail_odrive.max_rotations / 2,
+            -self.sail_odrive.max_rotations / 2,
+        )
 
         if self.sail_set:
             try:
                 self.sail_odrive.pos = rotations
             except Exception as e:
-                self.logging.error(F"odrive error: {e}")
+                self.logging.error(f"odrive error: {e}")
                 self.sail_odrive.reconnect("sail")
         else:
             self.sail_odrive.offset = self.sail_odrive.pos - rotations
             self.sail_set = True
 
     def sail_offset_callback(self, msg):
-        messageVal = float(msg.data)
+        msg = float(msg.data)
 
-        self.sail_odrive.offset += messageVal
-        self.logging.debug(f"Changing Sail offset by: {messageVal}%")
+        self.sail_odrive.offset += msg
+        self.logging.debug(f"Changing Sail offset by: {msg}%")
 
 
 def cleanupMotors():
@@ -96,5 +108,5 @@ def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/motorDrivers"
     rclpy.init(args=args)
 
-    motorDriver = MotorDriver()
-    rclpy.spin(motorDriver)
+    motor_driver = MotorDriver()
+    rclpy.spin(motor_driver)

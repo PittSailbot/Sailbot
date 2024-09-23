@@ -51,7 +51,7 @@ class Transceiver(Node):
         self.last_motor_offset_state = None
 
         self.ser = None
-        error = self.setupComs()
+        error = self.setup_coms()
         if error:
             raise error
 
@@ -87,8 +87,8 @@ class Transceiver(Node):
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
 
-    def setupComs(self):
-        found_ports, found_descriptions, found_hwids = self.listPorts()
+    def setup_coms(self):
+        found_ports, found_descriptions, found_hwids = self.list_ports()
 
         if len(found_ports) == 0:
             raise Exception("No connected devices found")
@@ -136,7 +136,7 @@ class Transceiver(Node):
         except Exception as e:
             self.logging.error(F"Error while reading teensy: {e}")
             self.timer.cancel()
-            self.setupComs()
+            self.setup_coms()
             sleep(1)
             self.timer.reset()
             return
@@ -171,8 +171,6 @@ class Transceiver(Node):
 
     def read(self):
         """Reads incoming data from the Teensy"""
-        # self.send("?")  # transceiver is programmed to respond to '?' with its data
-
         msg = self.ser.readline().strip()
         if self.ser.in_waiting > 0:
             # empty queue
@@ -180,8 +178,8 @@ class Transceiver(Node):
         # self.logging.warning(msg)
         try:
             message = teensy_pb2.Data()
-            retVal = message.ParseFromString(msg)
-            # self.logging.warning("retVal:" + str(retVal))
+            ret_val = message.ParseFromString(msg)
+            # self.logging.warning("ret_val:" + str(ret_val))
 
             if str(message).strip() != '':
                 self.last_successful_message = time.time()
@@ -252,10 +250,10 @@ class Transceiver(Node):
 
         self.last_motor_offset_state = motor_offset_mode
 
-    def listPorts(self):
-        """!
-        @brief Provide a list of names of serial ports that can be opened
-        @return A tuple of the port list and a corresponding list of device descriptions, and hwids
+    def list_ports(self):
+        """Provides a list of names of serial ports that can be opened
+        Returns:
+            tuple: the port list and a corresponding list of device descriptions, and hwids
         """
         ports = list(list_ports.comports())
 
@@ -268,7 +266,7 @@ class Transceiver(Node):
             descriptions.append(str(port.description))
             hwids.append(str(port.hwid))
 
-        return (resultPorts, descriptions, hwids)
+        return resultPorts, descriptions, hwids
 
 
 def main(args=None):

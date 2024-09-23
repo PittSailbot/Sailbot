@@ -52,15 +52,19 @@ class CameraServos(Node):
         """Return camera servos to center"""
         pitch = self.DEFAULT_ANGLE
         yaw = self.DEFAULT_ANGLE
-        self.setPosition(CameraServoState(yaw, pitch))
+        self.set_position(CameraServoState(yaw, pitch))
 
-    def setPosition(self, position: CameraServoState):
+    def set_position(self, position: CameraServoState):
         if position.horizonal_pos == "" and position.vertical_pos != "":
             data_to_send = [int(CAM_V_MOVE_ABS_CMD), int(position.vertical_pos)]
         elif position.vertical_pos == "" and position.horizonal_pos != "":
             data_to_send = [int(CAM_H_MOVE_ABS_CMD), int(position.horizonal_pos)]
         elif position.horizonal_pos != "" and position.vertical_pos != "":
-            data_to_send = [int(CAM_MOVE_ABS_CMD), int(position.horizonal_pos), int(position.vertical_pos)]
+            data_to_send = [
+                int(CAM_MOVE_ABS_CMD),
+                int(position.horizonal_pos),
+                int(position.vertical_pos),
+            ]
         self.send_data_to_teensy(data_to_send)
 
     def send_data_to_teensy(self, data: list):
@@ -75,7 +79,7 @@ class CameraServos(Node):
 
     def ROS_servo_control_callback(self, message):
         pos = CameraServoState.fromRosMessage(message)
-        self.setPosition(pos)
+        self.set_position(pos)
 
 
 def main(args=None):

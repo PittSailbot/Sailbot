@@ -131,18 +131,18 @@ class EventDefaults:
     defaults.read(f"{c.root_dir}/eventDefaults.ini")
 
 
-def getDefaultEventParams(eventEnum):
+def get_default_event_params(event_enum):
     """
     generated a event_info dict using the default values found in eventDefaults.ini
     """
     key = None
-    for testKey, testValue in c.config["MODES"].items():
-        if testValue == eventEnum:
-            key = testKey
+    for test_key, test_value in c.config["MODES"].items():
+        if test_value == event_enum:
+            key = test_key
             break
 
     if key is None:
-        raise KeyError(f"{eventEnum} was not found in config['MODES']")
+        raise KeyError(f"{event_enum} was not found in config['MODES']")
 
     defaults = EventDefaults.defaults[key.upper()]
 
@@ -153,8 +153,8 @@ def getDefaultEventParams(eventEnum):
             event_info[key] = Waypoint(float(args[0]), float(args[1]))
 
         elif str(value).lower().startswith("float"):
-            floatVal = value.split(" ")[1]
-            event_info[key] = float(floatVal)
+            float_val = value.split(" ")[1]
+            event_info[key] = float(float_val)
 
         else:
             event_info[key] = value
