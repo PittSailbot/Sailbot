@@ -37,8 +37,11 @@
 				"eamodio.gitlens"
 			]
 		}
-	}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
+
+	// Enable auto black and isort styling before commit
+	"postStartCommand": "pre-commit install"
 }

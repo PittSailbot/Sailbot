@@ -1,13 +1,7 @@
 [tool.black]
 line-length = 200
-skip-string-normalization = true
-exclude = """
-/(
-sailbot/sailbot/deprecated
-| teensy
-| sailbot/sailbot/telemetry
-)/
-"""
+force-exclude = '.*src\/teensy\/.*|.*src\/sailbot\/sailbot\/protobuf\/.*'
 
 [tool.isort]
 profile = "black"
+skip_gitignore = true
