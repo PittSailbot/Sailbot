@@ -7,15 +7,24 @@
 
 int encoderValue = 0;
 int lastEncoderValue = 0;
+/*
+displayedEncoderValue = 0;
+minEncoderValue = 0;
+maxEncoderValue = 0;
+*/
 bool hasChanged = false;
 
 void encoderISR() {
     // Interrupt functions to update the encoder value whenever the windvane changes angle
-    // Read the current state of encoder pin B
+    // Read the current state of enc oder pin B
     cli();
-    
+    //lastEncoderValue = encoderValue;
     int bState = digitalRead(WINDVANE_ENCODER_B);
     encoderValue += (bState == HIGH) ? 1 : -1;
+    /*
+    
+    
+    */
     encoderValue %= ENCODER_ROTATION;
     hasChanged = true;
 
