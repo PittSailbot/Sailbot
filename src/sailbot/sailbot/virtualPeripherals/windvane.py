@@ -1,11 +1,12 @@
 """
 Interface for reading wind angle
 """
+
+import json
+import os
 from threading import Lock, Thread
 from time import sleep
-import os 
-import json
-    
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -33,9 +34,7 @@ class WindVane(Node):
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-        self.compass_subscription = self.create_subscription(
-            String, "imu", self.ROS_compassCallback, 10
-        )
+        self.compass_subscription = self.create_subscription(String, "imu", self.ROS_compassCallback, 10)
 
         self._angle = 0
 
@@ -44,13 +43,12 @@ class WindVane(Node):
         self.compass_yaw = data.yaw
 
     def timer_callback(self):
-
         self.angle = (-self.compass_yaw + self.wind_source_angle) % 360
 
         msg = String()
         msg.data = str(self.angle)
         self.pub.publish(msg)
-        self.logging.debug(F'Windvane Publishing: "{msg.data}"')
+        self.logging.debug(f'Windvane Publishing: "{msg.data}"')
 
     def map(self, x, min1, max1, min2, max2):
         # converts value x, which ranges from min1-max1, to a corresponding value ranging from min2-max2
@@ -89,12 +87,13 @@ class NoGoZone:
 
         return False
 
+
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/windvane"
     rclpy.init(args=args)
     windvane = WindVane()
     rclpy.spin(windvane)
 
+
 if __name__ == "__main__":
     main()
-

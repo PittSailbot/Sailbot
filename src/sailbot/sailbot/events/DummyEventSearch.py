@@ -1,23 +1,23 @@
 import importlib
+import json
 import math
 import os
-import time
 import threading
-import json
+import time
 
 import rclpy
-from rcl_interfaces.msg import ParameterDescriptor
-from rcl_interfaces.msg import ParameterType
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.utils.boatMath import distance_between
 from sailbot.utils.eventUtils import Event, EventFinished
-from sailbot.utils.utils import Waypoint, has_reached_waypoint, CameraServoState
+from sailbot.utils.utils import CameraServoState, Waypoint, has_reached_waypoint
 
 DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if DOCKER == "True" else False
 folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
+
 
 class DummyEventSearch(Event):
     """
@@ -37,13 +37,13 @@ class DummyEventSearch(Event):
 
         # Declare parameters and their default values
         self.configureParameters()
-        
+
         # Set data based on parameters
-        target = self.get_parameter('Waypoint1').value
+        target = self.get_parameter("Waypoint1").value
         self.target = Waypoint(target[0], target[1])
 
         self.queuedWaypoints = []
-        for param in ['Waypoint2', 'Waypoint3', 'Waypoint4']:
+        for param in ["Waypoint2", "Waypoint3", "Waypoint4"]:
             target = self.get_parameter(param).value
             self.queuedWaypoints.append(Waypoint(target[0], target[1]))
 
@@ -53,11 +53,9 @@ class DummyEventSearch(Event):
         timer_period = 10.0  # seconds
         self.timer = self.create_timer(timer_period, self.publish_queued_waypoints)
 
-        self.set_event_subscription = self.create_subscription(
-            String, "set_event_target", self.ROS_setEventCallback, 10
-        )
+        self.set_event_subscription = self.create_subscription(String, "set_event_target", self.ROS_setEventCallback, 10)
 
-        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
+        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 1)
 
         self.position = None
         self.cameraLoc = 0
@@ -66,28 +64,25 @@ class DummyEventSearch(Event):
         self.position = Waypoint.from_msg(msg)
 
     def configureParameters(self):
-        descriptor = ParameterDescriptor(
-            type=ParameterType.PARAMETER_DOUBLE_ARRAY,
-            description='Latitude and longitude for the target waypoint'
-        )
+        descriptor = ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE_ARRAY, description="Latitude and longitude for the target waypoint")
         default_value = None
-        self.declare_parameter('Waypoint1', default_value, descriptor)
-        self.declare_parameter('Waypoint2', default_value, descriptor)
-        self.declare_parameter('Waypoint3', default_value, descriptor)
-        self.declare_parameter('Waypoint4', default_value, descriptor)
+        self.declare_parameter("Waypoint1", default_value, descriptor)
+        self.declare_parameter("Waypoint2", default_value, descriptor)
+        self.declare_parameter("Waypoint3", default_value, descriptor)
+        self.declare_parameter("Waypoint4", default_value, descriptor)
 
         # Verify the parameters were set when the Node was created
-        paramList = ['Waypoint1', 'Waypoint2', 'Waypoint3', 'Waypoint4']
+        paramList = ["Waypoint1", "Waypoint2", "Waypoint3", "Waypoint4"]
         for param in paramList:
             paramValue = self.get_parameter(param).value
 
             if paramValue == None:
-                self.logging.error(F"{self.__class__.__name__} parameters not set!")
-                raise Exception(F"{self.__class__.__name__} parameters not set!")
+                self.logging.error(f"{self.__class__.__name__} parameters not set!")
+                raise Exception(f"{self.__class__.__name__} parameters not set!")
 
             if len(paramValue) != 2:
-                self.logging.error(F"{self.__class__.__name__} parameters invalid!")
-                raise Exception(F"{self.__class__.__name__} parameters invalid!")
+                self.logging.error(f"{self.__class__.__name__} parameters invalid!")
+                raise Exception(f"{self.__class__.__name__} parameters invalid!")
 
     def next_gps(self):
         self.cameraLoc = (self.cameraLoc + 5) % 90
@@ -100,15 +95,15 @@ class DummyEventSearch(Event):
         if self.position and distance_between(self.position, self.target) < 3:
             self.target = self.queuedWaypoints.pop(0)
         return self.target
-    
+
     def publish_queued_waypoints(self):
         msg = String()
-        msg.data = json.dumps({'Waypoints': [self.target.toJson()] + [wp.toJson() for wp in self.queuedWaypoints]})
+        msg.data = json.dumps({"Waypoints": [self.target.toJson()] + [wp.toJson() for wp in self.queuedWaypoints]})
         self.pub_queuedWaypoints.publish(msg)
-    
+
     def ROS_setEventCallback(self, msg):
         self.target = Waypoint.from_msg(msg)
-        
+
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/main"

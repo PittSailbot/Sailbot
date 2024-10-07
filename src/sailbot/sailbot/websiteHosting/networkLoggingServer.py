@@ -1,7 +1,8 @@
 import socket
 import threading
 
-class NetworkLoggingServer():
+
+class NetworkLoggingServer:
     def __init__(self, host, port, callback=None) -> None:
         self.host = host
         self.port = port
@@ -31,7 +32,7 @@ class NetworkLoggingServer():
                 if not data:
                     break
 
-                log_message = data.decode('utf-8')
+                log_message = data.decode("utf-8")
                 self.callback(log_message)
 
     def stop_server(self):

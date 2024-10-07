@@ -24,27 +24,24 @@
 		}
 	},
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
-
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {			
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				"platformio.platformio-ide",
+				//"platformio.platformio-ide",
 				"ms-python.python",
 				"ms-vscode-remote.remote-ssh",
 				"ms-iot.vscode-ros",
 				"eamodio.gitlens"
 			]
 		}
-	}
+	},
 
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Enable auto black and isort styling before commit
+	"postStartCommand": "pre-commit install"
 }

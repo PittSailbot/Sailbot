@@ -1,5 +1,7 @@
 [tool.black]
-line-length = 120
+line-length = 200
+force-exclude = '.*src\/teensy\/.*|.*src\/sailbot\/sailbot\/protobuf\/.*'
 
 [tool.isort]
 profile = "black"
+skip_gitignore = true

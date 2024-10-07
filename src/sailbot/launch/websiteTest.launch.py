@@ -1,28 +1,22 @@
+import os
+from datetime import datetime
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import TextSubstitution
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-from datetime import datetime
-import os
 
 
 def generate_launch_description():
     os.environ["ROS_LOG_DIR"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
     os.environ["ROS_LOG_DIR_BASE"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
 
-    config = os.path.join(
-        get_package_share_directory('sailbot'),
-        'config',
-        'params_eventDefaults.yaml'
-        )
+    config = os.path.join(get_package_share_directory("sailbot"), "config", "params_eventDefaults.yaml")
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "log_level", default_value=TextSubstitution(text=str("INFO"))
-            ),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("INFO"))),
             Node(
                 package="sailbot",
                 namespace="boat",
@@ -114,8 +108,7 @@ def generate_launch_description():
                     "--ros-args",
                     "--log-level",
                     LaunchConfiguration("log_level"),
-                ]
+                ],
             ),
-            
         ]
     )

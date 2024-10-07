@@ -1,14 +1,16 @@
+import os
+import sys
+
 import rclpy
+import RPi.GPIO as GPIO
 from rclpy.node import Node
 from std_msgs.msg import String
-import RPi.GPIO as GPIO
-import sys, os
+
 
 class Test(Node):
     def __init__(self):
         super().__init__("test")
         self.logging = self.get_logger()
-
 
         self.pub = self.create_publisher(String, "test", 10)
         self.timer = self.create_timer(1, self.timer_callback)
@@ -19,7 +21,6 @@ class Test(Node):
         self.pinState = False
 
         self.logging.info("starting")
-        
 
     def timer_callback(self):
         self.pinState = not self.pinState
@@ -28,11 +29,10 @@ class Test(Node):
         self.logging.info("timer")
         self.pub.publish(msg)
 
+
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/rosTest"
     rclpy.init(args=args)
 
     t = Test()
     rclpy.spin(t)
-
-

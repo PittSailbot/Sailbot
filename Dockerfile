@@ -49,6 +49,9 @@ RUN echo 'source /opt/ros/humble/setup.bash' >> /ros_entrypoint.sh
 RUN echo 'exec "$@"' >> /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh
 
+# Install ROS packages
+RUN apt-get update && apt-get install -y ros-humble-geographic-msgs
+
 RUN apt-get update && apt-get install -y pip
 COPY requirements-dev.txt /workspace/
 COPY requirements-pi.txt /workspace/
@@ -89,5 +92,11 @@ RUN pip install build
 RUN pip install adafruit-blinka
 RUN sudo apt install -y python3-libgpiod
 RUN pip install adafruit-circuitpython-gps
+
+# Dev Container PlatformIO Requirement
+#RUN apt-get update && apt-get install -y software-properties-common && \
+    #add-apt-repository universe && \
+    #apt-get update
+#RUN apt-get install -y python3-venv
 
 WORKDIR /workspace/

@@ -2,25 +2,25 @@
 interfaces with USB GPS sensor
 """
 
+import json
+import math
 import os
+import random
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Float32
+from std_msgs.msg import Float32, String
 
-from sailbot.utils.utils import DummyObject, ControlState, ImuData
 from sailbot.utils.boatMath import is_within_angle
-import random
-import math
-import json
-
+from sailbot.utils.utils import ControlState, DummyObject, ImuData
 
 NO_GO_MIN = 40
 NO_GO_MAX = 360 - NO_GO_MIN
 
-MAX_VEL = 1.5 #m/s
-MAX_ACCEL = 0.01 #m/s^2
+MAX_VEL = 1.5  # m/s
+MAX_ACCEL = 0.01  # m/s^2
 MAX_DECCEL = 0.02
+
 
 class GPS(Node):
     """
@@ -45,15 +45,11 @@ class GPS(Node):
         self.pub = self.create_publisher(String, "GPS", 10)
         self.control_state_pub = self.create_publisher(String, "control_state", 10)
 
-        self.compass_subscription = self.create_subscription(
-            String, "imu", self.ROS_compassCallback, 10
-        )
-        self.windvane_subscription = self.create_subscription(
-            String, "wind_angle", self.ROS_windvaneCallback, 10
-        )
-        
+        self.compass_subscription = self.create_subscription(String, "imu", self.ROS_compassCallback, 10)
+        self.windvane_subscription = self.create_subscription(String, "wind_angle", self.ROS_windvaneCallback, 10)
+
         self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
-        
+
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -72,17 +68,13 @@ class GPS(Node):
 
     def timer_callback(self):
         self.control_state_pub.publish(ControlState(ControlState.AUTO, ControlState.AUTO).toRosMessage())
-        
+
         optAngle = max(min(self.relative_wind / 2, 90), 3)
         self.sail_angle = optAngle
-        if ( is_within_angle(self.relative_wind, (NO_GO_MIN), (NO_GO_MAX))):
-            self.velocity = min(MAX_VEL, self.velocity + MAX_ACCEL) * max(
-                (1 - abs(self.sail_angle - optAngle) / 30), 0
-            )
+        if is_within_angle(self.relative_wind, (NO_GO_MIN), (NO_GO_MAX)):
+            self.velocity = min(MAX_VEL, self.velocity + MAX_ACCEL) * max((1 - abs(self.sail_angle - optAngle) / 30), 0)
         else:
-            self.velocity = max(self.velocity - MAX_DECCEL, 0) * max(
-                (1 - abs(self.sail_angle - optAngle) / 30), 0
-            )
+            self.velocity = max(self.velocity - MAX_DECCEL, 0) * max((1 - abs(self.sail_angle - optAngle) / 30), 0)
 
         dx, dy = self.calculate_position_change(self.velocity, degreesToRadians(self.compass_yaw))
         self.gps.latitude, self.gps.longitude = self.computeNewCoordinate(self.gps.latitude, self.gps.longitude, dx, dy)
@@ -90,14 +82,9 @@ class GPS(Node):
         noisyLat, noisyLon = self.computeNewCoordinate(self.gps.latitude, self.gps.longitude, self.getNoise(gpsNoise), self.getNoise(gpsNoise))
 
         msg = String()
-        msg.data = (
-            json.dumps({'lat': noisyLat,
-                        'lon': noisyLon,
-                        'track_angle': self.gps.track_angle_deg,
-                        'velocity': self.velocity})
-        )
+        msg.data = json.dumps({"lat": noisyLat, "lon": noisyLon, "track_angle": self.gps.track_angle_deg, "velocity": self.velocity})
         self.pub.publish(msg)
-        self.logging.debug(F'GPS Publishing: "{msg.data}"')
+        self.logging.debug(f'GPS Publishing: "{msg.data}"')
 
     def __getattribute__(self, name):
         """
@@ -138,12 +125,11 @@ class GPS(Node):
         d_lon /= 1000
 
         new_lat = lat + (d_lat / earthRadiusKm) * (180 / math.pi)
-        new_lon = lon + (d_lon / earthRadiusKm) * (180 / math.pi) / math.cos(
-            lat * math.pi / 180
-        )
+        new_lon = lon + (d_lon / earthRadiusKm) * (180 / math.pi) / math.cos(lat * math.pi / 180)
 
         return (new_lat, new_lon)
-    
+
+
 def degreesToRadians(degrees):
     return degrees * math.pi / 180
 
@@ -167,6 +153,7 @@ def main(args=None):
 
 if __name__ == "__main__":
     from time import sleep
+
     gps = GPS()
     while True:
         gps.updategps()

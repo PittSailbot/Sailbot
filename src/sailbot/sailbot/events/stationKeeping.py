@@ -2,6 +2,7 @@ import importlib
 import math
 import os
 import time
+
 from std_msgs.msg import String
 
 from sailbot.utils.eventUtils import Event
@@ -111,9 +112,7 @@ class StationKeeping(Event):
             # find best point to leave:
             if self.escape_x == None:
                 self.skip = True  # faster if statement
-                self.escape_x, self.escape_y = self.cart_perimiter_scan(
-                    self.cool_arr[-7:-1]
-                )  # i thought the func name sounded cool
+                self.escape_x, self.escape_y = self.cart_perimiter_scan(self.cool_arr[-7:-1])  # i thought the func name sounded cool
             self.last_pnt_x, self.last_pnt_y = self.escape_x, self.escape_y
             return Waypoint(self.escape_x, self.escape_y)
 
@@ -122,11 +121,7 @@ class StationKeeping(Event):
         # also put before time because then it doesnt matter cause it's already out
 
         # past front line of box
-        if not (
-            self.SK_line_check(
-                self.cool_arr[-9:-7], self.cool_arr[-3:-1], self.cool_arr[-1]
-            )
-        ):
+        if not (self.SK_line_check(self.cool_arr[-9:-7], self.cool_arr[-3:-1], self.cool_arr[-1])):
             self.logging.debug("too forward")
             # loosen sail, do nuthin; drift
             # .adjustSail(90)
@@ -134,22 +129,14 @@ class StationKeeping(Event):
             return None
 
         # past bottom line of box
-        elif not (
-            self.SK_line_check(
-                self.cool_arr[-3:-1], self.cool_arr[-9:-7], self.cool_arr[-1]
-            )
-        ):
+        elif not (self.SK_line_check(self.cool_arr[-3:-1], self.cool_arr[-9:-7], self.cool_arr[-1])):
             self.logging.debug("too back")
             # go to 90deg line
             self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
             return Waypoint(self.cool_arr[6], self.cool_arr[7])
 
         # past left line of box
-        elif not (
-            self.SK_line_check(
-                self.cool_arr[-7:-5], self.cool_arr[-5:-3], self.cool_arr[-1]
-            )
-        ):
+        elif not (self.SK_line_check(self.cool_arr[-7:-5], self.cool_arr[-5:-3], self.cool_arr[-1])):
             self.logging.debug("too left")
             # find/go-to intersect of line (+)35degrees of wind direction to left line
             # mini cart scan
@@ -158,11 +145,7 @@ class StationKeeping(Event):
             return Waypoint(t_x, t_y)
 
         # past right line of box
-        elif not (
-            self.SK_line_check(
-                self.cool_arr[-5:-3], self.cool_arr[-7:-5], self.cool_arr[-1]
-            )
-        ):
+        elif not (self.SK_line_check(self.cool_arr[-5:-3], self.cool_arr[-7:-5], self.cool_arr[-1])):
             self.logging.debug("too right")
             # find/go-to intersect of line (-)35degrees of wind direction to left line
             # mini cart scan
@@ -175,9 +158,7 @@ class StationKeeping(Event):
         if self.start:
             self.logging.debug("start if")
             # if not moving and behind 80%
-            if self.SK_line_check(
-                self.cool_arr[0:2], self.cool_arr[-3:-1], self.cool_arr[-1]
-            ):
+            if self.SK_line_check(self.cool_arr[0:2], self.cool_arr[-3:-1], self.cool_arr[-1]):
                 self.logging.debug("start: behind 80%; ending start")
                 self.start = False
                 self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
@@ -189,24 +170,16 @@ class StationKeeping(Event):
         # majority of the sail
         else:
             # if behind 75%:sail back
-            if self.SK_line_check(
-                self.cool_arr[2:4], self.cool_arr[-3:-1], self.cool_arr[-1]
-            ):
+            if self.SK_line_check(self.cool_arr[2:4], self.cool_arr[-3:-1], self.cool_arr[-1]):
                 self.last_pnt_x, self.last_pnt_y = self.cool_arr[6], self.cool_arr[7]
                 return Waypoint(self.cool_arr[6], self.cool_arr[7])  # go to 90deg line
 
             # if past or at 90% (redundence reduction)
-            elif not (
-                self.SK_line_check(
-                    self.cool_arr[4:6], self.cool_arr[-3:-1], self.cool_arr[-1]
-                )
-            ):
+            elif not (self.SK_line_check(self.cool_arr[4:6], self.cool_arr[-3:-1], self.cool_arr[-1])):
                 self.last_pnt_x, self.last_pnt_y = None, None
                 return None  # loosen sail, do nuthin
 
-        return Waypoint(
-            self.last_pnt_x, self.last_pnt_y
-        )  # fall back return if nested if's dont pass
+        return Waypoint(self.last_pnt_x, self.last_pnt_y)  # fall back return if nested if's dont pass
 
     # give %-line of box and other lines(details in SK) used in algo
     def SK_perc_guide(self, inp_arr, type_arr, buoy_arr):
@@ -241,7 +214,7 @@ class StationKeeping(Event):
         """
         #   (12,13,34,24);(front,left,back,right)
         #   02,04,46,26
-        a = [0, 2, 0, 4, 4, 6, 2, 6]    #optimizing code with for rather then long ass list
+        a = [0, 2, 0, 4, 4, 6, 2, 6]  # optimizing code with for rather then long ass list
         # 0,1, 2,3, 4,5, 6,7
         for i in range(4):  # 0,1,2,3
             # TODO: remove nice variables: just fill in and make two lines (optimization)

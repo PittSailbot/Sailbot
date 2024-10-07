@@ -176,9 +176,7 @@ class PrecisionNavigation(Event):
             # left(long) of BL buoy[{4},5]
             # below(lat) line between p1[0,1] and BL buoy[4,5]
             if self.target_set == 1:
-                x = self.gps.longitude <= self._event_info[
-                    4
-                ] and self.gps.latitude <= self.SK_f(
+                x = self.gps.longitude <= self._event_info[4] and self.gps.latitude <= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[0],
                     self.PN_arr[1],
@@ -189,9 +187,7 @@ class PrecisionNavigation(Event):
             # below(lat) of BL buoy[4,{5}]
             # below(lat) line between p2[2,3] and BL buoy[4,5]
             elif self.target_set == 2:
-                x = self.gps.latitude <= self._event_info[
-                    5
-                ] and self.gps.latitude <= self.SK_f(
+                x = self.gps.latitude <= self._event_info[5] and self.gps.latitude <= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[2],
                     self.PN_arr[3],
@@ -214,9 +210,7 @@ class PrecisionNavigation(Event):
             # right(long) of BR buoy[{6},7]
             # above(lat) line between p4[6,7] and BR buoy[6,7]
             elif self.target_set == 4:
-                x = self.gps.longitude >= self._event_info[
-                    6
-                ] and self.gps.latitude >= self.SK_f(
+                x = self.gps.longitude >= self._event_info[6] and self.gps.latitude >= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[6],
                     self.PN_arr[7],
@@ -227,9 +221,7 @@ class PrecisionNavigation(Event):
             # above(lat) of BR buoy[6,{7}]
             # above(lat) line between p5[8,9] and BR buoy[6,7]
             elif self.target_set == 5:
-                x = self.gps.latitude >= self._event_info[
-                    7
-                ] and self.gps.latitude >= self.SK_f(
+                x = self.gps.latitude >= self._event_info[7] and self.gps.latitude >= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[8],
                     self.PN_arr[9],
@@ -247,18 +239,14 @@ class PrecisionNavigation(Event):
                     self._event_info[3],
                 )
             else:
-                self.logging.error(
-                    f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}"
-                )
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         # flip long/lat------------------------------------------------------------------
         elif not (self.ifupsidedown) and self.ifsideways:
             # left(long) of BL buoy[{4},5]
             # below(lat) line between p1[0,1] and BL buoy[4,5]
             if self.target_set == 1:
-                x = self.gps.latitude <= self._event_info[
-                    4
-                ] and self.gps.longitude <= self.SK_f(
+                x = self.gps.latitude <= self._event_info[4] and self.gps.longitude <= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[0],
                     self.PN_arr[1],
@@ -269,9 +257,7 @@ class PrecisionNavigation(Event):
             # below(lat) of BL buoy[4,{5}]
             # below(lat) line between p2[2,3] and BL buoy[4,5]
             elif self.target_set == 2:
-                x = self.gps.longitude <= self._event_info[
-                    5
-                ] and self.gps.longitude <= self.SK_f(
+                x = self.gps.longitude <= self._event_info[5] and self.gps.longitude <= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[2],
                     self.PN_arr[3],
@@ -294,9 +280,7 @@ class PrecisionNavigation(Event):
             # right(long) of BR buoy[{6},7]
             # above(lat) line between p4[6,7] and BR buoy[6,7]
             elif self.target_set == 4:
-                x = self.gps.latitude >= self._event_info[
-                    6
-                ] and self.gps.longitude >= self.SK_f(
+                x = self.gps.latitude >= self._event_info[6] and self.gps.longitude >= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[6],
                     self.PN_arr[7],
@@ -307,9 +291,7 @@ class PrecisionNavigation(Event):
             # above(lat) of BR buoy[6,{7}]
             # above(lat) line between p5[8,9] and BR buoy[6,7]
             elif self.target_set == 5:
-                x = self.gps.longitude >= self._event_info[
-                    7
-                ] and self.gps.longitude >= self.SK_f(
+                x = self.gps.longitude >= self._event_info[7] and self.gps.longitude >= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[8],
                     self.PN_arr[9],
@@ -327,18 +309,14 @@ class PrecisionNavigation(Event):
                     self._event_info[3],
                 )
             else:
-                self.logging.error(
-                    f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}"
-                )
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         # flip >/<------------------------------------------------------------------
         elif self.ifupsidedown and not (self.ifsideways):
             # left(long) of BL buoy[{4},5]
             # below(lat) line between p1[0,1] and BL buoy[4,5]
             if self.target_set == 1:
-                x = self.gps.longitude >= self._event_info[
-                    4
-                ] and self.gps.latitude >= self.SK_f(
+                x = self.gps.longitude >= self._event_info[4] and self.gps.latitude >= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[0],
                     self.PN_arr[1],
@@ -349,9 +327,7 @@ class PrecisionNavigation(Event):
             # below(lat) of BL buoy[4,{5}]
             # below(lat) line between p2[2,3] and BL buoy[4,5]
             elif self.target_set == 2:
-                x = self.gps.latitude >= self._event_info[
-                    5
-                ] and self.gps.latitude >= self.SK_f(
+                x = self.gps.latitude >= self._event_info[5] and self.gps.latitude >= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[2],
                     self.PN_arr[3],
@@ -374,9 +350,7 @@ class PrecisionNavigation(Event):
             # right(long) of BR buoy[{6},7]
             # above(lat) line between p4[6,7] and BR buoy[6,7]
             elif self.target_set == 4:
-                x = self.gps.longitude <= self._event_info[
-                    6
-                ] and self.gps.latitude <= self.SK_f(
+                x = self.gps.longitude <= self._event_info[6] and self.gps.latitude <= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[6],
                     self.PN_arr[7],
@@ -387,9 +361,7 @@ class PrecisionNavigation(Event):
             # above(lat) of BR buoy[6,{7}]
             # above(lat) line between p5[8,9] and BR buoy[6,7]
             elif self.target_set == 5:
-                x = self.gps.latitude <= self._event_info[
-                    7
-                ] and self.gps.latitude <= self.SK_f(
+                x = self.gps.latitude <= self._event_info[7] and self.gps.latitude <= self.SK_f(
                     self.gps.longitude,
                     self.PN_arr[8],
                     self.PN_arr[9],
@@ -407,18 +379,14 @@ class PrecisionNavigation(Event):
                     self._event_info[3],
                 )
             else:
-                self.logging.error(
-                    f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}"
-                )
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         # flip long/lat, flip >/<------------------------------------------------------------------
         elif self.ifupsidedown and self.ifsideways:
             # left(long) of BL buoy[{4},5]
             # below(lat) line between p1[0,1] and BL buoy[4,5]
             if self.target_set == 1:
-                x = self.gps.latitude >= self._event_info[
-                    4
-                ] and self.gps.longitude >= self.SK_f(
+                x = self.gps.latitude >= self._event_info[4] and self.gps.longitude >= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[0],
                     self.PN_arr[1],
@@ -429,9 +397,7 @@ class PrecisionNavigation(Event):
             # below(lat) of BL buoy[4,{5}]
             # below(lat) line between p2[2,3] and BL buoy[4,5]
             elif self.target_set == 2:
-                x = self.gps.longitude >= self._event_info[
-                    5
-                ] and self.gps.longitude >= self.SK_f(
+                x = self.gps.longitude >= self._event_info[5] and self.gps.longitude >= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[2],
                     self.PN_arr[3],
@@ -454,9 +420,7 @@ class PrecisionNavigation(Event):
             # right(long) of BR buoy[{6},7]
             # above(lat) line between p4[6,7] and BR buoy[6,7]
             elif self.target_set == 4:
-                x = self.gps.latitude <= self._event_info[
-                    6
-                ] and self.gps.longitude <= self.SK_f(
+                x = self.gps.latitude <= self._event_info[6] and self.gps.longitude <= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[6],
                     self.PN_arr[7],
@@ -467,9 +431,7 @@ class PrecisionNavigation(Event):
             # above(lat) of BR buoy[6,{7}]
             # above(lat) line between p5[8,9] and BR buoy[6,7]
             elif self.target_set == 5:
-                x = self.gps.longitude <= self._event_info[
-                    7
-                ] and self.gps.longitude <= self.SK_f(
+                x = self.gps.longitude <= self._event_info[7] and self.gps.longitude <= self.SK_f(
                     self.gps.latitude,
                     self.PN_arr[8],
                     self.PN_arr[9],
@@ -487,9 +449,7 @@ class PrecisionNavigation(Event):
                     self._event_info[3],
                 )
             else:
-                self.logging.error(
-                    f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}"
-                )
+                self.logging.error(f"PN: ERROR: 00: TARGET SET OUT OF RANGE (1to6)\nTARGET PNT = {self.target_set}")
 
         return x
 

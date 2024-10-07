@@ -3,30 +3,32 @@
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
+import json
+import os
+
 # Simple GPS module demonstration.
 # Will wait for a fix and print a message every second with the current location
 # and other details.
 import time
-import board
-import busio
-import serial
-import os
-import json
+from time import sleep
 
 import adafruit_gps
-
-from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
-from sailbot.utils import boatMath
+import board
+import busio
 import rclpy
 import serial
-from serial.tools import list_ports
-from rclpy.node import Node
-from std_msgs.msg import String, Float32, Int32
 from geometry_msgs.msg import Quaternion
-from time import sleep
-# from geographic_msgs.msg import GeoPose, GeoPoint
+from rclpy.node import Node
+from serial.tools import list_ports
+from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
+from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
+from sailbot.utils import boatMath
+
+# from geographic_msgs.msg import GeoPose, GeoPoint
+
+
 # https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
 # Compile .proto with `protoc teensy.proto --python_out=./`
 # from sailbot.utils.utils import Waypoint, ControlState, ImuData
@@ -45,25 +47,20 @@ class GPS(Node):
 
         self.gps.send_command(b"PMTK220,1000")
 
-        self.pub = self.create_publisher(String, "/boat/GPS", 10)
+        self.pub = self.create_publisher(String, "/boat/GPS", 1)
 
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         self.gps.update()
-        
+
         if self.gps.has_fix:
             msg = String()
-            msg.data = (
-                json.dumps({'lat': self.gps.latitude,
-                            'lon': self.gps.longitude,
-                            'track_angle': self.gps.track_angle_deg,
-                            'velocity': self.gps.speed_knots})
-            )
+            msg.data = json.dumps({"lat": self.gps.latitude, "lon": self.gps.longitude, "track_angle": self.gps.track_angle_deg, "velocity": self.gps.speed_knots})
             self.logging.info(str(msg.data))
             self.pub.publish(msg)
-            self.logging.debug(F'GPS Publishing: "{msg.data}"')
+            self.logging.debug(f'GPS Publishing: "{msg.data}"')
 
     # # Main loop runs forever printing the location, etc. every second.
     # last_print = time.monotonic()
@@ -121,6 +118,7 @@ class GPS(Node):
     #             print("Horizontal dilution: {}".format(gps.horizontal_dilution))
     #         if gps.height_geoid is not None:
     #             print("Height geoid: {} meters".format(gps.height_geoid))'
+
 
 def main(args=None):
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"

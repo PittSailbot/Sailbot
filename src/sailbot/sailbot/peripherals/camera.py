@@ -1,6 +1,7 @@
 """
 Interface for camera
 """
+
 import math
 import os
 import time
@@ -11,9 +12,9 @@ from std_msgs.msg import String
 
 from sailbot import constants as c
 from sailbot.CV.objectDetection import ObjectDetection, draw_bbox
+from sailbot.peripherals.cameraServos import CameraServos
 from sailbot.utils.boatMath import distance_between
 from sailbot.utils.utils import Waypoint
-from sailbot.peripherals.cameraServos import CameraServos
 
 
 class Frame:
@@ -66,8 +67,8 @@ class Camera(Node):
         self.path = os.getcwd()
         if c.config["MAIN"]["device"] == "pi":
             self.servos = CameraServos()
-            self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 2)
-            self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 2)
+            self.gps_sub = self.create_subscription(String, "gps", self.gps_callback, 1)
+            self.compass_sub = self.create_subscription(String, "compass", self.compass_callback, 1)
 
             self.position = None
             self.compass_angle = None
@@ -136,10 +137,7 @@ class Camera(Node):
 
         return frame
 
-    def survey(self, num_images=3, pitch=70,
-               servo_range=180, context=True,
-               detect=False, annotate=False,
-               save=False) -> list[Frame]:
+    def survey(self, num_images=3, pitch=70, servo_range=180, context=True, detect=False, annotate=False, save=False) -> list[Frame]:
         """Takes a horizontal panaroma over the camera's field of view
             - Maximum boat FoV is ~242.2 degrees (not tested)
         # Args:
@@ -210,10 +208,7 @@ class Camera(Node):
             self.logging.info(f"Focusing on camera pixel detection")
             Cx, Cy = detection.x, detection.y
             Px, Py = Cx / c.config["OBJECTDETECTION"]["camera_width"], Cy / c.config["OBJECTDETECTION"]["camera_height"]
-            if (
-                Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
-            ):
+            if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]:
                 return
 
             """
@@ -237,10 +232,7 @@ class Camera(Node):
                     Cx / c.config["OBJECTDETECTION"]["camera_width"],
                     Cy / c.config["OBJECTDETECTION"]["camera_height"],
                 )
-                if (
-                    Px <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                    and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]
-                ):
+                if Px <= c.config["OBJECTDETECTION"]["center_acceptance"] and Py <= c.config["OBJECTDETECTION"]["center_acceptance"]:
                     break
 
                 # TERRIBLE LOGIC
@@ -250,77 +242,6 @@ class Camera(Node):
                     signT = 1
                 if sign * signT == -1:
                     turn_deg * 0.8
-
-    # ----------------------------------
-    # calculate gps coords of object based on distance formula and angle
-    # speculation:
-    # rework events to work on ever updating gps coords rather then fantom radius area?
-    # how would you differenciate them from eachother?
-    def coordcalc(self, obj_width):
-        if c.config["OBJECTDETECTION"]["Width_Real"] == 0 or c.config["OBJECTDETECTION"]["Focal_Length"] == 0:
-            raise Exception("MISSING WIDTH REAL/FOCAL LENGTH INFO IN CONSTANTS")
-        dist = (c.config["OBJECTDETECTION"]["Width_Real"] * c.config["OBJECTDETECTION"]["Focal_Length"]) / obj_width
-        # TODO: either add angle its away from boat or focus boat at coord
-        comp = compass()  # assume 0 is north(y pos)
-        geep = gps()
-        geep.updategps()
-
-        t = math.pi / 180
-        # intersection of a line coming from the front of the boat to a circle of with a radius the distance it is away
-        return (
-            dist * math.cos((comp.angle + self.servos.yaw - 90) * t) + geep.latitude,
-            dist * math.sin((comp.angle + self.servos.yaw - 90) * t) + geep.longitude,
-        )
-
-    # ----------------------------------
-    # search use: returns based on threshold if theres a buoy in frame
-    def SCAN_minor(self):
-        # take 3 images by steps
-        imgs = self.survey(3, detect=True)
-        dets = []
-        for img in imgs:
-            dets.extend(img.detections)
-        for det in dets:
-            if det.conf > c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]:
-                return True
-        return False
-
-    # no real use (YET), but cool for presentation
-    # determine closest by widest in set of highest/threshold conf values, center camera to it(focus) , find distance away (coordcalc)
-    def SCAN_major(self):
-        # take 3 images by steps
-        imgs = self.survey(num_images=3, detect=True)
-        dets = []
-        for img in imgs:
-            dets.extend(img.detections)
-        # survey by groups of (1-thres)/steps
-        curr = []
-        st = (1 - c.config["OBJECTDETECTION"]["SCAN_minor_thresh"]) / c.config["OBJECTDETECTION"]["SCAN_major_steps"]
-        for j in range(c.config["OBJECTDETECTION"]["SCAN_major_steps"]):
-            for i in dets:
-                if i.conf > 1 - (st * j):
-                    curr.append(i)
-            if curr:
-                break
-        if not (curr):
-            return False
-        # sort by width
-        gainiest = 0
-        for i in curr:
-            if i.w > gainiest:
-                gainiest = i.w
-                index = i
-
-        # focus on it
-        del imgs
-        del dets
-        del curr
-        self.focus(index)
-
-        # look (camera)
-        frame = self.capture(detect=True, context=True)
-
-        return self.coordcalc(frame.detections[0].w)
 
 
 # TODO: Currently ignores camera height and pitch so estimated gps is based off of the triangle's leg vs hypotenuse

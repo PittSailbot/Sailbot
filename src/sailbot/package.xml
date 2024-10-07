@@ -3,9 +3,9 @@
 <package format="3">
   <name>sailbot</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="pi@todo.todo">pi</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Pitt's Sailbot repo</description>
+  <maintainer email="sailbot.pitt@gmail.com">Pitt Sailbot</maintainer>
+  <license>MIT</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

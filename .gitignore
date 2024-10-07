@@ -6,6 +6,9 @@
 /build
 /install
 /logs
+/log
+/ros_logs
+log_database.db
 /.vscode
 .ipynb_checkpoints
 .idea/
@@ -13,7 +16,4 @@
 /venv
 *.code-workspace
 raspi-config_*.deb
-log/COLCON_IGNORE
-log/latest
-log/latest_build
-log_database.db
+/site
