@@ -1,7 +1,6 @@
 // Reads if water is detected by any of the sensors and controls the pumps
 #include "water_sensors.h"
 #include "teensy.h"
-#include <Arduino.h>
 
 void setupWaterSensors() {
   if (WATER_SENSOR1_INSTALLED){

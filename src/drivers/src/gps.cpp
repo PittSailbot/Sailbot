@@ -1,6 +1,5 @@
 // Reads the Adafruit Ultimate GPS
 #include <nanobind/nanobind.h>
-#include <Arduino.h>
 #include <Adafruit_GPS.h>
 #include "gps.h"
 

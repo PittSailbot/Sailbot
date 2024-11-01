@@ -1,5 +1,4 @@
 // Reads the Adafruit Ultimate GPS
-#include <Arduino.h>
 #include <Adafruit_GPS.h>
 #include "gps.h"
 

@@ -1,5 +1,4 @@
 // Reads the RC controller state from the FrSky receiver
-#include <Arduino.h>
 #include <sbus.h>
 #include "transceiver.h"
 

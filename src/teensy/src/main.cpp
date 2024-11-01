@@ -1,6 +1,5 @@
 // Main program running on the Teensy
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
-#include <Arduino.h>
 #include <sbus.h>
 #include <pb_encode.h>
 #include "teensy.h"
