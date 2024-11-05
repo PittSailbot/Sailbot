@@ -23,15 +23,19 @@ void encoderISR() {
     change = (bState == HIGH) ? 1 : -1;
     encoderValue += change;
     
-    if (isIncreasing == false && change > 0) { // Encoder has changed from decreasing to increasing
+    if (isIncreasing == false && change > 0) { // Encoder has changed from decreasing to increasing (min)
         isIncreasing = true;
-        maxEncoderValue = encoderValue;
-        displayedEncoderValue = (minEncoderValue + maxEncoderValue) / 2;
-    } else if (isIncreasing == true && change < 0) { // Encoder has changed from increasing to decreasing
-        isIncreasing = false;
         minEncoderValue = encoderValue;
-        displayedEncoderValue = (minEncoderValue + maxEncoderValue) / 2;
+    } else if (isIncreasing == true && change < 0) { // Encoder has changed from increasing to decreasing (max)
+        isIncreasing = false;
+        maxEncoderValue = encoderValue;
     }
+
+    if (maxEncoderValue < minEncoderValue) //if the windvane is oscilating over the point where encoder goes from 0->256
+        maxEncoderValue += ENCODER_ROTATION; 
+    displayedEncoderValue = (minEncoderValue + maxEncoderValue) / 2;
+
+
 
     encoderValue %= ENCODER_ROTATION;
     hasChanged = true;
