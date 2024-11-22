@@ -102,7 +102,7 @@ class Camera(Node):
             # Inefficient as FUCK
             cmd = rf"libcamera-still -t 1 -o '{self.path}/buffer0.jpg' --width 640 --height 640"
             os.system(cmd)
-            frame.img = cv2.imread(f"{self.path}/buffer0.jpg")
+            frame.img = cv2.flip(cv2.imread(f"{self.path}/buffer0.jpg"), 1)
             if frame.img is None:
                 raise RuntimeError("No camera image detected!")
         else:
