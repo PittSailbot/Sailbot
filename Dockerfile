@@ -50,6 +50,12 @@ RUN echo 'exec "$@"' >> /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh
 
 # Install ROS packages
+RUN apt-get update && apt-get upgrade -y
+RUN sudo apt install -y \
+    ros-humble-xacro \
+    ros-humble-twist-mux \
+    ros-humble-navigation2 \
+    ros-humble-gazebo-ros-pkgs
 RUN apt-get update && apt-get install -y ros-humble-geographic-msgs
 
 RUN apt-get update && apt-get install -y pip
