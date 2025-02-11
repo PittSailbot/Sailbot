@@ -62,7 +62,7 @@ RUN apt-get install -y net-tools iproute2
 
 
 # RUN apt-get install -y ros-humble-camera-ros
-RUN apt-get install -y pkg-config python3-yaml python3-ply python3-jinja2 openssl libyaml-dev libssl-dev libudev-dev libatomic1 meson
+# RUN apt-get update && apt-get install -y pkg-config python3-yaml python3-ply python3-jinja2 openssl libyaml-dev libssl-dev libudev-dev libatomic1 meson
 
 # RUN git clone https://github.com/christianrauch/camera_ros.git /camera_ws/src/camera_ros
 # RUN pip install colcon-meson
@@ -98,5 +98,7 @@ RUN pip install adafruit-circuitpython-gps
     #add-apt-repository universe && \
     #apt-get update
 #RUN apt-get install -y python3-venv
+
+RUN apt-get update && apt-get upgrade -y
 
 WORKDIR /workspace/
