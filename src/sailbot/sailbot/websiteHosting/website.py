@@ -42,7 +42,9 @@ from sailbot.utils.utils import (
     create_directory_if_not_exists,
 )
 
-MY_IP = "192.168.8.246"
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 1))  # connect() for UDP doesn't send packets
+MY_IP = s.getsockname()[0]  # or set to static '192.168.1.x'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"
@@ -704,10 +706,11 @@ def ros_main():
     os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/website"
     rclpy.init()
     DATA = Website()
-    DATA.logging.info(f"Website available at https://localhost:{PORT}")
+    DATA.logging.info(f"Website available at https://localhost:{PORT} and http://{MY_IP}:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"))  # debug true causes the process to fork which causes problems
+    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"), threaded=True)  # debug true causes the process to fork which causes problems
+    # rclpy.spin(DATA)
 
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
