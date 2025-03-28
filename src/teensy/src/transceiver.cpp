@@ -1,13 +1,14 @@
 // Reads the RC controller state from the FrSky receiver
+#include "transceiver.h"
+
 #include <Arduino.h>
 #include <sbus.h>
-#include "transceiver.h"
 
 #define RC_LOW 150
 #define RC_HIGH 1811
 
 bfs::SbusRx sbus_rx(&Serial2);  // FrSky controller -> Sailboat receiver
-bfs::SbusTx sbus_tx(&Serial2); // Sailboat receiver -> FrSky receiver?
+bfs::SbusTx sbus_tx(&Serial2);  // Sailboat receiver -> FrSky receiver?
 bfs::SbusData data;
 
 void setupTransceiver() {
@@ -16,14 +17,16 @@ void setupTransceiver() {
   Serial.println("Started Transceiver");
 }
 
-bool readControllerState (RCData* controller) {
+bool readControllerState(RCData* controller) {
   /* EXPECTED RC CONTROLLER FORMAT
-  Max and min trim thresholds are within +-10. They do not effect the max/min value. They only offset the "center" value.
+  Max and min trim thresholds are within +-10. They do not effect the max/min value. They only
+  offset the "center" value.
   - Down/Left reads ~172-180 (Converted to 0)
     - Front-facing switches are reversed and read 0 on up
   - Center reads ~980-1000 (Converted to 50)
   - Up/Right reads ~1795-1811 (Converted to 100)
-  RC receiver still repeats the last controller state when it is off/connection lost. Could cause issues.
+  RC receiver still repeats the last controller state when it is off/connection lost. Could cause
+  issues.
 
   Channels:
   0 - left_analog_y

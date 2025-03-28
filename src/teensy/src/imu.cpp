@@ -1,4 +1,4 @@
-// Reads the acceleration, gyroscope and magnometer from the IMU 
+// Reads the acceleration, gyroscope and magnometer from the IMU
 
 // Full orientation sensing using NXP/Madgwick/Mahony and a range of 9-DoF
 // sensor sets.
@@ -9,26 +9,27 @@
 // Based on  https://github.com/PaulStoffregen/NXPMotionSense with adjustments
 // to Adafruit Unified Sensor interface
 
-#include <Adafruit_Sensor_Calibration.h>
-#include <Adafruit_AHRS.h>
 #include "imu.h"
+
+#include <Adafruit_AHRS.h>
+#include <Adafruit_Sensor_Calibration.h>
 
 Adafruit_Sensor *accelerometer, *gyroscope, *magnetometer;
 
 // uncomment one combo 9-DoF!
 #include "LSM6DS_LIS3MDL.h"  // see the the LSM6DS_LIS3MDL file in this project to change board to LSM6DS33, LSM6DS3U, LSM6DSOX, etc
-//#include "LSM9DS.h"           // LSM9DS1 or LSM9DS0
-//#include "NXP_FXOS_FXAS.h"  // NXP 9-DoF breakout
+// #include "LSM9DS.h"           // LSM9DS1 or LSM9DS0
+// #include "NXP_FXOS_FXAS.h"  // NXP 9-DoF breakout
 
 // pick your filter! slower == better quality output
-Adafruit_NXPSensorFusion filter; // slowest
-//Adafruit_Madgwick filter;  // faster than NXP
-// Adafruit_Mahony filter;  // fastest/smalleset
+Adafruit_NXPSensorFusion filter;  // slowest
+// Adafruit_Madgwick filter;  // faster than NXP
+//  Adafruit_Mahony filter;  // fastest/smalleset
 
 #if defined(ADAFRUIT_SENSOR_CALIBRATION_USE_EEPROM)
-  Adafruit_Sensor_Calibration_EEPROM cal;
+Adafruit_Sensor_Calibration_EEPROM cal;
 #else
-  Adafruit_Sensor_Calibration_SDFat cal;
+Adafruit_Sensor_Calibration_SDFat cal;
 #endif
 
 uint32_t timestamp;
@@ -37,7 +38,7 @@ bool found_transceiver = false;
 int setupIMU() {
   if (!cal.begin()) {
     Serial.println("Failed to initialize calibration helper");
-  } else if (! cal.loadCalibration()) {
+  } else if (!cal.loadCalibration()) {
     Serial.println("No calibration loaded/found");
   }
 
@@ -45,7 +46,7 @@ int setupIMU() {
     Serial.println("Failed to find IMU");
     return 1;
   }
-  
+
   /*accelerometer->printSensorDetails();
   gyroscope->printSensorDetails();
   magnetometer->printSensorDetails();*/
@@ -59,11 +60,10 @@ int setupIMU() {
   return 0;
 }
 
-void updateIMU(){
-  if (!found_transceiver){
+void updateIMU() {
+  if (!found_transceiver) {
     return;
   }
-  
 
   float gx, gy, gz;
 
@@ -83,15 +83,12 @@ void updateIMU(){
   gz = gyro.gyro.z * SENSORS_RADS_TO_DPS;
 
   // Update the SensorFusion filter
-  filter.update(gx, gy, gz, 
-                accel.acceleration.x, accel.acceleration.y, accel.acceleration.z, 
+  filter.update(gx, gy, gz, accel.acceleration.x, accel.acceleration.y, accel.acceleration.z,
                 mag.magnetic.x, mag.magnetic.y, mag.magnetic.z);
-
 }
 
-
 bool readIMU(IMU* imu) {
-  if (!found_transceiver){
+  if (!found_transceiver) {
     return false;
   }
 

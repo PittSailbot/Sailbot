@@ -8,5 +8,4 @@ extern int setupIMU();
 extern bool readIMU(IMU*);
 extern void updateIMU();
 
-
 #endif
