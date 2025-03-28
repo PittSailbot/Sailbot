@@ -1,8 +1,7 @@
 // Main program running on the Teensy
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
-#include <sbus.h>
-#include <pb_encode.h>
+#include <ArduinoLog.h>
 #include <IntervalTimer.h>
 #include <Wire.h>
 #include <pb_encode.h>
@@ -18,6 +17,9 @@
 #include "water_sensors.h"
 #include "windvane.h"
 
+// Uncomment to disable all logging. Or use Log.setLevel() to hide low priority logs.
+// #define DISABLE_LOGGING
+
 int pwm_val = 0;
 int pwm_peak = 150;
 
@@ -26,24 +28,24 @@ IntervalTimer filterTimer;
 int i = 0;
 
 void setup() {
+  Log.begin(LOG_LEVEL_VERBOSE, &Serial);
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(400000);
   // while (!Serial) {}
-
   setupTransceiver();
   setupWindVane();
   // setupGPS();
   setupIMU();
   setupServos();
   if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
-    Serial.println("Failed to start filter timer");
+    Log.errorln("Failed to start filter timer");
   }
   setupWaterSensors();
   // setupPumps();
   setupReceiver();
 
-  Serial.println("Initialized Teensy");
+  Log.infoln("Initialized Teensy");
 }
 
 void loop() {
@@ -80,8 +82,7 @@ void loop() {
     Serial.write(buffer, stream.bytes_written);
     Serial.println();
   } else {
-    Serial.print("ERROR: ");
-    Serial.println(stream.errmsg);
+    Log.errorln("Failed to write protobuf to Pi: %s", stream.errmsg);
   }
 
   delay(100);
