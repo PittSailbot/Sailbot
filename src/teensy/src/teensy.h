@@ -1,4 +1,5 @@
 // Wired connections between the PCB and the Teensy
+// Teensy pinouts can be found here: https://www.pjrc.com/teensy/pinout.html
 // If any pinouts to the Teensy are changed, update them here:
 
 // PCB -> Teensy

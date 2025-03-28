@@ -74,6 +74,7 @@ void loop() {
     digitalWrite(20, LOW);
   }
 
+  // Write protobuf data to Pi over Serial
   uint8_t buffer[TEENSY_PB_H_MAX_SIZE];
   pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
   bool status = pb_encode(&stream, Data_fields, &pi_data);
