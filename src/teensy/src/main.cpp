@@ -11,6 +11,7 @@
 #include "gps.h"
 #include "imu.h"
 #include "receiveCmds.h"
+#include "servos.h"
 #include "teensy.h"
 #include "teensy.pb.h"
 #include "transceiver.h"
@@ -22,6 +23,8 @@ int pwm_peak = 150;
 
 IntervalTimer filterTimer;
 
+int i = 0;
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -32,6 +35,7 @@ void setup() {
   setupWindVane();
   // setupGPS();
   setupIMU();
+  setupServos();
   if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
     Serial.println("Failed to start filter timer");
   }
@@ -49,7 +53,12 @@ void loop() {
   pi_data.has_gps = false;  // readGPS(&pi_data.gps);
   pi_data.has_imu = readIMU(&pi_data.imu);
   pi_data.has_water_sensors = readWaterSensors(&pi_data.water_sensors);
+  // pi_data.has_servos = readServos(&pi_data.servos)
   pumpOnSensors();
+
+  // i = i + 1;
+  // setSail(i % 180);
+  // delay(100);
 
   pwm_val = (pwm_val + 10) % pwm_peak;
   analogWrite(13, pwm_val);

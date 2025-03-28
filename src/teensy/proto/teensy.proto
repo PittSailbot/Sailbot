@@ -17,6 +17,7 @@ message Data {
     optional WaterSensors water_sensors = 4;
     optional GPSData gps = 5;
     optional IMU imu = 6;
+    optional Servos servos = 7;
 }
 
 // RC Controller State
@@ -59,4 +60,10 @@ message IMU {
     float roll = 1;
     float pitch = 2;
     float yaw = 3;
+}
+
+message Servos {
+    int32 sail = 1;
+    int32 jib = 2;
+    int32 rudder = 3;
 }

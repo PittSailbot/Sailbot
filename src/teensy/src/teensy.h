@@ -12,6 +12,10 @@
 #define PUMP2 AUXFET3
 #define PUMP3 AUXFET2
 
+#define SAIL_SERVO 23 // TODO: Set to servo control pin
+#define JIB_SERVO -1 // TODO: Set to servo control pin
+#define RUDDER_SERVO -1 // TODO: Set to servo control pin
+
 #define WATER_SENSOR1 41
 #define WATER_SENSOR2 40
 #define WATER_SENSOR3 39
