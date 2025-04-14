@@ -55,7 +55,7 @@ void loop() {
   pi_data.has_gps = false;  // readGPS(&pi_data.gps);
   pi_data.has_imu = readIMU(&pi_data.imu);
   pi_data.has_water_sensors = readWaterSensors(&pi_data.water_sensors);
-  // pi_data.has_servos = readServos(&pi_data.servos)
+  pi_data.has_servos = readServos(&pi_data.servos);
   pumpOnSensors();
 
   // i = i + 1;
