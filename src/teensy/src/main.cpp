@@ -42,7 +42,7 @@ void setup() {
     Log.errorln("Failed to start filter timer");
   }
   setupWaterSensors();
-  // setupPumps();
+  setupPumps();
   setupReceiver();
 
   Log.infoln("Initialized Teensy");
@@ -56,7 +56,8 @@ void loop() {
   pi_data.has_imu = readIMU(&pi_data.imu);
   pi_data.has_water_sensors = readWaterSensors(&pi_data.water_sensors);
   pi_data.has_servos = readServos(&pi_data.servos);
-  pumpOnSensors();
+
+  pumpIfWaterDetected();
 
   // i = i + 1;
   // setSail(i % 180);
