@@ -1,8 +1,9 @@
 // Return data from all the sensors on the teensy to be read by the pi
 
-// RECOMPILE src/sailbot/sailbot/telemetry/protobuf/teensy_pb2.py IF THIS FILE IS CHANGED!
+// RECOMPILE teensy_pb2.py IF THIS FILE IS CHANGED!
 // https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
-// Compile .proto with `protoc src\teensy\proto\teensy.proto  --python_out=./`
+// 1. Compile .proto with `protoc src\teensy\proto\teensy.proto  --python_out=./`
+// 2. Copy and replace "src\sailbot\sailbot\protobuf\teensy_pb2.py" with the new version
 
 syntax = "proto3";
 
@@ -44,9 +45,7 @@ message WindVane {
 }
 
 message WaterSensors {
-    optional bool sensor1_is_wet = 1;
-    optional bool sensor2_is_wet = 2;
-    optional bool sensor3_is_wet = 3;
+    int32 water_level = 1;
 }
 
 message GPSData {

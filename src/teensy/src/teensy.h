@@ -9,10 +9,6 @@
 #define AUXFET4 28
 
 // Teensy -> Sensors/Controls
-#define PUMP1 AUXFET4
-#define PUMP2 AUXFET3
-#define PUMP3 AUXFET2
-
 #define SERVO_USE_I2C false
 #define SERVO_USE_GPIO !SERVO_USE_I2C
 
@@ -29,13 +25,8 @@
 #define RUDDER_SERVO 0x40
 #endif
 
-#define WATER_SENSOR1 41
-#define WATER_SENSOR2 40
-#define WATER_SENSOR3 39
-
-#define WATER_SENSOR1_INSTALLED false
-#define WATER_SENSOR2_INSTALLED true
-#define WATER_SENSOR3_INSTALLED true
+#define WATER_SENSOR1 0x36
+#define PUMP1 AUXFET4
 
 #define WINDVANE_ENCODER_A 34
 #define WINDVANE_ENCODER_B 35
