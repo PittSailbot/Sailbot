@@ -13,9 +13,21 @@
 #define PUMP2 AUXFET3
 #define PUMP3 AUXFET2
 
-#define SAIL_SERVO 23 // TODO: Set to servo control pin
-#define JIB_SERVO -1 // TODO: Set to servo control pin
-#define RUDDER_SERVO -1 // TODO: Set to servo control pin
+#define SERVO_USE_I2C false
+#define SERVO_USE_GPIO !SERVO_USE_I2C
+
+#if SERVO_USE_GPIO
+#define SAIL_SERVO -1    // TODO: Set to servo control pin
+#define JIB_SERVO -1     // TODO: Set to servo control pin
+#define RUDDER_SERVO -1  // TODO: Set to servo control pin
+#endif
+#if SERVO_USE_I2C  // Are the servos connected to an adafruit PWM servo driver board?
+// https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/blob/master/examples/servo/servo.ino
+// I2C address for the servo driver board is 0x40 (base) + number on terminal block
+#define SAIL_SERVO 0x41
+#define JIB_SERVO 0x42
+#define RUDDER_SERVO 0x40
+#endif
 
 #define WATER_SENSOR1 41
 #define WATER_SENSOR2 40
