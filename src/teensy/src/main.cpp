@@ -1,15 +1,16 @@
 // Main program running on the Teensy
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
-#include <ArduinoLog.h>
+// #include <ArduinoLog.h>
 #include <IntervalTimer.h>
 #include <Wire.h>
+#include <pb_decode.h>
 #include <pb_encode.h>
 #include <sbus.h>
 
 #include "gps.h"
 #include "imu.h"
-#include "receiveCmds.h"
+#include "pi.pb.h"
 #include "servos.h"
 #include "teensy.h"
 #include "teensy.pb.h"
@@ -25,10 +26,37 @@ int pwm_peak = 150;
 
 IntervalTimer filterTimer;
 
-int i = 0;
+TeensyData teensy_data = TeensyData_init_default;
+PiData pi_data = PiData_init_default;
+
+void readProtobufFromPi(PiData* pi_data) {
+  if (Serial.available()) {
+    uint8_t buffer[PI_PB_H_MAX_SIZE];
+    pb_istream_t stream = pb_istream_from_buffer(buffer, sizeof(buffer));
+    bool status = pb_decode(&stream, PiData_fields, pi_data);
+
+    if (!status) {
+      // Log.errorln("Failed to read protobuf from Pi: %s", stream.errmsg);
+    }
+    return;
+  }
+}
+
+void writeProtobufToPi(TeensyData* teensy_data) {
+  uint8_t buffer[TEENSY_PB_H_MAX_SIZE];
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  bool status = pb_encode(&stream, TeensyData_fields, teensy_data);
+
+  if (status) {
+    Serial.write(buffer, stream.bytes_written);
+    Serial.println();
+  } else {
+    // Log.errorln("Failed to write protobuf to Pi: %s", stream.errmsg);
+  }
+}
 
 void setup() {
-  Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+  // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(400000);
@@ -39,53 +67,29 @@ void setup() {
   setupIMU();
   setupServos();
   if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
-    Log.errorln("Failed to start filter timer");
+    // Log.errorln("Failed to start filter timer");
   }
   setupWaterSensors();
   setupPumps();
-  setupReceiver();
+  // setupReceiver();
 
-  Log.infoln("Initialized Teensy");
+  // Log.infoln("Initialized Teensy");
 }
 
 void loop() {
-  Data pi_data = Data_init_default;
-  pi_data.has_rc_data = readControllerState(&pi_data.rc_data);
-  pi_data.has_windvane = readWindVane(&pi_data.windvane);
-  pi_data.has_gps = false;  // readGPS(&pi_data.gps);
-  pi_data.has_imu = readIMU(&pi_data.imu);
-  pi_data.has_water_sensors = readWaterSensors(&pi_data.water_sensors);
-  pi_data.has_servos = readServos(&pi_data.servos);
+  teensy_data = TeensyData_init_default;
+  teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
+  teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
+  teensy_data.has_gps = readGPS(&teensy_data.gps);
+  teensy_data.has_imu = readIMU(&teensy_data.imu);
+  teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
+  teensy_data.has_servos = readServos(&teensy_data.servos);
 
-  pumpIfWaterDetected();
-
-  // i = i + 1;
-  // setSail(i % 180);
-  // delay(100);
-
-  pwm_val = (pwm_val + 10) % pwm_peak;
-  analogWrite(13, pwm_val);
-  if (pi_data.has_imu && pi_data.has_rc_data &&
-      pi_data.has_windvane) {  // steady blue light if all usb sensors are working
-    digitalWrite(20, HIGH);
-  } else if (pi_data.has_imu || pi_data.has_rc_data ||
-             pi_data.has_windvane) {  // blinking blue light if some are working
-    digitalWrite(20, pwm_val > (pwm_peak / 2));
-  } else {
-    digitalWrite(20, LOW);
+  if (Serial.available()) {
+    readProtobufFromPi(&pi_data);
   }
 
-  // Write protobuf data to Pi over Serial
-  uint8_t buffer[TEENSY_PB_H_MAX_SIZE];
-  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-  bool status = pb_encode(&stream, Data_fields, &pi_data);
+  writeProtobufToPi(&teensy_data);
 
-  if (status) {
-    Serial.write(buffer, stream.bytes_written);
-    Serial.println();
-  } else {
-    Log.errorln("Failed to write protobuf to Pi: %s", stream.errmsg);
-  }
-
-  delay(100);
+  delay(5000);
 }
