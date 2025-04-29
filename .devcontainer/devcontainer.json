@@ -7,7 +7,8 @@
 	"dockerFile": "../Dockerfile",
 	"runArgs": [
 		"--privileged",
-		"--network=host"
+		"--network=host",
+		"--device=/dev/ttyUSB0"
 	],
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
 	"workspaceFolder": "/workspace",
@@ -30,7 +31,7 @@
 		"vscode": {			
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				//"platformio.platformio-ide",
+				"platformio.platformio-ide",
 				"ms-python.python",
 				"ms-vscode-remote.remote-ssh",
 				"ms-iot.vscode-ros",
