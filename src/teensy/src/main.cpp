@@ -8,6 +8,7 @@
 #include <pb_encode.h>
 #include <sbus.h>
 
+#include "camera_servos.h"
 #include "gps.h"
 #include "imu.h"
 #include "pi.pb.h"
@@ -84,6 +85,7 @@ void loop() {
   teensy_data.has_imu = readIMU(&teensy_data.imu);
   teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
   teensy_data.has_servos = readServos(&teensy_data.servos);
+  teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
 
   if (Serial.available()) {
     readProtobufFromPi(&pi_data);
