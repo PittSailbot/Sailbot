@@ -31,6 +31,8 @@
 #define WINDVANE_ENCODER_A 34
 #define WINDVANE_ENCODER_B 35
 
+#define CAMERA_SERVOS_I2C 0x40
+
 #define SLAVE_ADDRESS 0x10
 
 // the first byte in an i2c command, to indicate the intention of the message
