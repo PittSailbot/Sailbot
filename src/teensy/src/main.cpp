@@ -1,7 +1,7 @@
 // Main program running on the Teensy
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
-// #include <ArduinoLog.h>
+#include <ArduinoLog.h>
 #include <IntervalTimer.h>
 #include <Wire.h>
 #include <pb_decode.h>
@@ -55,7 +55,8 @@ void writeProtobufToPi(TeensyData* teensy_data) {
 }
 
 void setup() {
-  // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+  // Use Log.setLevel() to hide low priority logs.
+  Log.begin(LOG_LEVEL_VERBOSE, &Serial);
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(400000);
@@ -66,13 +67,13 @@ void setup() {
   setupIMU();
   setupServos();
   if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
-    // Log.errorln("Failed to start filter timer");
+    Log.errorln("Failed to start filter timer");
   }
   setupWaterSensors();
   setupPumps();
   // setupReceiver();
 
-  // Log.infoln("Initialized Teensy");
+  Log.infoln("Initialized Teensy");
 }
 
 void mapControls(RCData* controller) {
