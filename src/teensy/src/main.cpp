@@ -4,8 +4,6 @@
 #include <ArduinoLog.h>
 #include <IntervalTimer.h>
 #include <Wire.h>
-#include <pb_decode.h>
-#include <pb_encode.h>
 #include <sbus.h>
 
 #include "camera_servos.h"
@@ -13,6 +11,7 @@
 #include "gps.h"
 #include "imu.h"
 #include "pi.pb.h"
+#include "protobuf.h"
 #include "servos.h"
 #include "teensy.h"
 #include "teensy.pb.h"
@@ -27,32 +26,6 @@ elapsedMillis timer_1HZ = elapsedMillis();
 
 TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
-
-void readProtobufFromPi(PiData* pi_data) {
-  if (Serial.available()) {
-    uint8_t buffer[PI_PB_H_MAX_SIZE];
-    pb_istream_t stream = pb_istream_from_buffer(buffer, sizeof(buffer));
-    bool status = pb_decode(&stream, PiData_fields, pi_data);
-
-    if (!status) {
-      // Log.errorln("Failed to read protobuf from Pi: %s", stream.errmsg);
-    }
-    return;
-  }
-}
-
-void writeProtobufToPi(TeensyData* teensy_data) {
-  uint8_t buffer[TEENSY_PB_H_MAX_SIZE];
-  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-  bool status = pb_encode(&stream, TeensyData_fields, teensy_data);
-
-  if (status) {
-    Serial.write(buffer, stream.bytes_written);
-    Serial.println();
-  } else {
-    // Log.errorln("Failed to write protobuf to Pi: %s", stream.errmsg);
-  }
-}
 
 void setup() {
   // Use Log.setLevel() to hide low priority logs.
