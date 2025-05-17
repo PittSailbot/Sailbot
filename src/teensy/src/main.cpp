@@ -22,9 +22,6 @@
 // Uncomment to disable all logging. Or use Log.setLevel() to hide low priority logs.
 // #define DISABLE_LOGGING
 
-int pwm_val = 0;
-int pwm_peak = 150;
-
 IntervalTimer filterTimer;
 
 TeensyData teensy_data = TeensyData_init_default;
@@ -77,6 +74,62 @@ void setup() {
   // Log.infoln("Initialized Teensy");
 }
 
+void mapControls(RCData* controller) {
+  /*Executes the keybind/meaning of each controller input.
+    Editing this function will 'rebind' what an input does.
+
+    left_analog_y       - Sail / Camera Pitch
+    right_analog_x      - Rudder / Camera Yaw
+    right_analog_y      -
+    left_analog_x       - Jib
+    front_left_switch1  - Up (0): Manual Sail/Rudder      | Mid (1): Manual Rudder  | Down (2):
+    Autonomous front_left_switch2  - Up (0):                         | Mid (1): Camera Control |
+    Down (2): RC Sail front_right_switch  - Up (0):                         | Mid (1): | Down (2):
+    top_left_switch     - Down (0):                       | Up (1):
+    top_right_switch    - DISABLED (Reset switch broken)
+    potentiometer       -
+  */
+
+  // RC / Autonomous Mode
+  switch (controller->front_left_switch1) {
+    case TRI_SWITCH_UP:  // Manual Sail, Jib & Rudder
+      switch (controller->front_left_switch2) {
+        case TRI_SWITCH_DOWN:  // RC Sail Mode
+          setSail(controller->left_analog_y);
+          setJib(controller->left_analog_x);
+          setRudder(controller->right_analog_x);
+          break;
+        case TRI_SWITCH_MID:  // Camera Control Mode
+          setCameraYaw(controller->right_analog_y);
+          setCameraPitch(controller->left_analog_x);
+          break;
+        case TRI_SWITCH_UP:  // Unused
+          break;
+      }
+      break;
+    case TRI_SWITCH_MID:  // Manual Rudder, Autonomous Sail & Jib
+      if (pi_data.has_cmd_sail) {
+        setSail(pi_data.cmd_sail);
+      }
+      if (pi_data.has_cmd_jib) {
+        setJib(pi_data.cmd_jib);
+      }
+      setRudder(controller->right_analog_x);
+      break;
+    case TRI_SWITCH_DOWN:  // Autonomous Sail, Rudder & Jib
+      if (pi_data.has_cmd_sail) {
+        setSail(pi_data.cmd_sail);
+      }
+      if (pi_data.has_cmd_jib) {
+        setJib(pi_data.cmd_jib);
+      }
+      if (pi_data.has_cmd_rudder) {
+        setRudder(pi_data.cmd_rudder);
+      }
+      break;
+  }
+}
+
 void loop() {
   teensy_data = TeensyData_init_default;
   teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
@@ -90,6 +143,8 @@ void loop() {
   if (Serial.available()) {
     readProtobufFromPi(&pi_data);
   }
+
+  mapControls(&teensy_data.rc_data);
 
   writeProtobufToPi(&teensy_data);
 
