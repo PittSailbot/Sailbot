@@ -2,6 +2,7 @@
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
 #include <ArduinoLog.h>
+#include <I2CScanner.h>
 #include <IntervalTimer.h>
 #include <Wire.h>
 #include <sbus.h>
@@ -47,6 +48,10 @@ void setup() {
   // setupReceiver();
 
   Log.infoln("Initialized Teensy");
+
+  I2CScanner scanner;
+  scanner.Init();
+  scanner.Scan();
 }
 
 void mapControls(RCData* controller) {
