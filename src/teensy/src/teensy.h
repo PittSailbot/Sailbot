@@ -26,6 +26,7 @@
 #endif
 
 #define WATER_SENSOR1 0x36
+#define WATER_SENSOR2 0x39
 #define PUMP1 AUXFET4
 
 #define WINDVANE_ENCODER_A 34
