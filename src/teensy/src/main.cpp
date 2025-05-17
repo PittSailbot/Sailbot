@@ -9,6 +9,7 @@
 #include <sbus.h>
 
 #include "camera_servos.h"
+#include "elapsedMillis.h"
 #include "gps.h"
 #include "imu.h"
 #include "pi.pb.h"
@@ -19,10 +20,10 @@
 #include "water_sensors.h"
 #include "windvane.h"
 
-// Uncomment to disable all logging. Or use Log.setLevel() to hide low priority logs.
-// #define DISABLE_LOGGING
-
 IntervalTimer filterTimer;
+elapsedMillis timer_20HZ = elapsedMillis();
+elapsedMillis timer_10HZ = elapsedMillis();
+elapsedMillis timer_1HZ = elapsedMillis();
 
 TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
@@ -132,13 +133,22 @@ void mapControls(RCData* controller) {
 
 void loop() {
   teensy_data = TeensyData_init_default;
-  teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
-  teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
-  teensy_data.has_gps = readGPS(&teensy_data.gps);
-  teensy_data.has_imu = readIMU(&teensy_data.imu);
-  teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
-  teensy_data.has_servos = readServos(&teensy_data.servos);
-  teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
+  if (timer_20HZ > 50) {
+    teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
+    teensy_data.has_servos = readServos(&teensy_data.servos);
+    timer_20HZ = 0;
+  }
+  if (timer_10HZ > 100) {
+    teensy_data.has_gps = readGPS(&teensy_data.gps);
+    teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
+    teensy_data.has_imu = readIMU(&teensy_data.imu);
+    teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
+    timer_10HZ = 0;
+  }
+  if (timer_1HZ > 1000) {
+    teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
+    timer_1HZ = 0;
+  }
 
   if (Serial.available()) {
     readProtobufFromPi(&pi_data);
@@ -147,6 +157,4 @@ void loop() {
   mapControls(&teensy_data.rc_data);
 
   writeProtobufToPi(&teensy_data);
-
-  delay(5000);
 }
