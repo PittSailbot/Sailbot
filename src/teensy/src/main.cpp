@@ -37,7 +37,9 @@ void setup() {
   // while (!Serial) {}
   setupTransceiver();
   setupWindVane();
-  // setupGPS();
+  if (!GPS_USE_PI) {
+    setupGPS();
+  }
   setupIMU();
   setupServos();
   if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
@@ -118,7 +120,9 @@ void loop() {
     timer_20HZ = 0;
   }
   if (timer_10HZ > 100) {
-    teensy_data.has_gps = readGPS(&teensy_data.gps);
+    if (!GPS_USE_PI) {
+      teensy_data.has_gps = readGPS(&teensy_data.gps);
+    }
     teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
     teensy_data.has_imu = readIMU(&teensy_data.imu);
     teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);

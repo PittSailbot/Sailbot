@@ -25,6 +25,7 @@
 #define RUDDER_SERVO 0x40
 #endif
 
+#define GPS_USE_PI true
 #define WATER_SENSOR1 0x36
 #define WATER_SENSOR2 0x39
 #define PUMP1 AUXFET4
