@@ -27,24 +27,27 @@ void writeProtobufToPi(TeensyData* teensy_data) {
   memset(teensy_buffer, 0, sizeof(teensy_buffer));
   bool status = pb_encode(&ostream, TeensyData_fields, teensy_data);
 
-  if (status && ostream.bytes_written > 0) {
+  if (!status) {
+    Serial.printf("E: Failed to write protobuf to Pi: %s\n", ostream.errmsg);
+    return;
+  }
+
+  if (ostream.bytes_written > 0) {
     Serial.write(teensy_buffer, ostream.bytes_written);
     Serial.write("\n");
-    Serial.printf(
-        "I: Wrote protobuf to Pi:\
-    RC: %d\
-    GPS: %d\
-    IMU: %d\
-    Servos: %d\
-    Water Sensors: %d\
-    Windvane: %d\
-    Camera Servos: %d\
-    Command: %d\n\
-      ",
-        teensy_data->has_rc_data, teensy_data->has_gps, teensy_data->has_imu,
-        teensy_data->has_servos, teensy_data->has_water_sensors, teensy_data->has_windvane,
-        teensy_data->has_camera_servos, teensy_data->has_command);
-  } else {
-    Serial.printf("E: Failed to write protobuf to Pi: %s\n", ostream.errmsg);
+    // Serial.printf(
+    //     "V: Wrote protobuf to Pi:\
+    // RC: %d\
+    // GPS: %d\
+    // IMU: %d\
+    // Servos: %d\
+    // Water Sensors: %d\
+    // Windvane: %d\
+    // Camera Servos: %d\
+    // Command: %d\n\
+    //   ",
+    //     teensy_data->has_rc_data, teensy_data->has_gps, teensy_data->has_imu,
+    //     teensy_data->has_servos, teensy_data->has_water_sensors, teensy_data->has_windvane,
+    //     teensy_data->has_camera_servos, teensy_data->has_command);
   }
 }
