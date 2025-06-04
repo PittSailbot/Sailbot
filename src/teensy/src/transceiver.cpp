@@ -14,7 +14,7 @@ bfs::SbusData data;
 void setupTransceiver() {
   sbus_rx.Begin();
   sbus_tx.Begin();
-  Serial.println("Started Transceiver");
+  Serial.println("I: Started Transceiver");
 }
 
 bool readControllerState(RCData* controller) {

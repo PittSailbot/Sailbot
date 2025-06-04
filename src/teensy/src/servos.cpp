@@ -25,27 +25,27 @@ Servo JibServo;
 Servo RudderServo;
 
 int setupServos() {
-  Serial.println("Initializing servos");
+  Serial.println("I: Initializing servos");
   if (SAIL_SERVO != -1) {
     SailServo.attach(SAIL_SERVO, BILDA_MIN_ANGLE, BILDA_MAX_ANGLE);
     setSail(0);
-    Serial.printf("Initialized SAIL servo on pin %d\n", SAIL_SERVO);
+    Serial.printf("I: Initialized SAIL servo on pin %d\n", SAIL_SERVO);
   } else {
-    Serial.println("Skipping SAIL servo; no pin defined");
+    Serial.println("W: Skipping SAIL servo; no pin defined\n");
   }
   if (JIB_SERVO != -1) {
     JibServo.attach(JIB_SERVO, BILDA_MIN_ANGLE, BILDA_MAX_ANGLE);
     setJib(0);
-    Serial.printf("Initialized JIB servo on pin %d\n", JIB_SERVO);
+    Serial.printf("I: Initialized JIB servo on pin %d\n", JIB_SERVO);
   } else {
-    Serial.println("Skipping JIB servo; no pin defined");
+    Serial.println("W: Skipping JIB servo; no pin defined");
   }
   if (RUDDER_SERVO != -1) {
     RudderServo.attach(RUDDER_SERVO, HITECH_MIN_ANGLE, HITECH_MAX_ANGLE);
     setRudder((HITECH_MAX_ANGLE - HITECH_MIN_ANGLE) / 2);
-    Serial.printf("Initialized RUDDER servo on pin %d\n", RUDDER_SERVO);
+    Serial.printf("I: Initialized RUDDER servo on pin %d\n", RUDDER_SERVO);
   } else {
-    Serial.println("Skipping RUDDER servo; no pin defined");
+    Serial.println("W: Skipping RUDDER servo; no pin defined");
   }
 
   Serial.println("Servos initialized");
@@ -76,30 +76,30 @@ void setRudder(int angle) {
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 
 int setupServos() {
-  Serial.println("Initializing servos");
+  Serial.println("I: Initializing servos");
   driver.begin();
   driver.setPWMFreq(1600);
 
   if (SAIL_SERVO != -1) {
     setSail(0);
-    Serial.printf("Initialized SAIL servo at address %x\n", SAIL_SERVO);
+    Serial.printf("I: Initialized SAIL servo at address %x\n", SAIL_SERVO);
   } else {
-    Serial.println("Skipping SAIL servo; no i2c address defined");
+    Serial.println("W: Skipping SAIL servo; no i2c address defined");
   }
   if (JIB_SERVO != -1) {
     setJib(0);
-    Serial.printf("Initialized JIB servo at address %x\n", JIB_SERVO);
+    Serial.printf("I: Initialized JIB servo at address %x\n", JIB_SERVO);
   } else {
-    Serial.println("Skipping JIB servo; no i2c address defined");
+    Serial.println("W: Skipping JIB servo; no i2c address defined");
   }
   if (RUDDER_SERVO != -1) {
     setRudder((HITECH_MAX_ANGLE - HITECH_MIN_ANGLE) / 2);
-    Serial.printf("Initialized RUDDER servo at address %x\n", RUDDER_SERVO);
+    Serial.printf("I: Initialized RUDDER servo at address %x\n", RUDDER_SERVO);
   } else {
-    Serial.println("Skipping RUDDER servo; no i2c address defined");
+    Serial.println("W: Skipping RUDDER servo; no i2c address defined");
   }
 
-  Serial.println("Servos initialized");
+  Serial.println("I: Servos initialized");
   return 0;
 }
 

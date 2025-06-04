@@ -3,7 +3,6 @@
 
 #include <Adafruit_seesaw.h>
 #include <Arduino.h>
-#include <ArduinoLog.h>
 
 #include "teensy.h"
 
@@ -16,12 +15,12 @@ void setupWaterSensors() {
   if (!initialized) {
     initialized = ss.begin(WATER_SENSOR2);
     if (!initialized) {
-      Log.warningln("ERROR! seesaw not found");
+      Serial.println("W: Water level sensor not found");
       return;
     }
   }
 
-  Log.infoln("Started Water Sensors");
+  Serial.println("I: Started Water Sensors");
 }
 
 bool readWaterSensors(WaterSensors* water_sensors) {
@@ -44,9 +43,9 @@ bool readWaterSensors(WaterSensors* water_sensors) {
 void setupPumps() {
   if (PUMP1 != -1) {
     pinMode(PUMP1, OUTPUT);
-    Log.infoln("Started Pumps");
+    Serial.println("I: Started Pumps");
   } else {
-    Log.warningln("Skipping pumps; no pin defined");
+    Serial.println("W: Skipping pumps; no pin defined");
   }
 }
 
@@ -62,10 +61,10 @@ void pumpIfWaterDetected() {
 
 void enablePumps() {
   digitalWrite(PUMP1, HIGH);
-  Log.infoln("Enabling pumps");
+  Serial.println("I: Enabling pumps");
 }
 
 void disablePumps() {
   digitalWrite(PUMP1, LOW);
-  Log.infoln("Disabling pumps");
+  Serial.println("I: Disabling pumps");
 }

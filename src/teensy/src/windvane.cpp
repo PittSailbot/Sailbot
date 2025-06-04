@@ -28,7 +28,7 @@ extern void setupWindVane() {
   pinMode(WINDVANE_ENCODER_B, INPUT);
 
   attachInterrupt(digitalPinToInterrupt(WINDVANE_ENCODER_A), encoderISR, RISING);
-  Serial.println("Started WindVane");
+  Serial.println("I: Started WindVane");
 }
 
 extern bool readWindVane(WindVane* windvane) {

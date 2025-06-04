@@ -37,13 +37,13 @@ bool found_transceiver = false;
 
 int setupIMU() {
   if (!cal.begin()) {
-    Serial.println("Failed to initialize calibration helper");
+    Serial.println("E: Failed to initialized calibration helper");
   } else if (!cal.loadCalibration()) {
-    Serial.println("No calibration loaded/found");
+    Serial.println("E: No calibration loaded/found");
   }
 
   if (!init_sensors()) {
-    Serial.println("Failed to find IMU");
+    Serial.println("E: Failed to find IMU");
     return 1;
   }
 
@@ -56,7 +56,7 @@ int setupIMU() {
   timestamp = millis();
 
   found_transceiver = true;
-  Serial.println("Started IMU");
+  Serial.println("I: Started IMU");
   return 0;
 }
 
