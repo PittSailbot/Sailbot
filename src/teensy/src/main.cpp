@@ -39,9 +39,6 @@ void setup() {
   }
   setupIMU();
   setupServos();
-  if (!filterTimer.begin(updateIMU, int(1000000 / FILTER_UPDATE_RATE_HZ))) {
-    Serial.println("E: Failed to start filter timer");
-  }
   setupWaterSensors();
   setupPumps();
   // setupReceiver();
