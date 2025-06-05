@@ -20,9 +20,9 @@
 #include "windvane.h"
 
 IntervalTimer filterTimer;
-elapsedMillis timer_20HZ = elapsedMillis();
-elapsedMillis timer_10HZ = elapsedMillis();
-elapsedMillis timer_1HZ = elapsedMillis();
+elapsedMillis timer_20HZ;
+elapsedMillis timer_10HZ;
+elapsedMillis timer_1HZ;
 
 TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
@@ -134,7 +134,13 @@ void loop() {
     readProtobufFromPi(&pi_data);
   }
 
-  mapControls(&teensy_data.rc_data);
+  if (&teensy_data.has_rc_data) {
+    mapControls(&teensy_data.rc_data);
+  }
 
-  writeProtobufToPi(&teensy_data);
+  if (&teensy_data.has_rc_data || &teensy_data.has_gps || &teensy_data.has_imu ||
+      &teensy_data.has_servos || &teensy_data.has_water_sensors || &teensy_data.has_windvane ||
+      &teensy_data.has_camera_servos || &teensy_data.has_command) {
+    writeProtobufToPi(&teensy_data);
+  }
 }

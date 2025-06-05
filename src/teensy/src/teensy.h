@@ -1,3 +1,5 @@
+#ifndef TEENSY_H
+#define TEENSY_H
 // Wired connections between the PCB and the Teensy
 // Teensy pinouts can be found here: https://www.pjrc.com/teensy/pinout.html
 // If any pinouts to the Teensy are changed, update them here:
@@ -13,9 +15,9 @@
 #define SERVO_USE_GPIO !SERVO_USE_I2C
 
 #if SERVO_USE_GPIO
-#define SAIL_SERVO -1    // TODO: Set to servo control pin
-#define JIB_SERVO -1     // TODO: Set to servo control pin
-#define RUDDER_SERVO -1  // TODO: Set to servo control pin
+#define SAIL_SERVO 9
+#define JIB_SERVO -1
+#define RUDDER_SERVO 23
 #endif
 #if SERVO_USE_I2C  // Are the servos connected to an adafruit PWM servo driver board?
 // https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/blob/master/examples/servo/servo.ino
@@ -26,6 +28,7 @@
 #endif
 
 #define GPS_USE_PI true
+
 #define WATER_SENSOR1 0x36
 #define WATER_SENSOR2 0x39
 #define PUMP1 AUXFET4
@@ -35,6 +38,8 @@
 
 #define CAMERA_SERVOS_I2C 0x40
 
+#define TEENSY_LED 20
+
 #define SLAVE_ADDRESS 0x10
 
 // the first byte in an i2c command, to indicate the intention of the message
@@ -42,3 +47,5 @@
 #define CAM_H_MOVE_ABS_CMD 0
 #define CAM_V_MOVE_ABS_CMD 1
 #define CAM_MOVE_ABS_CMD 2
+
+#endif
