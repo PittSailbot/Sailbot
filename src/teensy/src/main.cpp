@@ -69,19 +69,22 @@ void mapControls(RCData* controller) {
   // RC / Autonomous Mode
   switch (controller->front_left_switch1) {
     case TRI_SWITCH_UP:  // Manual Sail, Jib & Rudder
-      switch (controller->front_left_switch2) {
-        case TRI_SWITCH_DOWN:  // RC Sail Mode
-          setSail(controller->left_analog_y);
-          setJib(controller->left_analog_x);
-          setRudder(controller->right_analog_x);
-          break;
-        case TRI_SWITCH_MID:  // Camera Control Mode
-          setCameraYaw(controller->right_analog_y);
-          setCameraPitch(controller->left_analog_x);
-          break;
-        case TRI_SWITCH_UP:  // Unused
-          break;
-      }
+      setSail(controller->left_analog_y);
+      setJib(controller->left_analog_x);
+      setRudder(controller->right_analog_x);
+      // switch (controller->front_left_switch2) {
+      //   case TRI_SWITCH_DOWN:  // RC Sail Mode
+      //     setSail(controller->left_analog_y);
+      //     setJib(controller->left_analog_x);
+      //     setRudder(controller->right_analog_x);
+      //     break;
+      //   case TRI_SWITCH_MID:  // Camera Control Mode
+      //     setCameraYaw(controller->right_analog_y);
+      //     setCameraPitch(controller->left_analog_x);
+      //     break;
+      //   case TRI_SWITCH_UP:  // Unused
+      //     break;
+      // }
       break;
     case TRI_SWITCH_MID:  // Manual Rudder, Autonomous Sail & Jib
       if (pi_data.has_cmd_sail) {
@@ -108,12 +111,12 @@ void mapControls(RCData* controller) {
 
 void loop() {
   teensy_data = TeensyData_init_default;
-  if (timer_20HZ > 50) {
+  if (timer_20HZ > 500) {
     teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
     teensy_data.has_servos = readServos(&teensy_data.servos);
     timer_20HZ = 0;
   }
-  if (timer_10HZ > 100) {
+  if (timer_10HZ > 1000) {
     if (!GPS_USE_PI) {
       teensy_data.has_gps = readGPS(&teensy_data.gps);
     }
@@ -122,7 +125,7 @@ void loop() {
     teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
     timer_10HZ = 0;
   }
-  if (timer_1HZ > 1000) {
+  if (timer_1HZ > 10000) {
     teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
     timer_1HZ = 0;
   }
