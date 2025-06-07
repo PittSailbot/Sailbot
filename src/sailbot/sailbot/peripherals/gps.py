@@ -52,6 +52,8 @@ class GPS(Node):
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
+        self.last_fix = time.time()
+
     def timer_callback(self):
         self.gps.update()
 
@@ -61,6 +63,9 @@ class GPS(Node):
             self.logging.info(str(msg.data))
             self.pub.publish(msg)
             self.logging.debug(f'GPS Publishing: "{msg.data}"')
+            self.last_fix = time.time()
+        else:
+            self.logging.warning(f"Waiting for fix ({round(time.time() - self.last_fix)}s)", throttle_duration_sec=5)
 
     # # Main loop runs forever printing the location, etc. every second.
     # last_print = time.monotonic()

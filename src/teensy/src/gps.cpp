@@ -59,7 +59,6 @@ bool readGPS(GPSData* gps) {
   //   Serial.println("no fix");
   //   return false;
   // }
-  Serial.println(GPS.latitudeDegrees);
   gps->lat = GPS.latitudeDegrees;
   gps->lon = GPS.longitudeDegrees;
   gps->speed = GPS.speed * 0.5144;  // knots -> m/s
