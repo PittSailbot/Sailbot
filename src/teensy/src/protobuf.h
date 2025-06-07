@@ -7,5 +7,6 @@
 
 extern void readProtobufFromPi(PiData*);
 extern void writeProtobufToPi(TeensyData*);
+extern void printTeensyProtobuf(TeensyData*);
 
 #endif

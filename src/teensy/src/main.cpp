@@ -140,4 +140,6 @@ void loop() {
       &teensy_data.has_camera_servos || &teensy_data.has_command) {
     writeProtobufToPi(&teensy_data);
   }
+
+  printTeensyProtobuf(&teensy_data);
 }
