@@ -72,19 +72,6 @@ void mapControls(RCData* controller) {
       setSail(controller->left_analog_y);
       setJib(controller->left_analog_x);
       setRudder(controller->right_analog_x);
-      // switch (controller->front_left_switch2) {
-      //   case TRI_SWITCH_DOWN:  // RC Sail Mode
-      //     setSail(controller->left_analog_y);
-      //     setJib(controller->left_analog_x);
-      //     setRudder(controller->right_analog_x);
-      //     break;
-      //   case TRI_SWITCH_MID:  // Camera Control Mode
-      //     setCameraYaw(controller->right_analog_y);
-      //     setCameraPitch(controller->left_analog_x);
-      //     break;
-      //   case TRI_SWITCH_UP:  // Unused
-      //     break;
-      // }
       break;
     case TRI_SWITCH_MID:  // Manual Rudder, Autonomous Sail & Jib
       if (pi_data.has_cmd_sail) {
@@ -110,9 +97,17 @@ void mapControls(RCData* controller) {
 }
 
 void loop() {
+  if (Serial.available()) {
+    readProtobufFromPi(&pi_data);
+  }
+
   teensy_data = TeensyData_init_default;
   if (timer_20HZ > 500) {
     teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
+
+    if (&teensy_data.has_rc_data) {
+      mapControls(&teensy_data.rc_data);
+    }
     teensy_data.has_servos = readServos(&teensy_data.servos);
     timer_20HZ = 0;
   }
@@ -128,14 +123,6 @@ void loop() {
   if (timer_1HZ > 10000) {
     teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
     timer_1HZ = 0;
-  }
-
-  if (Serial.available()) {
-    readProtobufFromPi(&pi_data);
-  }
-
-  if (&teensy_data.has_rc_data) {
-    mapControls(&teensy_data.rc_data);
   }
 
   if (&teensy_data.has_rc_data || &teensy_data.has_gps || &teensy_data.has_imu ||
