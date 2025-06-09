@@ -117,7 +117,7 @@ void loop() {
     }
     teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
     teensy_data.has_imu = readIMU(&teensy_data.imu);
-    teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
+    // teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
     timer_10HZ = 0;
   }
   if (timer_1HZ > 10000) {
