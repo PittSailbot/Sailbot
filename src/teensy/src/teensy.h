@@ -89,4 +89,18 @@
 #define TRANSCEIVER_SERIAL &Serial1  // Serial2 wizard shit, Serial1 works through PCB?
 
 #endif
+
+#ifdef USE_LEO_PCB_PINOUT
+#define SAIL_SERVO 23
+#define JIB_SERVO 24
+#define RUDDER_SERVO 9
+
+#define TRANSCEIVER_SERIAL &Serial1
+
+#define WINDVANE_ENCODER_A -1
+#define WINDVANE_ENCODER B - 1
+
+#define PUMP1 -1
+
+#endif
 #endif
