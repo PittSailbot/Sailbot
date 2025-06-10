@@ -13,6 +13,9 @@ int last_jib_percent;
 int last_rudder_angle;
 
 bool readServos(Servos* servos) {
+  if (last_sail_percent == 0 && last_jib_percent == 0 && last_rudder_angle == 0) {
+    return false;
+  }
   servos->sail = last_sail_percent;
   servos->jib = last_jib_percent;
   servos->rudder = last_rudder_angle;
@@ -27,21 +30,21 @@ Servo RudderServo;
 int setupServos() {
   Serial.println("I: Initializing servos");
   if (SAIL_SERVO != -1) {
-    SailServo.attach(SAIL_SERVO, BILDA_MIN_ANGLE, BILDA_MAX_ANGLE);
-    setSail(0);
+    SailServo.attach(SAIL_SERVO);
+    // setSail(0);
     Serial.printf("I: Initialized SAIL servo on pin %d\n", SAIL_SERVO);
   } else {
     Serial.println("W: Skipping SAIL servo; no pin defined\n");
   }
   if (JIB_SERVO != -1) {
-    JibServo.attach(JIB_SERVO, BILDA_MIN_ANGLE, BILDA_MAX_ANGLE);
-    setJib(0);
+    JibServo.attach(JIB_SERVO);
+    // setJib(0);
     Serial.printf("I: Initialized JIB servo on pin %d\n", JIB_SERVO);
   } else {
     Serial.println("W: Skipping JIB servo; no pin defined");
   }
   if (RUDDER_SERVO != -1) {
-    RudderServo.attach(RUDDER_SERVO, HITECH_MIN_ANGLE, HITECH_MAX_ANGLE);
+    RudderServo.attach(RUDDER_SERVO);
     setRudder((HITECH_MAX_ANGLE - HITECH_MIN_ANGLE) / 2);
     Serial.printf("I: Initialized RUDDER servo on pin %d\n", RUDDER_SERVO);
   } else {
@@ -53,18 +56,21 @@ int setupServos() {
 }
 
 void setSail(int percentTensioned) {
-  int pwm = map(percentTensioned, 0, 100, BILDA_MIN_PWM, BILDA_MAX_PWM);
+  constrain(percentTensioned, 0, 100);
+  int pwm = map(percentTensioned, 0, 100, BILDA_MIN_PWM + 600, BILDA_MAX_PWM - 600);
   SailServo.writeMicroseconds(pwm);
   last_sail_percent = percentTensioned;
 }
 
 void setJib(int percentTensioned) {
+  constrain(percentTensioned, 0, 100);
   int pwm = map(percentTensioned, 0, 100, BILDA_MIN_PWM, BILDA_MAX_PWM);
   JibServo.writeMicroseconds(pwm);
   last_jib_percent = percentTensioned;
 }
 
 void setRudder(int angle) {
+  constrain(angle, HITECH_MIN_ANGLE, HITECH_MAX_ANGLE);
   int pwm = map(angle, HITECH_MIN_ANGLE, HITECH_MAX_ANGLE, HITECH_MIN_PWM, HITECH_MAX_PWM);
   RudderServo.writeMicroseconds(pwm);
   last_rudder_angle = angle;
