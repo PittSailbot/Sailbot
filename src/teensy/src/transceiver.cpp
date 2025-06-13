@@ -1,29 +1,34 @@
 // Reads the RC controller state from the FrSky receiver
+#include "transceiver.h"
+
 #include <Arduino.h>
 #include <sbus.h>
-#include "transceiver.h"
+
+#include "teensy.h"
 
 #define RC_LOW 150
 #define RC_HIGH 1811
 
-bfs::SbusRx sbus_rx(&Serial2);  // FrSky controller -> Sailboat receiver
-bfs::SbusTx sbus_tx(&Serial2); // Sailboat receiver -> FrSky receiver?
+bfs::SbusRx sbus_rx(TRANSCEIVER_SERIAL);  // FrSky controller -> Sailboat receiver
+bfs::SbusTx sbus_tx(TRANSCEIVER_SERIAL);  // Sailboat receiver -> FrSky receiver?
 bfs::SbusData data;
 
 void setupTransceiver() {
   sbus_rx.Begin();
   sbus_tx.Begin();
-  Serial.println("Started Transceiver");
+  Serial.println("I: Started Transceiver");
 }
 
-bool readControllerState (RCData* controller) {
+bool readControllerState(RCData* controller) {
   /* EXPECTED RC CONTROLLER FORMAT
-  Max and min trim thresholds are within +-10. They do not effect the max/min value. They only offset the "center" value.
+  Max and min trim thresholds are within +-10. They do not effect the max/min value. They only
+  offset the "center" value.
   - Down/Left reads ~172-180 (Converted to 0)
     - Front-facing switches are reversed and read 0 on up
   - Center reads ~980-1000 (Converted to 50)
   - Up/Right reads ~1795-1811 (Converted to 100)
-  RC receiver still repeats the last controller state when it is off/connection lost. Could cause issues.
+  RC receiver still repeats the last controller state when it is off/connection lost. Could cause
+  issues.
 
   Channels:
   0 - left_analog_y
@@ -48,6 +53,11 @@ bool readControllerState (RCData* controller) {
     // sbus_tx.data(data);
     // sbus_tx.Write();
 
+    // data channels = 0 when controller is disconnected, when connected they are RC_LOW:RC_HIGH
+    if (data.ch[0] == 0) {
+      return false;
+    }
+
     controller->left_analog_y = map(data.ch[0], RC_LOW, RC_HIGH, 0, 100);
     controller->right_analog_x = map(data.ch[1], RC_LOW, RC_HIGH, 0, 100);
     controller->right_analog_y = map(data.ch[2], RC_LOW, RC_HIGH, 0, 100);
@@ -58,11 +68,6 @@ bool readControllerState (RCData* controller) {
     controller->top_left_switch = map(data.ch[7], RC_LOW, RC_HIGH, 0, 1);
     controller->top_right_switch = map(data.ch[8], RC_LOW, RC_HIGH, 0, 1);
     controller->potentiometer = map(data.ch[9], RC_LOW, RC_HIGH, 0, 100);
-
-    // data channels = 0 when controller is disconnected, when connected they are RC_LOW:RC_HIGH
-    if (data.ch[0] == 0) {
-      return false;
-    }
 
     return true;
   }
