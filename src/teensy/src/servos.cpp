@@ -57,7 +57,7 @@ int setupServos() {
 
 void setSail(int percentTensioned) {
   constrain(percentTensioned, 0, 100);
-  int pwm = map(percentTensioned, 0, 100, BILDA_MIN_PWM + 600, BILDA_MAX_PWM - 600);
+  int pwm = map(percentTensioned, 0, 100, BILDA_MIN_PWM + 500, BILDA_MAX_PWM - 500);
   SailServo.writeMicroseconds(pwm);
   last_sail_percent = percentTensioned;
 }
