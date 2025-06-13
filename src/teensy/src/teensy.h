@@ -76,9 +76,9 @@
 #define NETC8_2  // 5v level shift of water level sensor 2?
 
 #if SERVO_USE_GPIO
-#define SAIL_SERVO 2    // SOLDERED_ASS_PIN3
-#define JIB_SERVO 33    // SOLDERED_ASS_PIN2
-#define RUDDER_SERVO 4  // SOLDERED_ASS_PIN1
+#define SAIL_SERVO 9
+#define JIB_SERVO -1  // 33
+#define RUDDER_SERVO 5
 #endif
 
 #define WINDVANE_ENCODER_A 34
@@ -98,7 +98,7 @@
 #define TRANSCEIVER_SERIAL &Serial1
 
 #define WINDVANE_ENCODER_A -1
-#define WINDVANE_ENCODER B - 1
+#define WINDVANE_ENCODER_B -1
 
 #define PUMP1 -1
 
