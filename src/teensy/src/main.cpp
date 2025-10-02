@@ -1,29 +1,27 @@
-// Main program running on the Teensy
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
 #include <I2CScanner.h>
-#include <IntervalTimer.h>
 #include <Wire.h>
 #include <sbus.h>
 
-#include "camera_servos.h"
 #include "elapsedMillis.h"
-#include "gps.h"
-#include "imu.h"
+#include "hal/hal_config.h"
+#include "hal/system_factory.h"
 #include "pi.pb.h"
 #include "protobuf.h"
-#include "servos.h"
-#include "teensy.h"
 #include "teensy.pb.h"
 #include "transceiver.h"
-#include "water_sensors.h"
-#include "windvane.h"
 
-IntervalTimer filterTimer;
+// Global platform instance
+// Includes all sensors, servos, etc.
+std::unique_ptr<Sailbot::SystemFactory> platform;
+
+// Timers
 elapsedMillis timer_20HZ;
 elapsedMillis timer_10HZ;
 elapsedMillis timer_1HZ;
 
+// Protobuf data
 TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
 
@@ -31,23 +29,13 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(400000);
-  // while (!Serial) {}
-  setupTransceiver();
-  setupWindVane();
-  if (!GPS_USE_PI) {
-    setupGPS();
-  }
-  setupIMU();
-  setupServos();
-  setupWaterSensors();
-  setupPumps();
-  // setupReceiver();
 
-  Serial.println("I: Initialized Teensy");
+  Serial.println("I: Initializing Sailbot Platform...");
 
-  I2CScanner scanner;
-  scanner.Init();
-  scanner.Scan();
+  // Create the complete platform (MCU + PCB + boat + components)
+  platform = Sailbot::SystemFactory::createPlatform();
+
+  Serial.printf("I: %s\n", platform->toString());
 }
 
 void mapControls(RCData* controller) {
@@ -69,28 +57,37 @@ void mapControls(RCData* controller) {
   // RC / Autonomous Mode
   switch (controller->front_left_switch1) {
     case TRI_SWITCH_UP:  // Manual Sail, Jib & Rudder
-      setSail(controller->left_analog_y);
-      setJib(controller->left_analog_x);
-      setRudder(controller->right_analog_x);
+      platform->setSail(controller->left_analog_y);
+      platform->setRudder(controller->right_analog_x);
+
+#if HAS_JIB_SERVO
+      platform->setJib(controller->left_analog_x);
+#endif
       break;
+
     case TRI_SWITCH_MID:  // Manual Rudder, Autonomous Sail & Jib
       if (pi_data.has_cmd_sail) {
-        setSail(pi_data.cmd_sail);
+        platform->setSail(pi_data.cmd_sail);
       }
+#if HAS_JIB_SERVO
       if (pi_data.has_cmd_jib) {
-        setJib(pi_data.cmd_jib);
+        platform->setJib(pi_data.cmd_jib);
       }
-      setRudder(controller->right_analog_x);
+#endif
+      platform->setRudder(controller->right_analog_x);
       break;
+
     case TRI_SWITCH_DOWN:  // Autonomous Sail, Rudder & Jib
       if (pi_data.has_cmd_sail) {
-        setSail(pi_data.cmd_sail);
+        platform->setSail(pi_data.cmd_sail);
       }
+#if HAS_JIB_SERVO
       if (pi_data.has_cmd_jib) {
-        setJib(pi_data.cmd_jib);
+        platform->setJib(pi_data.cmd_jib);
       }
+#endif
       if (pi_data.has_cmd_rudder) {
-        setRudder(pi_data.cmd_rudder);
+        platform->setRudder(pi_data.cmd_rudder);
       }
       break;
   }
@@ -102,34 +99,44 @@ void loop() {
   }
 
   teensy_data = TeensyData_init_default;
-  if (timer_20HZ > 500) {
-    teensy_data.has_rc_data = readControllerState(&teensy_data.rc_data);
 
-    if (&teensy_data.has_rc_data) {
+  if (timer_20HZ > 500) {
+    teensy_data.has_rc_data = platform->readControllerState(&teensy_data.rc_data);
+
+    if (teensy_data.has_rc_data) {
       mapControls(&teensy_data.rc_data);
     }
-    teensy_data.has_servos = readServos(&teensy_data.servos);
+
+    teensy_data.has_servos = platform->readServos(&teensy_data.servos);
+
     timer_20HZ = 0;
   }
   if (timer_10HZ > 1000) {
-    if (!GPS_USE_PI) {
-      teensy_data.has_gps = readGPS(&teensy_data.gps);
-    }
-    teensy_data.has_windvane = readWindVane(&teensy_data.windvane);
-    teensy_data.has_imu = readIMU(&teensy_data.imu);
-    // teensy_data.has_camera_servos = readCameraServos(&teensy_data.camera_servos);
+#if HAS_GPS
+    teensy_data.has_gps = platform->readGPS(&teensy_data.gps);
+#endif
+
+#if HAS_WINDVANE
+    teensy_data.has_windvane = platform->readWindVane(&teensy_data.windvane);
+#endif
+
     timer_10HZ = 0;
   }
+
   if (timer_1HZ > 10000) {
-    teensy_data.has_water_sensors = readWaterSensors(&teensy_data.water_sensors);
+#if HAS_WATER_SENSORS
+    teensy_data.has_water_sensors = platform->checkWaterLevels(&teensy_data.water_sensors);
+#endif
     timer_1HZ = 0;
   }
 
-  if (&teensy_data.has_rc_data || &teensy_data.has_gps || &teensy_data.has_imu ||
-      &teensy_data.has_servos || &teensy_data.has_water_sensors || &teensy_data.has_windvane ||
-      &teensy_data.has_camera_servos || &teensy_data.has_command) {
+  // Send data to Pi if we have any data to send
+  if (teensy_data.has_rc_data || teensy_data.has_gps || teensy_data.has_servos ||
+      teensy_data.has_water_sensors || teensy_data.has_windvane || teensy_data.has_camera_servos ||
+      teensy_data.has_command) {
     writeProtobufToPi(&teensy_data);
   }
 
+  // Debug output (can be conditionally compiled out later)
   printTeensyProtobuf(&teensy_data);
 }
