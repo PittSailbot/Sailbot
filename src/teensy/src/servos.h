@@ -1,24 +1,54 @@
-#ifndef SERVOS_H
-#define SERVOS_H
-#include "teensy.pb.h"
+#pragma once
+#include <Servo.h>
 
-// PWM ranges that the servos will respond to
-// Update if any of our servos are replaced with a different model
-#define BILDA_MIN_PWM 500
-#define BILDA_MAX_PWM 2500
-#define HITECH_MIN_PWM 870
-#define HITECH_MAX_PWM 2320
+/**
+ * @brief Base template class for servo driver implementations
+ */
+class ServoInterface {
+ public:
+  uint16_t min_pwm;
+  uint16_t max_pwm;
+  uint16_t min_angle;
+  uint16_t max_angle;
+  uint16_t angle = 0;
 
-// Max travel range in degrees that the servo can travel
-#define BILDA_MIN_ANGLE 0
-#define BILDA_MAX_ANGLE 1800
-#define HITECH_MIN_ANGLE 0
-#define HITECH_MAX_ANGLE 146
+  virtual ~ServoInterface() = default;
 
-extern int setupServos();
-extern void setSail(int);
-extern void setJib(int);
-extern void setRudder(int);
-extern bool readServos(Servos*);
+  /**
+   * @brief Set the servo to a specific angle
+   * @param angle position to send servo to (in degrees); automatically constrained to min/max
+   */
+  virtual void write(int angle) = 0;
 
-#endif
+  /**
+   * @brief Read the last set angle (in degrees)
+   * @return angle (in degrees) that the angle was last set to. This assumes instantenous movement,
+   * so actual angle may differ according to travel time
+   */
+  int read() {
+    return angle;
+  }
+};
+
+// Interface for driving servos directly over GPIO pins
+class GPIOServoInterface : public ServoInterface {
+ private:
+  Servo servo;
+  int pin_number;  // MUST be a PWM-capable pin
+
+ public:
+  GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm, uint16_t min_angle,
+                     uint16_t max_angle);
+  void write(int angle) override;
+};
+
+// Interface for driving servos over the Adafruit driver board
+class I2CServoInterface : public ServoInterface {
+ private:
+  int channel;
+
+ public:
+  I2CServoInterface(int i2c_channel, uint16_t min_pwm, uint16_t max_pwm, uint16_t min_angle,
+                    uint16_t max_angle);
+  void write(int angle) override;
+};
