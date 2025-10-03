@@ -67,6 +67,7 @@ class SystemFactory {
     // Create servos based on type-safe configuration and layout pins
     // Assumes that all servos communicate over the same interface which may not always be true if
     // you have 1 servo over GPIO and another over I2C
+#ifdef SERVO_TYPE
     if constexpr (SERVO_TYPE == ServoType::GPIO) {
 #ifdef HAS_SAIL
       sail_servo =
@@ -97,6 +98,7 @@ class SystemFactory {
 #ifdef HAS_JIB
       jib_servo = std::make_unique<I2CServoInterface>(2, jib_spec.min_pwm, jib_spec.max_pwm,
                                                       jib_spec.min_angle, jib_spec.max_angle);
+#endif
 #endif
     }
 
