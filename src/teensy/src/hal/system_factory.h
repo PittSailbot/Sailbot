@@ -89,10 +89,10 @@ class SystemFactory {
 #ifdef HAS_IMU
     switch (IMU_TYPE) {
       case IMUType::ADAFRUIT_BNO055:
-        imu = nullptr;  // TODO: std::make_unique<BNO055IMU>();
+        imu = std::make_unique<BNO055_IMU>();
         break;
       case IMUType::ADAFRUIT_LSM6DS_LIS3MDL:
-        imu = nullptr;  // TODO: std::make_unique<LSM6DS_LIS3MDL_IMU>();
+        imu = std::make_unique<LSM6DS_IMU>();
         break;
     }
 #endif
