@@ -8,7 +8,7 @@
 #include "Adafruit_PWMServoDriver.h"
 
 // ===== GPIO Servo Driver ======
-GPIOServoInterface::GPIOServoInterface(u_int8_t pin, uint16_t min_pwm, uint16_t max_pwm,
+GPIOServoInterface::GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm,
                                        uint16_t max_angle) {
   this->min_pwm = min_pwm;
   this->max_pwm = max_pwm;
@@ -18,7 +18,7 @@ GPIOServoInterface::GPIOServoInterface(u_int8_t pin, uint16_t min_pwm, uint16_t 
   servo.attach(pin);
 }
 
-GPIOServoInterface::GPIOServoInterface(u_int8_t pin, ServoSpecData spec)
+GPIOServoInterface::GPIOServoInterface(int pin, ServoSpecData spec)
     : GPIOServoInterface(pin, spec.min_pwm, spec.max_pwm, spec.max_angle) {
 }
 
