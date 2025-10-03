@@ -1,5 +1,6 @@
 #pragma once
 #include <Servo.h>
+
 #include "hal/components.h"
 
 /**
@@ -45,8 +46,8 @@ class GPIOServoInterface : public ServoInterface {
   int pin_number;  // MUST be a PWM-capable pin
 
  public:
-  GPIOServoInterface(u_int8_t pin, uint16_t min_pwm, uint16_t max_pwm, uint16_t max_angle);
-  GPIOServoInterface(u_int8_t pin, ServoSpecData spec);
+  GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm, uint16_t max_angle);
+  GPIOServoInterface(int pin, ServoSpecData spec);
   void write(int angle) override;
 };
 
