@@ -7,16 +7,19 @@
 
 #include "Adafruit_PWMServoDriver.h"
 
-// GPIOServoInterface Implementation
-GPIOServoInterface::GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm,
-                                       uint16_t min_angle, uint16_t max_angle) {
+// ===== GPIO Servo Driver ======
+GPIOServoInterface::GPIOServoInterface(u_int8_t pin, uint16_t min_pwm, uint16_t max_pwm,
+                                       uint16_t max_angle) {
   this->min_pwm = min_pwm;
   this->max_pwm = max_pwm;
-  this->min_angle = min_angle;
   this->max_angle = max_angle;
   this->pin_number = pin;
   this->angle = 0;
   servo.attach(pin);
+}
+
+GPIOServoInterface::GPIOServoInterface(u_int8_t pin, ServoSpecData spec)
+    : GPIOServoInterface(pin, spec.min_pwm, spec.max_pwm, spec.max_angle) {
 }
 
 void GPIOServoInterface::write(int angle) {
@@ -28,15 +31,14 @@ void GPIOServoInterface::write(int angle) {
   this->angle = angle;
 }
 
-// I2CServoInterface Implementation
-extern Adafruit_PWMServoDriver driver;  // Use existing driver from servo code
+// ===== Adafruit I2C Driver =====
+extern Adafruit_PWMServoDriver driver;
 
 I2CServoInterface::I2CServoInterface(int i2c_channel, uint16_t min_pwm, uint16_t max_pwm,
-                                     uint16_t min_angle, uint16_t max_angle) {
+                                     uint16_t max_angle) {
   this->channel = i2c_channel;
   this->min_pwm = min_pwm;
   this->max_pwm = max_pwm;
-  this->min_angle = min_angle;
   this->max_angle = max_angle;
   this->angle = 0;
 }

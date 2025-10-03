@@ -71,28 +71,27 @@ enum class ServoSpec {
               // https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/new-digital-metal-gear-rudder-servo_2025
 };
 
-// Servo specification data structure
+// ===== SERVOS =====
+// Define new servos here!
 struct ServoSpecData {
   uint16_t min_pwm;
   uint16_t max_pwm;
-  uint16_t min_angle;
   uint16_t max_angle;
   const char* name;
 };
 
-// Servo specification lookup table
-constexpr ServoSpecData getServoSpec(ServoSpec spec) {
-  switch (spec) {
-    case ServoSpec::BILDA:
-      return {500, 2500, 0, 1800, "BILDA"};
-    case ServoSpec::HITECH:
-      return {870, 2320, 0, 146, "HiTech"};
-    case ServoSpec::JOY880545:
-      return {1520, 2500, 0, 612,
-              "JoySway Winch"};  // TODO: Guestimating the PWM/angle range, no specs online
-    case ServoSpec::JOY881504:
-      return {1520, 2500, 0, 180,
-              "JoySway Servo"};  // TODO: Guestimating the PWM/angle range, no specs online
-  }
-  return {1000, 2000, 0, 180, "Default"};  // Fallback value for undefined servos
-};
+namespace ServoSpecs {
+// Bilda servos (sails) https://www.servocity.com/2000-series-5-turn-dual-mode-servo-25-2-torque/
+constexpr ServoSpecData BILDA = {500, 2500, 1800, "BILDA"};
+// HiTech servos  (rudder) https://www.servocity.com/d845wp-servo/?sku=3684500
+constexpr ServoSpecData HITECH = {870, 2320, 146, "HiTech"};
+// Mini boat servo winch (sails)
+// https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/sail-winch-servo-set-df65
+constexpr ServoSpecData JOY880545 = {
+    1520, 2500, 612, "JoySway Winch"};  // TODO: Guestimating the PWM/angle range, no specs online
+// Mini boat servo (rudder)
+// https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/new-digital-metal-gear-rudder-servo_2025
+constexpr ServoSpecData JOY881504 = {
+    1520, 2500, 180, "JoySway Servo"};  // TODO: Guestimating the PWM/angle range, no specs online
+constexpr ServoSpecData DEFAULT = {1000, 2000, 180, "Default"};
+}  // namespace ServoSpecs

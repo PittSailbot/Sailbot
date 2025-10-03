@@ -54,53 +54,36 @@ class SystemFactory {
    */
   void initialize() {
 // Get servo specifications based on platform configuration
-#ifdef HAS_SAIL
-    constexpr auto sail_spec = getServoSpec(SAIL_SERVO_SPEC);
-#endif
-#ifdef HAS_RUDDER
-    constexpr auto rudder_spec = getServoSpec(RUDDER_SERVO_SPEC);
-#endif
-#ifdef HAS_JIB
-    constexpr auto jib_spec = getServoSpec(JIB_SERVO_SPEC);
-#endif
-
+#ifdef SERVO_TYPE
     // Create servos based on type-safe configuration and layout pins
     // Assumes that all servos communicate over the same interface which may not always be true if
     // you have 1 servo over GPIO and another over I2C
-#ifdef SERVO_TYPE
-    if constexpr (SERVO_TYPE == ServoType::GPIO) {
+    switch (SERVO_TYPE) {
+      case ServoType::GPIO:
 #ifdef HAS_SAIL
-      sail_servo =
-          std::make_unique<GPIOServoInterface>(SAIL_SERVO_PIN, sail_spec.min_pwm, sail_spec.max_pwm,
-                                               sail_spec.min_angle, sail_spec.max_angle);
+        sail_servo = std::make_unique<GPIOServoInterface>(SAIL_SERVO_PIN, SAIL_SERVO_SPEC);
 #endif
 #ifdef HAS_RUDDER
-      rudder_servo = std::make_unique<GPIOServoInterface>(
-          RUDDER_SERVO_PIN, rudder_spec.min_pwm, rudder_spec.max_pwm, rudder_spec.min_angle,
-          rudder_spec.max_angle);
+        rudder_servo = std::make_unique<GPIOServoInterface>(RUDDER_SERVO_PIN, RUDDER_SERVO_SPEC);
 #endif
 #ifdef HAS_JIB
-      jib_servo =
-          std::make_unique<GPIOServoInterface>(JIB_SERVO_PIN, jib_spec.min_pwm, jib_spec.max_pwm,
-                                               jib_spec.min_angle, jib_spec.max_angle);
+        jib_servo = std::make_unique<GPIOServoInterface>(JIB_SERVO_PIN, JIB_SERVO_SPEC);
 #endif
-    } else if constexpr (SERVO_TYPE == ServoType::ADAFRUIT_I2C_DRIVER) {
-      // Using I2C servo driver board with per-servo specs
+        break;
+      case ServoType::ADAFRUIT_I2C_DRIVER:
+        // Using I2C servo driver board with per-servo specs
 #ifdef HAS_SAIL
-      sail_servo = std::make_unique<I2CServoInterface>(0, sail_spec.min_pwm, sail_spec.max_pwm,
-                                                       sail_spec.min_angle, sail_spec.max_angle);
+        sail_servo = std::make_unique<I2CServoInterface>(0, SAIL_SERVO_SPEC);
 #endif
 #ifdef HAS_RUDDER
-      rudder_servo =
-          std::make_unique<I2CServoInterface>(1, rudder_spec.min_pwm, rudder_spec.max_pwm,
-                                              rudder_spec.min_angle, rudder_spec.max_angle);
+        rudder_servo = std::make_unique<I2CServoInterface>(1, RUDDER_SERVO_SPEC);
 #endif
 #ifdef HAS_JIB
-      jib_servo = std::make_unique<I2CServoInterface>(2, jib_spec.min_pwm, jib_spec.max_pwm,
-                                                      jib_spec.min_angle, jib_spec.max_angle);
+        jib_servo = std::make_unique<I2CServoInterface>(2, JIB_SERVO_SPEC);
 #endif
-#endif
+        break;
     }
+#endif  // SERVO_TYPE
 
 // Create other components based on type-safe configuration
 #ifdef HAS_IMU
