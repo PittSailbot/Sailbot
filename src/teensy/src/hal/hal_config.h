@@ -50,8 +50,8 @@ and sometimes just stops working.
 #define SERVO_TYPE ServoType::ADAFRUIT_I2C_DRIVER
 #define PCB_SPEC PCBSpec::TOM_PCB  // Tom's PCB pin layout
 
-#define SAIL_SERVO_SPEC ServoSpec::BILDA
-#define RUDDER_SERVO_SPEC ServoSpec::BILDA
+#define SAIL_SERVO_SPEC ServoSpecs::BILDA
+#define RUDDER_SERVO_SPEC ServoSpecs::BILDA
 // #define JIB_SERVO_SPEC     ServoSpec::HITECH
 
 #define GPS_TYPE GPSType::ADAFRUIT
@@ -72,9 +72,9 @@ and sometimes just stops working.
 #define PCB_SPEC PCBSpec::LEO_PCB                   // Leo's PCB pin layout
 
 // Servo specifications - define only servos that exist
-#define SAIL_SERVO_SPEC ServoSpec::BILDA            // Large BILDA servo for sail
-#define RUDDER_SERVO_SPEC ServoSpec::HITECH         // HiTech servo for rudder
-#define JIB_SERVO_SPEC ServoSpec::BILDA             // Large BILDA servo for jib
+#define SAIL_SERVO_SPEC ServoSpecs::BILDA            // Large BILDA servo for sail
+#define RUDDER_SERVO_SPEC ServoSpecs::HITECH         // HiTech servo for rudder
+#define JIB_SERVO_SPEC ServoSpecs::BILDA             // Large BILDA servo for jib
 
 // Optional components - define type if present, comment out if not
 #define GPS_TYPE GPSType::ADAFRUIT_PA1616S          // Has GPS
@@ -96,8 +96,8 @@ and sometimes just stops working.
 #define PCB_SPEC PCBSpec::BREADBOARD  // Breadboard test setup
 
 // Servo specifications - define only servos that exist (minimal for mini boat)
-#define SAIL_SERVO_SPEC ServoSpec::JOY880545
-#define RUDDER_SERVO_SPEC ServoSpec::JOY881504
+#define SAIL_SERVO_SPEC ServoSpecs::JOY880545
+#define RUDDER_SERVO_SPEC ServoSpecs::JOY881504
 // #define JIB_SERVO_SPEC                         // No jib servo on mini boat
 
 // Optional components - minimal setup, most components disabled
@@ -119,9 +119,9 @@ and sometimes just stops working.
 #define PCB_SPEC PCBSpec::BREADBOARD        // Breadboard test setup
 
 // Servo specifications - define only servos that exist (test breadboard has all servos)
-#define SAIL_SERVO_SPEC ServoSpec::BILDA    // Test with BILDA servo for sail
-#define RUDDER_SERVO_SPEC ServoSpec::BILDA  // Test with BILDA servo for rudder
-#define JIB_SERVO_SPEC ServoSpec::BILDA     // Test with BILDA servo for jib
+// #define SAIL_SERVO_SPEC ServoSpecs::BILDA    // Test with BILDA servo for sail
+// #define RUDDER_SERVO_SPEC ServoSpecs::BILDA  // Test with BILDA servo for rudder
+// #define JIB_SERVO_SPEC ServoSpecs::BILDA     // Test with BILDA servo for jib
 
 // Optional components - testing platform can have various sensors
 // #define GPS_TYPE           GPSType::ADAFRUIT_PA1616S    // Uncomment to test GPS

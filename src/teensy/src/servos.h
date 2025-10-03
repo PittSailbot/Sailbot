@@ -1,5 +1,6 @@
 #pragma once
 #include <Servo.h>
+#include "hal/components.h"
 
 /**
  * @brief Base template class for servo driver implementations
@@ -8,7 +9,7 @@ class ServoInterface {
  public:
   uint16_t min_pwm;
   uint16_t max_pwm;
-  uint16_t min_angle;
+  uint16_t min_angle = 0;
   uint16_t max_angle;
   uint16_t angle = 0;
 
@@ -28,6 +29,13 @@ class ServoInterface {
   int read() {
     return angle;
   }
+
+  /**
+   * @brief Set servo to center position
+   */
+  void center() {
+    this->write((this->max_angle - this->min_angle) / 2);
+  }
 };
 
 // Interface for driving servos directly over GPIO pins
@@ -37,8 +45,8 @@ class GPIOServoInterface : public ServoInterface {
   int pin_number;  // MUST be a PWM-capable pin
 
  public:
-  GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm, uint16_t min_angle,
-                     uint16_t max_angle);
+  GPIOServoInterface(u_int8_t pin, uint16_t min_pwm, uint16_t max_pwm, uint16_t max_angle);
+  GPIOServoInterface(u_int8_t pin, ServoSpecData spec);
   void write(int angle) override;
 };
 
@@ -48,7 +56,7 @@ class I2CServoInterface : public ServoInterface {
   int channel;
 
  public:
-  I2CServoInterface(int i2c_channel, uint16_t min_pwm, uint16_t max_pwm, uint16_t min_angle,
-                    uint16_t max_angle);
+  I2CServoInterface(int i2c_channel, uint16_t min_pwm, uint16_t max_pwm, uint16_t max_angle);
+  I2CServoInterface(int i2c_channel, ServoSpecData spec);
   void write(int angle) override;
 };
