@@ -1,56 +1,11 @@
-// Reads the acceleration, gyroscope and magnometer from the IMU
-#include "imu.h"
+// Driver for LSM6DS3TR-C + LIS3MDL 9-DOF IMU combo
+#include "drivers/imu/lsm6ds_lis3mdl.h"
 
 #include <Adafruit_AHRS.h>
-#include <Adafruit_BNO055.h>
 #include <Adafruit_LIS3MDL.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_Sensor_Calibration.h>
-#include <utility/imumaths.h>
+#include <Wire.h>
 
-// https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/arduino-code
-BNO055_IMU::BNO055_IMU() : bno(55) {
-}
-
-bool BNO055_IMU::begin() {
-  if (!bno.begin()) {
-    Serial.println("E: Failed to find BNO055 IMU... Check your wiring or I2C ADDR!");
-    return false;
-  }
-
-  bno.setExtCrystalUse(true);
-
-  this->initialized = true;
-  return true;
-}
-
-bool BNO055_IMU::read(IMU* imu) {
-  if (!this->initialized) {
-    return false;
-  }
-
-  sensors_event_t event;
-  bno.getEvent(&event);
-
-  /* Display the floating powsersint data */
-  // Serial.print("X: ");
-  // Serial.print(event.orientation.x, 4);
-  // Serial.print("\tY: ");
-  // Serial.print(event.orientation.y, 4);
-  // Serial.print("\tZ: ");
-  // Serial.print(event.orientation.z, 4);
-  // Serial.println("");
-
-  imu->yaw = event.orientation.x;
-  imu->pitch = event.orientation.y;
-  imu->roll = event.orientation.z;
-  // Acceleration can be collected but unused
-  // imu->accel_x = event.acceleration.x
-
-  return true;
-}
-
-// ===== LSM6DS_LIS3MDL Driver =====
 LSM6DS_IMU::LSM6DS_IMU() : lsm6ds() {
 }
 

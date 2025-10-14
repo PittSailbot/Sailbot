@@ -1,9 +1,11 @@
 #pragma once
 #include <memory>
 
+#include "drivers/imu/bno055.h"
+#include "drivers/imu/imu.h"
+#include "drivers/imu/lsm6ds_lis3mdl.h"  // TODO: Causes error on pico2
 #include "hal.h"
 #include "hal_config.h"
-#include "imu.h"
 #include "servos.h"
 #include "teensy.pb.h"
 #include "transceiver.h"
@@ -199,6 +201,15 @@ class SystemFactory {
 #ifdef HAS_WINDVANE
     if (windvane) {
       return windvane->read(wind_data);
+    }
+#endif
+    return false;
+  }
+
+  bool readIMU(IMU* imu_data) {
+#ifdef HAS_IMU
+    if (imu) {
+      return imu->read(imu_data);
     }
 #endif
     return false;
