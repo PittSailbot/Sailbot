@@ -256,6 +256,17 @@ class SystemFactory {
     return true;
   }
 
+  void scanI2C() {
+    Serial.println("Scanning I2C bus...");
+    for (byte addr = 1; addr < 127; addr++) {
+      Wire.beginTransmission(addr);
+      if (Wire.endTransmission() == 0) {
+        Serial.print("Found device at 0x");
+        Serial.println(addr, HEX);
+      }
+    }
+  }
+
   /**
    * @brief Print platform configuration and initialized components
    * @return String representation of the platform
