@@ -7,12 +7,12 @@
 // ============================================================================
 
 #define HAL_MICROCONTROLLER MCU_PICO2
-// #define HAL_RECEIVER                RECEIVER_IBUS
-// #define HAL_SERVO_TYPE              SERVO_PROTOCOL_GPIO
-// #define HAL_SAIL_SERVO_SPEC         ServoSpecs::JOY880545
-// #define HAL_RUDDER_SERVO_SPEC       ServoSpecs::JOY881504
+#define HAL_RECEIVER RECEIVER_IBUS
+#define HAL_SERVO_TYPE SERVO_PROTOCOL_GPIO
+#define HAL_SAIL_SERVO_SPEC ServoSpecs::JOY880545
+#define HAL_RUDDER_SERVO_SPEC ServoSpecs::JOY881504
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
-#define HAL_IMU IMU_BNO055
+// #define HAL_IMU                  IMU_BNO055
 // #define HAL_GPS                  GPS_ADAFRUIT_PA1616S
 // #define HAL_WINDVANE             WINDVANE_ROTARY_ENCODER
 // #define HAL_WATER_SENSOR         // None
@@ -43,4 +43,4 @@
 // PLATFORM INFO
 // ============================================================================
 
-#define PLATFORM_NAME "Breadboard Testing"
+#define PLATFORM_NAME "Dragonforce 65"

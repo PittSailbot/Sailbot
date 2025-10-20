@@ -1,15 +1,32 @@
 #pragma once
 #include <memory>
 
-#include "drivers/imu/bno055.h"
-#include "drivers/imu/imu.h"
-#include "drivers/imu/lsm6ds_lis3mdl.h"  // TODO: Causes error on pico2
 #include "hal.h"
 #include "hal_config.h"
-#include "servos.h"
 #include "teensy.pb.h"
+
+#ifdef HAS_SERVOS
+#include "servos.h"
+#endif
+
+#ifdef HAS_RECEIVER
 #include "transceiver.h"
+#endif
+
+#ifdef HAS_WINDVANE
 #include "windvane.h"
+#endif
+
+#ifdef HAS_IMU
+#include "drivers/imu/imu.h"
+#if HAL_IMU == IMU_BNO055
+#include "drivers/imu/bno055.h"
+#elif HAL_IMU == IMU_LSM6DS
+#include "drivers/imu/lsm6ds_lis3mdl.h"
+#else
+#error "Unknown IMU defined. Check components.h for valid options."
+#endif
+#endif
 
 namespace Sailbot {
 /**
@@ -55,63 +72,63 @@ class SystemFactory {
    * Uses layout-specific pin definitions and compile-time configuration
    */
   void initialize() {
+    // Init I2C
+#if defined(I2C_SDA_PIN) && defined(I2C_SCL_PIN)
+    Wire.setSDA(I2C_SDA_PIN);
+    Wire.setSCL(I2C_SCL_PIN);
+    Wire.begin();
+#endif
+
 // Get servo specifications based on platform configuration
-#ifdef SERVO_TYPE
+#ifdef HAS_SERVOS
     // Create servos based on type-safe configuration and layout pins
     // Assumes that all servos communicate over the same interface which may not always be true if
     // you have 1 servo over GPIO and another over I2C
-    switch (SERVO_TYPE) {
-      case ServoType::GPIO:
+#if HAL_SERVO_TYPE == SERVO_PROTOCOL_GPIO
 #ifdef HAS_SAIL
-        sail_servo = std::make_unique<GPIOServoInterface>(SAIL_SERVO_PIN, SAIL_SERVO_SPEC);
+    sail_servo = std::make_unique<GPIOServoInterface>(SAIL_SERVO_PIN, HAL_SAIL_SERVO_SPEC);
 #endif
 #ifdef HAS_RUDDER
-        rudder_servo = std::make_unique<GPIOServoInterface>(RUDDER_SERVO_PIN, RUDDER_SERVO_SPEC);
+    rudder_servo = std::make_unique<GPIOServoInterface>(RUDDER_SERVO_PIN, HAL_RUDDER_SERVO_SPEC);
 #endif
 #ifdef HAS_JIB
-        jib_servo = std::make_unique<GPIOServoInterface>(JIB_SERVO_PIN, JIB_SERVO_SPEC);
+    jib_servo = std::make_unique<GPIOServoInterface>(JIB_SERVO_PIN, HAL_JIB_SERVO_SPEC);
 #endif
-        break;
-      case ServoType::ADAFRUIT_I2C_DRIVER:
-        // Using I2C servo driver board with per-servo specs
+#elif HAL_SERVO_TYPE == SERVO_PROTOCOL_ADAFRUIT_I2C
+    // Using I2C servo driver board with per-servo specs
 #ifdef HAS_SAIL
-        sail_servo = std::make_unique<I2CServoInterface>(0, SAIL_SERVO_SPEC);
+    sail_servo = std::make_unique<I2CServoInterface>(0, HAL_SAIL_SERVO_SPEC);
 #endif
 #ifdef HAS_RUDDER
-        rudder_servo = std::make_unique<I2CServoInterface>(1, RUDDER_SERVO_SPEC);
+    rudder_servo = std::make_unique<I2CServoInterface>(1, HAL_RUDDER_SERVO_SPEC);
 #endif
 #ifdef HAS_JIB
-        jib_servo = std::make_unique<I2CServoInterface>(2, JIB_SERVO_SPEC);
+    jib_servo = std::make_unique<I2CServoInterface>(2, HAL_JIB_SERVO_SPEC);
 #endif
-        break;
-    }
-#endif  // SERVO_TYPE
+    break;
+  }
+#endif
+#endif
 
 // Create other components based on type-safe configuration
 #ifdef HAS_IMU
-    switch (IMU_TYPE) {
-      case IMUType::ADAFRUIT_BNO055:
-        imu = std::make_unique<BNO055_IMU>();
-        break;
-      case IMUType::ADAFRUIT_LSM6DS_LIS3MDL:
-        imu = std::make_unique<LSM6DS_IMU>();
-        break;
-    }
+#if IMU_TYPE == IMU_BNO055
+    imu = std::make_unique<BNO055_IMU>();
+#elif IMU_TYPE == IMU_LSM6DS
+  imu = std::make_unique<LSM6DS_IMU>();
+#endif
 #endif
 
 #ifdef HAS_RECEIVER
-    switch (RECEIVER_TYPE) {
-      case ReceiverType::SBUS:
-        receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_SERIAL);
-        receiver->begin() ? Serial.println("I: Started SBUS Receiver")
-                          : Serial.println("E: Failed to start SBUS Receiver");
-        break;
-      case ReceiverType::IBUS:
-        receiver = std::make_unique<IBusReceiver>(TRANSCEIVER_SERIAL);
-        receiver->begin() ? Serial.println("I: Started IBUS Receiver")
-                          : Serial.println("E: Failed to start IBUS Receiver");
-        break;
-    }
+#if HAL_RECEIVER == RECEIVER_SBUS
+    receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_SERIAL);
+    receiver->begin() ? Serial.println("I: Started SBUS Receiver")
+                      : Serial.println("E: Failed to start SBUS Receiver");
+#elif HAL_RECEIVER == RECEIVER_IBUS
+  receiver = std::make_unique<IBusReceiver>(TRANSCEIVER_SERIAL);
+  receiver->begin() ? Serial.println("I: Started IBUS Receiver")
+                    : Serial.println("E: Failed to start IBUS Receiver");
+#endif
 #endif
 
 #ifdef HAS_GPS
@@ -120,17 +137,15 @@ class SystemFactory {
 
 #ifdef HAS_WINDVANE
     // Use layout-defined windvane pins
-    switch (WINDVANE_TYPE) {
-      case WindVaneType::ROTARY_ENCODER:
-        windvane = nullptr  // TODO: std::make_unique<RotaryEncoderWindVane>(WINDVANE_ENCODER_A_PIN,
-                            // WINDVANE_ENCODER_B_PIN);
-            // windvane->setup();
-            break;
-    }
+#if HAL_WINDVANE == WINDVANE_ROTARY_ENCODER
+    windvane = nullptr  // TODO: std::make_unique<RotaryEncoderWindVane>(WINDVANE_ENCODER_A_PIN,
+                        // WINDVANE_ENCODER_B_PIN);
+                        // windvane->setup();
+#endif
 #endif
 
 #ifdef HAS_WATER_SENSORS
-    water_sensor1 = nullptr;  // TODO: WaterSensor implementation
+        water_sensor1 = nullptr;  // TODO: WaterSensor implementation
     water_sensor2 = nullptr;
 #endif
   }
@@ -254,7 +269,7 @@ class SystemFactory {
 #ifdef HAS_SAIL
     result += "  Sail Servo: ";
     result += (sail_servo != nullptr) ? "Initialized" : "Not initialized";
-    if (sail_servo != nullptr && SERVO_TYPE == ServoType::GPIO) {
+    if (sail_servo != nullptr && HAL_SERVO_TYPE == SERVO_PROTOCOL_GPIO) {
       result += " (Pin: ";
       result += SAIL_SERVO_PIN;
       result += ")";
@@ -265,7 +280,7 @@ class SystemFactory {
 #ifdef HAS_RUDDER
     result += "  Rudder Servo: ";
     result += (rudder_servo != nullptr) ? "Initialized" : "Not initialized";
-    if (rudder_servo != nullptr && SERVO_TYPE == ServoType::GPIO) {
+    if (rudder_servo != nullptr && HAL_SERVO_TYPE == SERVO_PROTOCOL_GPIO) {
       result += " (Pin: ";
       result += RUDDER_SERVO_PIN;
       result += ")";
@@ -276,7 +291,7 @@ class SystemFactory {
 #ifdef HAS_JIB
     result += "  Jib Servo: ";
     result += (jib_servo != nullptr) ? "Initialized" : "Not initialized";
-    if (jib_servo != nullptr && SERVO_TYPE == ServoType::GPIO) {
+    if (jib_servo != nullptr && HAL_SERVO_TYPE == SERVO_PROTOCOL_GPIO) {
       result += " (Pin: ";
       result += JIB_SERVO_PIN;
       result += ")";

@@ -9,58 +9,45 @@
  * If we get a new sensor, servo, receiver, PCB, etc. add it below!
  */
 
-// ===== MICROCONTROLLERS =====
-enum class MicrocontrollerType { PICO2, CYTRON, TEENSY41 };
+// Unfortunately enums/constexpr don't work with the preprocessor so no real type-safe way to
+// conditionally include driver-specific headers
 
-// ===== PCB PINOUT =====
-// Defines the relevant microcontroller pinouts to each component
-enum class PCBSpec {
-  TOM_PCB,     // The double-sided blue one
-  LEO_PCB,     // The single-sided green one
-  BREADBOARD,  // Breadboard test setup
-};
+// ===== MICROCONTROLLERS =====
+#define MCU_PICO2 1
+#define MCU_CYTRON 2
+#define MCU_TEENSY41 3
 
 // ===== RC RECEIVERS =====
-enum class ReceiverType {
-  SBUS,  // Any generic SBUS receiver (currently our FrSky X9-lite)
-  IBUS,  // Any generic IBUS receiver (currently our FS-IA6B)
-};
+#define RECEIVER_SBUS 1  // Any generic SBUS receiver (currently our FrSky X9-lite)
+#define RECEIVER_IBUS 2  // Any generic IBUS receiver (currently our FS-IA6B)
 
 // ===== CONTROLLERS =====
 // NOT IMPLEMENTED: In case we ever want to mix and match controllers
-// enum class ControllerType {
-//     FRSKY_X9,
-//     FLYSKY_FSI6X
-// }
+// #define CONTROLLER_FRSKY_X9
+// #define FLYSKY_FSI6X
 
 // ===== IMUs =====
-enum class IMUType {
-  ADAFRUIT_BNO055,          // Adafruit BNO055 9-DOF
-  ADAFRUIT_LSM6DS_LIS3MDL,  // LSM6DS + LIS3MDL combo
-};
+// Preprocessor-compatible constants for conditional compilation
+#define IMU_BNO055 1  // Adafruit BNO055 9-DOF
+#define IMU_LSM6DS 2  // LSM6DS + LIS3MDL combo
 
 // ===== GPSs =====
-enum class GPSType {
-  ADAFRUIT_PA1616S,  // Adafruit Ultimate GPS https://www.adafruit.com/product/746
-  ADAFRUIT_PA1010D   // Mini GPS w/ I2C & UART https://www.adafruit.com/product/4415
-};
+#define GPS_ADAFURIT_PA1616S 1  // Adafruit Ultimate GPS https://www.adafruit.com/product/746
+#define GPS_ADAFRUIT_PA1010D 2  // Mini GPS w/ I2C & UART https://www.adafruit.com/product/4415
 
 // ===== WINDVANES =====
-enum class WindVaneType { ROTARY_ENCODER };
+#define WINDVANE_ROTARY_ENCODER 1
 
 // ===== WATER SENSORS =====
-enum class WaterSensorType {
-  ADAFRUIT_SOIL_SENSOR,    // Capactive sensor communicating over I2C
-                           // https://www.adafruit.com/product/4026
-  ADAFRUIT_DIGITAL_SENSOR  // (these suck, don't bother using) https://www.adafruit.com/product/4965
-};
+#define WATER_SENSOR_ADAFRUIT_SOIL \
+  1  // Capactive sensor communicating over I2C  // Capactive sensor communicating over I2C
+#define WATER_SENSOR_ADAFRUIT_DIGITAL \
+  2  // (these suck, don't bother using) https://www.adafruit.com/product/4965
 
 // ===== SERVO COMMUNICATION PROTOCOL =====
 // How each servo's PWM signal is sent; currently no way to mix/match GPIO & I2C servos
-enum class ServoType {
-  GPIO,                 // Direct GPIO PWM servos
-  ADAFRUIT_I2C_DRIVER,  // I2C servo driver board (PCA9685)
-};
+#define SERVO_PROTOCOL_GPIO 1          // Direct GPIO PWM servos
+#define SERVO_PROTOCOL_ADAFRUIT_I2C 2  // I2C servo driver board (PCA9685)
 
 // ===== SERVOS =====
 // Define new servos here!
