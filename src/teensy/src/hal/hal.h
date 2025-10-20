@@ -29,9 +29,5 @@ class HAL {
 
   // Platform information
   virtual const char* getPlatformName() = 0;
-  virtual bool hasI2CServoDriver() = 0;
-  virtual uint8_t getMaxServos() = 0;
-  virtual bool hasI2CServoDriver() = 0;
-  virtual uint8_t getMaxServos() = 0;
 };
 }  // namespace Sailbot
