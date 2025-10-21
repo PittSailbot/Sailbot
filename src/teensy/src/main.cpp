@@ -10,7 +10,6 @@
 #include "pi.pb.h"
 #include "protobuf.h"
 #include "teensy.pb.h"
-#include "transceiver.h"
 
 // Global platform instance
 // Includes all sensors, servos, etc.
