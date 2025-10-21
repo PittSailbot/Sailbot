@@ -46,9 +46,9 @@
 // ===== DERIVED SETTINGS =====
 // Additional definitions that are the same for all platforms
 
-#if HAL_MICROCONTROLLER == MCU_TEENSY41
-#define MCU_LED 20  // TODO: add support for MCU light debugging
-#elif HAL_MICROCONTROLLER == MCU_PICO2 || HAL_MICROCONTROLLER == MCU_CYTRON
+#if defined(PLATFORM_TEENSY)
+#define MCU_LED 20
+#elif defined(PLATFORM_RP2350) || defined(PLATFORM_CYTRON)
 #define MCU_LED 25
 #endif
 
