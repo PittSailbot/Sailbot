@@ -10,7 +10,12 @@
 #endif
 
 #ifdef HAS_RECEIVER
-#include "transceiver.h"
+#include "drivers/rc_receiver/rc_receiver.h"
+#if HAL_RECEIVER == RECEIVER_SBUS
+#include "drivers/rc_receiver/sbus.h"
+#elif HAL_RECEIVER == RECEIVER_IBUS
+#include "drivers/rc_receiver/ibus.h"
+#endif
 #endif
 
 #ifdef HAS_WINDVANE

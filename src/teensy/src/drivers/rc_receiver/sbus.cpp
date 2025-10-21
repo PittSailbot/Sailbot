@@ -1,8 +1,6 @@
-// Driver implementations to reads the RC controller state from various receivers
-#include "transceiver.h"
+#include "drivers/rc_receiver/sbus.h"
 
 #include <Arduino.h>
-#include <IBusBM.h>
 #include <sbus.h>
 
 // SBUS Receiver Implementation
@@ -71,39 +69,4 @@ bool SBusReceiver::readControllerState(RCData* controller) {
     return true;
   }
   return false;
-}
-
-// IBus Receiver Implementation
-IBusReceiver::IBusReceiver(HardwareSerial* port) : serial_port(port) {
-  ibus = new IBusBM();
-}
-
-IBusReceiver::~IBusReceiver() {
-  delete ibus;
-}
-
-bool IBusReceiver::begin() {
-  ibus->begin(*serial_port);
-  return true;
-}
-
-bool IBusReceiver::readControllerState(RCData* controller) {
-  // Data channels = 0 when controller is disconnected
-  if (ibus->readChannel(0) == 0) {
-    return false;
-  }
-
-  // Map IBus channels to controller data (channels are 1000-2000 range)
-  controller->left_analog_y = map(ibus->readChannel(0), 1000, 2000, 0, 100);
-  controller->right_analog_x = map(ibus->readChannel(1), 1000, 2000, 0, 100);
-  controller->right_analog_y = map(ibus->readChannel(2), 1000, 2000, 0, 100);
-  controller->left_analog_x = map(ibus->readChannel(3), 1000, 2000, 0, 100);
-  controller->front_left_switch1 = map(ibus->readChannel(4), 1000, 2000, 0, 2);
-  controller->front_left_switch2 = map(ibus->readChannel(5), 1000, 2000, 0, 2);
-  controller->front_right_switch = map(ibus->readChannel(6), 1000, 2000, 0, 2);
-  controller->top_left_switch = map(ibus->readChannel(7), 1000, 2000, 0, 1);
-  controller->top_right_switch = map(ibus->readChannel(8), 1000, 2000, 0, 1);
-  controller->potentiometer = map(ibus->readChannel(9), 1000, 2000, 0, 100);
-
-  return true;
 }
