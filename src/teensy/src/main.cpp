@@ -1,8 +1,6 @@
 // Reads and controls most of the sensors on the boat and interfaces with the Pi via protobuf
 #include <Arduino.h>
-#include <I2CScanner.h>
 #include <Wire.h>
-#include <sbus.h>
 
 #include "elapsedMillis.h"
 #include "hal/hal_config.h"
