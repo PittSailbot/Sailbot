@@ -3,7 +3,7 @@
 #include <Adafruit_BNO055.h>
 #include <Adafruit_Sensor.h>
 
-#include "imu.h"
+#include "drivers/imu/imu.h"
 
 #define BNO055_I2C_ADDR 0x28  // 0x28 or 0x29 (if soldered)
 
