@@ -30,6 +30,9 @@
 #include "drivers/imu/lsm6ds_lis3mdl.h"
 #else
 #error "Unknown IMU defined. Check components.h for valid options."
+#endif
+#endif
+
 #ifdef HAS_GPS
 #include "drivers/gps/gps.h"
 #if HAL_GPS == GPS_ADAFRUIT_PA1010D
@@ -85,6 +88,12 @@ class SystemFactory {
    * Uses layout-specific pin definitions and compile-time configuration
    */
   void initialize() {
+    // Init Serial
+    Serial.begin(115200);
+    while (!Serial) delay(10);
+
+    Serial.println("I: Initializing Sailbot Platform...");
+
     // Init I2C
 #if defined(I2C_SDA_PIN) && defined(I2C_SCL_PIN)
     Wire.setSDA(I2C_SDA_PIN);
@@ -118,17 +127,19 @@ class SystemFactory {
 #ifdef HAS_JIB
     jib_servo = std::make_unique<I2CServoInterface>(2, HAL_JIB_SERVO_SPEC);
 #endif
-    break;
-  }
 #endif
 #endif
 
 // Create other components based on type-safe configuration
 #ifdef HAS_IMU
-#if IMU_TYPE == IMU_BNO055
+#if HAL_IMU == IMU_BNO055
     imu = std::make_unique<BNO055_IMU>();
-#elif IMU_TYPE == IMU_LSM6DS
-  imu = std::make_unique<LSM6DS_IMU>();
+    imu->begin() ? Serial.println("I: Started BNO055 IMU")
+                 : Serial.println("E: Failed to start BNO055 IMU");
+#elif HAL_IMU == IMU_LSM6DS
+    imu = std::make_unique<LSM6DS_IMU>();
+    imu->begin() ? Serial.println("I: Started LSM6DS IMU")
+                 : Serial.println("E: Failed to start LSM6DS IMU");
 #endif
 #endif
 
@@ -138,20 +149,21 @@ class SystemFactory {
     receiver->begin() ? Serial.println("I: Started SBUS Receiver")
                       : Serial.println("E: Failed to start SBUS Receiver");
 #elif HAL_RECEIVER == RECEIVER_IBUS
-  receiver = std::make_unique<IBusReceiver>(TRANSCEIVER_SERIAL);
-  receiver->begin() ? Serial.println("I: Started IBUS Receiver")
-                    : Serial.println("E: Failed to start IBUS Receiver");
+    receiver = std::make_unique<IBusReceiver>(TRANSCEIVER_SERIAL);
+    receiver->begin() ? Serial.println("I: Started IBUS Receiver")
+                      : Serial.println("E: Failed to start IBUS Receiver");
 #endif
 #endif
 
 #ifdef HAS_GPS
 #if HAL_GPS == GPS_ADAFRUIT_PA1616S
-  gps = std::make_unique<PA1616S_GPS>(GPS_SERIAL);
-  gps->begin() ? Serial.println("I: Started PA1616S GPS") : Serial.println("E: Failed to start PA1616S GPS");
+    gps = std::make_unique<PA1616S_GPS>(GPS_SERIAL);
+    gps->begin() ? Serial.println("I: Started PA1616S GPS")
+                 : Serial.println("E: Failed to start PA1616S GPS");
 #elif HAL_GPS == GPS_ADAFRUIT_PA1010D
-  // gps = std::make_unique<PA1010D_GPS>(GPS_SERIAL);
-  // gps->begin() ? Serial.println("I: Started PA1010D GPS");
-  //              : Serial.println("E: Failed to start PA1010D GPS");
+    // gps = std::make_unique<PA1010D_GPS>(GPS_SERIAL);
+    // gps->begin() ? Serial.println("I: Started PA1010D GPS");
+    //              : Serial.println("E: Failed to start PA1010D GPS");
 #endif
 #endif
 
@@ -168,22 +180,15 @@ class SystemFactory {
         water_sensor1 = nullptr;  // TODO: WaterSensor implementation
     water_sensor2 = nullptr;
 #endif
+
+    Serial.println("I: Platform created successfully");
   }
 
  public:
   SystemFactory() {
-    initialize();
   }
 
   ~SystemFactory() = default;
-
-  /**
-   * @brief Create complete platform system
-   * @return Fully configured and initialized platform
-   */
-  static std::unique_ptr<SystemFactory> createPlatform() {
-    return std::make_unique<SystemFactory>();
-  }
 
   // Component control methods
   void setSail(int angle) {
@@ -222,7 +227,6 @@ class SystemFactory {
   //                 return false;
   //             }
   //         }
-
 
   bool readWindVane(WindVane* wind_data) {
 #ifdef HAS_WINDVANE
@@ -368,8 +372,8 @@ class SystemFactory {
     // Water Sensors
     result += "  Water Sensors: ";
 #ifdef HAS_WATER_SENSORS
-    result += (water_sensor1_ != nullptr && water_sensor2_ != nullptr) ? "Initialized"
-                                                                       : "Not initialized";
+    result +=
+        (water_sensor1 != nullptr && water_sensor2 != nullptr) ? "Initialized" : "Not initialized";
 #else
     result += "Disabled";
 #endif
