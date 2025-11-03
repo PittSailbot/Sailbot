@@ -23,18 +23,13 @@ TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
 
 void setup() {
-  Serial.begin(115200);
-  Wire.begin();
-  Wire.setClock(400000);
-
-  Serial.println("I: Initializing Sailbot Platform...");
-
   // Create the complete platform (MCU + PCB + boat + components)
-  platform = Sailbot::SystemFactory::createPlatform();
+  platform = std::make_unique<Sailbot::SystemFactory>();
+  platform->initialize();
 
-  Serial.printf("I: %s\n", platform->toString());
+  Serial.printf("I: %s\n", platform->toString().c_str());
 }
-
+#if HAS_SERVOS
 void mapControls(RCData* controller) {
   /*Executes the keybind/meaning of each controller input.
     Editing this function will 'rebind' what an input does.
@@ -89,6 +84,7 @@ void mapControls(RCData* controller) {
       break;
   }
 }
+#endif
 
 void loop() {
   if (Serial.available()) {
@@ -100,20 +96,21 @@ void loop() {
   if (timer_20HZ > 500) {
     teensy_data.has_rc_data = platform->readControllerState(&teensy_data.rc_data);
 
+#ifdef HAS_SERVOS
     if (teensy_data.has_rc_data) {
       mapControls(&teensy_data.rc_data);
     }
 
     teensy_data.has_servos = platform->readServos(&teensy_data.servos);
-
+#endif
     timer_20HZ = 0;
   }
   if (timer_10HZ > 1000) {
-#if HAS_GPS
-    teensy_data.has_gps = platform->readGPS(&teensy_data.gps);
+#ifdef HAS_IMU
+    teensy_data.has_imu = platform->imu->read(&teensy_data.imu);
 #endif
 
-#if HAS_WINDVANE
+#ifdef HAS_WINDVANE
     teensy_data.has_windvane = platform->readWindVane(&teensy_data.windvane);
 #endif
 
