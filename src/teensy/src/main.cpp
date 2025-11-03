@@ -121,6 +121,9 @@ void loop() {
   }
 
   if (timer_1HZ > 10000) {
+#ifdef HAS_GPS
+    teensy_data.has_gps = platform->gps->read(&teensy_data.gps);
+#endif
 #if HAS_WATER_SENSORS
     teensy_data.has_water_sensors = platform->checkWaterLevels(&teensy_data.water_sensors);
 #endif

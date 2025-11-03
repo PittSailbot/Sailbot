@@ -30,6 +30,14 @@
 #include "drivers/imu/lsm6ds_lis3mdl.h"
 #else
 #error "Unknown IMU defined. Check components.h for valid options."
+#ifdef HAS_GPS
+#include "drivers/gps/gps.h"
+#if HAL_GPS == GPS_ADAFRUIT_PA1010D
+#include "drivers/gps/pa1010d.h"
+#elif HAL_GPS == GPS_ADAFRUIT_PA1616S
+#include "drivers/gps/pa1616s.h"
+#else
+#error "Unknown GPS defined. Check components.h for valid options."
 #endif
 #endif
 
@@ -137,7 +145,14 @@ class SystemFactory {
 #endif
 
 #ifdef HAS_GPS
-    gps = nullptr;  // TODO: GPS implementation
+#if HAL_GPS == GPS_ADAFRUIT_PA1616S
+  gps = std::make_unique<PA1616S_GPS>(GPS_SERIAL);
+  gps->begin() ? Serial.println("I: Started PA1616S GPS") : Serial.println("E: Failed to start PA1616S GPS");
+#elif HAL_GPS == GPS_ADAFRUIT_PA1010D
+  // gps = std::make_unique<PA1010D_GPS>(GPS_SERIAL);
+  // gps->begin() ? Serial.println("I: Started PA1010D GPS");
+  //              : Serial.println("E: Failed to start PA1010D GPS");
+#endif
 #endif
 
 #ifdef HAS_WINDVANE
@@ -208,14 +223,6 @@ class SystemFactory {
   //             }
   //         }
 
-  bool readGPS(GPSData* gps_data) {
-#ifdef HAS_GPS
-    if (gps) {
-      return gps->read(gps_data);
-    }
-#endif
-    return false;
-  }
 
   bool readWindVane(WindVane* wind_data) {
 #ifdef HAS_WINDVANE
