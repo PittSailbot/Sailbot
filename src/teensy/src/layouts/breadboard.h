@@ -13,7 +13,7 @@
 // #define HAL_RUDDER_SERVO_SPEC       ServoSpecs::JOY881504
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
 #define HAL_IMU IMU_BNO055
-// #define HAL_GPS                  GPS_ADAFRUIT_PA1616S
+#define HAL_GPS GPS_ADAFRUIT_PA1616S
 // #define HAL_WINDVANE             WINDVANE_ROTARY_ENCODER
 // #define HAL_WATER_SENSOR         // None
 
@@ -34,6 +34,7 @@
 #define I2C_SDA_PIN 0
 #define I2C_SCL_PIN 1
 #define TRANSCEIVER_SERIAL &Serial1
+#define GPS_SERIAL &Serial2
 
 // Water sensor I2C addresses
 #define WATER_SENSOR1_ADDR 0x36

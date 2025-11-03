@@ -32,7 +32,7 @@
 #define IMU_LSM6DS 2  // LSM6DS + LIS3MDL combo
 
 // ===== GPSs =====
-#define GPS_ADAFURIT_PA1616S 1  // Adafruit Ultimate GPS https://www.adafruit.com/product/746
+#define GPS_ADAFRUIT_PA1616S 1  // Adafruit Ultimate GPS https://www.adafruit.com/product/746
 #define GPS_ADAFRUIT_PA1010D 2  // Mini GPS w/ I2C & UART https://www.adafruit.com/product/4415
 
 // ===== WINDVANES =====
