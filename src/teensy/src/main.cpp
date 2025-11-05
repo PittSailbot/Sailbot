@@ -93,7 +93,7 @@ void loop() {
 
   teensy_data = TeensyData_init_default;
 
-  if (timer_20HZ > 500) {
+  if (timer_20HZ > 50) {
     teensy_data.has_rc_data = platform->readControllerState(&teensy_data.rc_data);
 
 #ifdef HAS_SERVOS
@@ -105,7 +105,7 @@ void loop() {
 #endif
     timer_20HZ = 0;
   }
-  if (timer_10HZ > 1000) {
+  if (timer_10HZ > 100) {
 #ifdef HAS_IMU
     teensy_data.has_imu = platform->imu->read(&teensy_data.imu);
 #endif
@@ -117,7 +117,7 @@ void loop() {
     timer_10HZ = 0;
   }
 
-  if (timer_1HZ > 10000) {
+  if (timer_1HZ > 1000) {
 #ifdef HAS_GPS
     teensy_data.has_gps = platform->gps->read(&teensy_data.gps);
 #endif
