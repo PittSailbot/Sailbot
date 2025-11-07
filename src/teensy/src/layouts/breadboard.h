@@ -13,7 +13,7 @@
 // #define HAL_RUDDER_SERVO_SPEC       ServoSpecs::JOY881504
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
 #define HAL_IMU IMU_BNO055
-#define HAL_GPS GPS_ADAFRUIT_PA1616S
+#define HAL_GPS GPS_ADAFRUIT_PA1010D
 // #define HAL_WINDVANE             WINDVANE_ROTARY_ENCODER
 // #define HAL_WATER_SENSOR         // None
 

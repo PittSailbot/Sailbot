@@ -160,9 +160,9 @@ class SystemFactory {
     gps->begin() ? Serial.println("I: Started PA1616S GPS")
                  : Serial.println("E: Failed to start PA1616S GPS");
 #elif HAL_GPS == GPS_ADAFRUIT_PA1010D
-    // gps = std::make_unique<PA1010D_GPS>(GPS_SERIAL);
-    // gps->begin() ? Serial.println("I: Started PA1010D GPS");
-    //              : Serial.println("E: Failed to start PA1010D GPS");
+    gps = std::make_unique<PA1010D_GPS>(GPS_SERIAL);
+    gps->begin() ? Serial.println("I: Started PA1010D GPS")
+                 : Serial.println("E: Failed to start PA1010D GPS");
 #endif
 #endif
 
