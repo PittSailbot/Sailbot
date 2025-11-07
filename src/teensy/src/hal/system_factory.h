@@ -90,7 +90,6 @@ class SystemFactory {
   void initialize() {
     // Init Serial
     Serial.begin(115200);
-    while (!Serial) delay(10);
 
     Serial.println("I: Initializing Sailbot Platform...");
 
