@@ -27,6 +27,8 @@ void setup() {
   platform->initialize();
 
   Serial.printf("I: %s\n", platform->toString().c_str());
+
+  platform->scanI2C();  // Debug to see if I2C devices are connected
 }
 #ifdef HAS_SERVOS
 void mapControls(RCData* controller) {
