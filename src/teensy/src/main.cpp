@@ -14,7 +14,6 @@
 std::unique_ptr<Sailbot::SystemFactory> platform;
 
 // Timers
-elapsedMillis timer_20HZ;
 elapsedMillis timer_10HZ;
 elapsedMillis timer_1HZ;
 
@@ -29,7 +28,7 @@ void setup() {
 
   Serial.printf("I: %s\n", platform->toString().c_str());
 }
-#if HAS_SERVOS
+#ifdef HAS_SERVOS
 void mapControls(RCData* controller) {
   /*Executes the keybind/meaning of each controller input.
     Editing this function will 'rebind' what an input does.
@@ -45,7 +44,6 @@ void mapControls(RCData* controller) {
     top_right_switch    - DISABLED (Reset switch broken)
     potentiometer       -
   */
-
   // RC / Autonomous Mode
   switch (controller->front_left_switch1) {
     case TRI_SWITCH_UP:  // Manual Sail, Jib & Rudder
@@ -93,7 +91,7 @@ void loop() {
 
   teensy_data = TeensyData_init_default;
 
-  if (timer_20HZ > 50) {
+  if (timer_10HZ > 100) {
     teensy_data.has_rc_data = platform->readControllerState(&teensy_data.rc_data);
 
 #ifdef HAS_SERVOS
@@ -103,9 +101,7 @@ void loop() {
 
     teensy_data.has_servos = platform->readServos(&teensy_data.servos);
 #endif
-    timer_20HZ = 0;
-  }
-  if (timer_10HZ > 100) {
+
 #ifdef HAS_IMU
     teensy_data.has_imu = platform->imu->read(&teensy_data.imu);
 #endif
