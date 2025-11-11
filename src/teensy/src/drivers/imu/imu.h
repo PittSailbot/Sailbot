@@ -12,8 +12,11 @@
 class IMUInterface {
  public:
   bool initialized = false;
-  // TODO: offset difference between boat's straight and IMU's straight, depends on mounting
-  // int offset_yaw
+
+  // Offsets to account for IMU mounting orientation relative to boat (clockwise 0-360°)
+  float yaw_offset = 0.0;
+  float pitch_offset = 0.0;
+  float roll_offset = 0.0;
 
   virtual ~IMUInterface() = default;
 
@@ -29,4 +32,10 @@ class IMUInterface {
    * @return true if data was successfully read, false otherwise
    */
   virtual bool read(IMU* imu) = 0;
+
+  virtual void set_offsets(float yaw = 0.0, float pitch = 0.0, float roll = 0.0) {
+    this->yaw_offset = yaw;
+    this->pitch_offset = pitch;
+    this->roll_offset = roll;
+  }
 };

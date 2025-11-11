@@ -77,6 +77,21 @@ and sometimes just stops working.
 #define PUMP1_CONTROL_PIN 28  // AUXFET4
 
 // ============================================================================
+// SENSOR CONFIG
+// ============================================================================
+
+// For the IMU to work it MUST be aligned with the boat's physical orientation
+// Use these offsets to account for static differences from mounting/PCB layout
+// For best accuracy, mount the PCB in the orientation in the boat to avoid recalibrating
+// Angles are in 0-360° clockwise
+// For the BNO055 (front 0° aligns with the y-silkscreen arrow)
+#define IMU_YAW_OFFSET \
+  0  // Should be close to a multiple of of 90° (depends on which way IMU is flipped)
+#define IMU_ROLL_OFFSET \
+  0  // Should be close to 0 (depends if PCB is level with boat deck or IMU is upside down)
+#define IMU_PITCH_OFFSET 0  // Should be close to 0 (depends if PCB is tilted front/back from deck)
+
+// ============================================================================
 // PLATFORM INFO
 // ============================================================================
 
