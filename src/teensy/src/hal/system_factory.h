@@ -272,11 +272,16 @@ class SystemFactory {
   }
 
   void scanI2C() {
-    Serial.println("Scanning I2C bus...");
+    if (this->initialized) {
+      Serial.println(
+          "W: RUNNING THIS FUNCTION AFTER INITIALIZATION CAUSES I2C SENSORS TO ONLY READ 0.0");
+    }
+
+    Serial.println("D: Scanning I2C bus...");
     for (byte addr = 1; addr < 127; addr++) {
       Wire.beginTransmission(addr);
       if (Wire.endTransmission() == 0) {
-        Serial.print("Found device at 0x");
+        Serial.print("D: Found device at 0x");
         Serial.println(addr, HEX);
       }
     }
