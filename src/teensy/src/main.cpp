@@ -28,7 +28,7 @@ void setup() {
 
   Serial.printf("I: %s\n", platform->toString().c_str());
 
-  platform->scanI2C();  // Debug to see if I2C devices are connected
+  // platform->scanI2C(); // DEBUG I2C WIRING ONLY, this WILL mess with reading sensors
 }
 #ifdef HAS_SERVOS
 void mapControls(RCData* controller) {
