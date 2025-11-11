@@ -56,6 +56,7 @@ namespace Sailbot {
  */
 class SystemFactory {
  public:
+  bool initialized = false;
   // Platform components (conditionally compiled)
 #ifdef HAS_SAIL
   std::unique_ptr<ServoInterface> sail_servo;
@@ -182,6 +183,7 @@ class SystemFactory {
 #endif
 
     Serial.println("I: Platform created successfully");
+    this->initialized = true;
   }
 
  public:
