@@ -140,6 +140,7 @@ class SystemFactory {
     imu->begin() ? Serial.println("I: Started LSM6DS IMU")
                  : Serial.println("E: Failed to start LSM6DS IMU");
 #endif
+    imu->set_offsets(IMU_YAW_OFFSET, IMU_PITCH_OFFSET, IMU_ROLL_OFFSET);
 #endif
 
 #ifdef HAS_RECEIVER
