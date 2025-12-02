@@ -7,7 +7,7 @@
 // ============================================================================
 
 #define HAL_MICROCONTROLLER MCU_PICO2
-// #define HAL_RECEIVER                RECEIVER_IBUS
+#define HAL_RECEIVER RECEIVER_SBUS
 // #define HAL_SERVO_TYPE              SERVO_PROTOCOL_GPIO
 // #define HAL_SAIL_SERVO_SPEC         ServoSpecs::JOY880545
 // #define HAL_RUDDER_SERVO_SPEC       ServoSpecs::JOY881504
@@ -33,8 +33,8 @@
 // Communication pins
 #define I2C_SDA_PIN 0
 #define I2C_SCL_PIN 1
-#define TRANSCEIVER_SERIAL &Serial1
-#define GPS_SERIAL &Serial2
+#define TRANSCEIVER_SERIAL &Serial2  // GP9
+#define GPS_SERIAL &Serial1
 
 // Water sensor I2C addresses
 #define WATER_SENSOR1_ADDR 0x36
