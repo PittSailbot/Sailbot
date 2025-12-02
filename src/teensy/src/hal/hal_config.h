@@ -15,10 +15,10 @@
 // ===== PLATFORM SELECTION =====
 // Uncomment ONE of these to select your complete platform configuration
 
-#define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
+// #define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
 // #define DAN_MARINA_LEO_PCB   // Mini boat + Pico + Leo PCB
 // #define DRAGONFORCE_65      // Mini boat autonomy testing platform
-// #define BREADBOARD
+#define BREADBOARD
 
 // ===== PLATFORM CONFIGURATIONS =====
 /**
