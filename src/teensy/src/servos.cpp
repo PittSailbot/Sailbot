@@ -23,6 +23,10 @@ GPIOServoInterface::GPIOServoInterface(int pin, ServoSpecData spec)
 }
 
 void GPIOServoInterface::write(int angle) {
+  if (angle == this->last_angle) {
+    return;  // already at position, no need to rewrite
+  }
+  this->last_angle = angle;
   angle = constrain(angle, min_angle, max_angle);
 
   int pwm = map(angle, min_angle, max_angle, min_pwm, max_pwm);

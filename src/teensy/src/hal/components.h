@@ -65,11 +65,9 @@ constexpr ServoSpecData BILDA = {500, 2500, 1800, "BILDA"};
 constexpr ServoSpecData HITECH = {870, 2320, 146, "HiTech"};
 // Mini boat servo winch (sails)
 // https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/sail-winch-servo-set-df65
-constexpr ServoSpecData JOY880545 = {
-    1520, 2500, 612, "JoySway Winch"};  // TODO: Guestimating the PWM/angle range, no specs online
+constexpr ServoSpecData JOY880545 = {1000, 2000, 612, "JoySway Winch"};
 // Mini boat servo (rudder)
 // https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/new-digital-metal-gear-rudder-servo_2025
-constexpr ServoSpecData JOY881504 = {
-    1520, 2500, 180, "JoySway Servo"};  // TODO: Guestimating the PWM/angle range, no specs online
+constexpr ServoSpecData JOY881504 = {1000, 2000, 180, "JoySway Servo"};
 constexpr ServoSpecData DEFAULT = {1000, 2000, 180, "Default"};
 }  // namespace ServoSpecs

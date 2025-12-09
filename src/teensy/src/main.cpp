@@ -49,8 +49,8 @@ void mapControls(RCData* controller) {
   // RC / Autonomous Mode
   switch (controller->front_left_switch1) {
     case TRI_SWITCH_UP:  // Manual Sail, Jib & Rudder
-      platform->setSail(controller->left_analog_y);
-      platform->setRudder(controller->right_analog_x);
+      platform->sail_servo->writePercent(controller->left_analog_y);
+      platform->rudder_servo->writePercent(controller->right_analog_x);
 
 #if HAS_JIB_SERVO
       platform->setJib(controller->left_analog_x);
@@ -93,8 +93,11 @@ void loop() {
 
   teensy_data = TeensyData_init_default;
 
-  if (timer_10HZ > 100) {
-    teensy_data.has_rc_data = platform->readControllerState(&teensy_data.rc_data);
+  if (timer_10HZ > 10) {
+    if (timer_10HZ > 150) {
+      Serial.printf("W: MCU failing to meet 10hz timer %.2fhz\n", 1000.0 / timer_10HZ);
+    }
+    teensy_data.has_rc_data = platform->receiver->readControllerState(&teensy_data.rc_data);
 
 #ifdef HAS_SERVOS
     if (teensy_data.has_rc_data) {
@@ -126,11 +129,11 @@ void loop() {
   }
 
   // Send data to Pi if we have any data to send
-  if (teensy_data.has_rc_data || teensy_data.has_gps || teensy_data.has_servos ||
-      teensy_data.has_water_sensors || teensy_data.has_windvane || teensy_data.has_camera_servos ||
-      teensy_data.has_command) {
-    writeProtobufToPi(&teensy_data);
-  }
+  // if (teensy_data.has_rc_data || teensy_data.has_gps || teensy_data.has_servos ||
+  //     teensy_data.has_water_sensors || teensy_data.has_windvane || teensy_data.has_camera_servos
+  //     || teensy_data.has_command) {
+  //   writeProtobufToPi(&teensy_data);
+  // }
 
   // Debug output (can be conditionally compiled out later)
   printTeensyProtobuf(&teensy_data);
