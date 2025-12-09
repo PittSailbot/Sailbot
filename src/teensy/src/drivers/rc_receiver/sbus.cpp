@@ -2,23 +2,34 @@
 
 #include <Arduino.h>
 #include <sbus.h>
+#if defined(ARDUINO_ARCH_RP2040)
+#include <SerialPIO.h>
+#endif
 
-// SBUS Receiver Implementation
+#if !defined(ARDUINO_ARCH_RP2040)
 SBusReceiver::SBusReceiver(HardwareSerial* port) : serial_port(port) {
   sbus_rx = new bfs::SbusRx(port);
-  sbus_tx = new bfs::SbusTx(port);
+  // sbus_tx = new bfs::SbusTx(port);
   data = new bfs::SbusData();
 }
+#endif
+
+#if defined(ARDUINO_ARCH_RP2040)
+SBusReceiver::SBusReceiver(int8_t rxpin) : serial_port(nullptr) {
+  sbus_rx = new bfs::SbusRx(rxpin);
+  data = new bfs::SbusData();
+}
+#endif
 
 SBusReceiver::~SBusReceiver() {
   delete sbus_rx;
-  delete sbus_tx;
+  // delete sbus_tx;
   delete data;
 }
 
 bool SBusReceiver::begin() {
   sbus_rx->Begin();
-  sbus_tx->Begin();
+  // sbus_tx->Begin();
   return true;
 }
 
