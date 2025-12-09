@@ -1,4 +1,5 @@
 #pragma once
+#include <Arduino.h>
 #include <Servo.h>
 
 #include "hal/components.h"
@@ -13,6 +14,7 @@ class ServoInterface {
   uint16_t min_angle = 0;
   uint16_t max_angle;
   uint16_t angle = 0;
+  uint16_t last_angle = 65535;
 
   virtual ~ServoInterface() = default;
 
@@ -36,6 +38,17 @@ class ServoInterface {
    */
   void center() {
     this->write((this->max_angle - this->min_angle) / 2);
+  }
+
+  /**
+   * @brief Set the servo to a percent of its maximum travel range
+   */
+  void writePercent(int percent) {
+    percent = constrain(percent, 0, 100);
+
+    int angle = map(percent, 0, 100, min_angle, max_angle);
+
+    this->write(angle);
   }
 };
 
