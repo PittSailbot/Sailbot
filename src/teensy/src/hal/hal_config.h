@@ -12,6 +12,8 @@
  * 3. Only components with HAS_* = 1 will be compiled into the firmware
  */
 
+//  #define DEBUG // Uncomment to enable debug mode
+
 // ===== PLATFORM SELECTION =====
 // Uncomment ONE of these to select your complete platform configuration
 

@@ -88,7 +88,9 @@ void mapControls(RCData* controller) {
 
 void loop() {
   if (Serial.available()) {
-    readProtobufFromPi(&pi_data);
+    while (Serial.read() != -1) {
+    };  // temp
+    // readProtobufFromPi(&pi_data); TEMP DISABLE
   }
 
   teensy_data = TeensyData_init_default;
@@ -128,13 +130,21 @@ void loop() {
     timer_1HZ = 0;
   }
 
-  // Send data to Pi if we have any data to send
-  // if (teensy_data.has_rc_data || teensy_data.has_gps || teensy_data.has_servos ||
-  //     teensy_data.has_water_sensors || teensy_data.has_windvane || teensy_data.has_camera_servos
-  //     || teensy_data.has_command) {
-  //   writeProtobufToPi(&teensy_data);
-  // }
+// Send protobuf over serial at throttled rate (10Hz max to prevent overwhelming device)
+#ifndef DEBUG
+  static elapsedMillis protobuf_timer;
+  if (protobuf_timer > 500) {  // 100ms = 10HZ
+    if (teensy_data.has_rc_data || teensy_data.has_gps || teensy_data.has_servos ||
+        teensy_data.has_water_sensors || teensy_data.has_windvane ||
+        teensy_data.has_camera_servos || teensy_data.has_command) {
+      writeProtobufToPi(&teensy_data);
+      protobuf_timer = 0;
+    }
+  }
+#endif
 
-  // Debug output (can be conditionally compiled out later)
-  printTeensyProtobuf(&teensy_data);
+// Debug output, print protobuf in human-readable format
+#ifdef DEBUG
+// printTeensyProtobuf(&teensy_data);
+#endif
 }

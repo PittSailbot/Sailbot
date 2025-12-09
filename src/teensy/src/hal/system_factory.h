@@ -95,7 +95,11 @@ class SystemFactory {
   void initialize() {
     // Init Serial
     Serial.begin(115200);
-
+#ifdef DEBUG
+    while (!Serial) {
+      delay(10);
+    }  // Wait to allow entire Serial logs
+#endif
     Serial.println("I: Initializing Sailbot Platform...");
 
     // Init I2C
