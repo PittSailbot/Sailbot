@@ -44,6 +44,10 @@
 #endif
 #endif
 
+#ifdef MCU_PICO2
+#include <SerialPIO.h>
+#endif
+
 namespace Sailbot {
 /**
  * @brief System Factory - Complete Platform Creation and Management
@@ -146,7 +150,17 @@ class SystemFactory {
 
 #ifdef HAS_RECEIVER
 #if HAL_RECEIVER == RECEIVER_SBUS
+#if HAL_MICROCONTROLLER == MCU_TEENSY41
+    // Teensy has native SBUS signal inversion so no need to flip
     receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_SERIAL);
+#elif HAL_MICROCONTROLLER == MCU_PICO2
+#define NOPIN 255
+    SerialPIO sbusSerial(NOPIN, 13);  // invert SBUS signal -> UART using PIO block
+    sbusSerial.setInvertRX(true);
+    receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_RX_PIN);
+#elif HAL_MICROCONTROLLER == MCU_CYTRON
+    receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_RX_PIN);
+#endif
     receiver->begin() ? Serial.println("I: Started SBUS Receiver")
                       : Serial.println("E: Failed to start SBUS Receiver");
 #elif HAL_RECEIVER == RECEIVER_IBUS
