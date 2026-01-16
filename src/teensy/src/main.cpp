@@ -93,6 +93,10 @@ void loop() {
     // readProtobufFromPi(&pi_data); TEMP DISABLE
   }
 
+#ifdef HAS_GPS
+  platform->gps->update();
+#endif
+
   teensy_data = TeensyData_init_default;
 
   if (timer_10HZ > 10) {

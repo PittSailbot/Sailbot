@@ -21,8 +21,15 @@ class GPSInterface {
   virtual bool begin() = 0;
 
   /**
+   * @brief Update GPS - call frequently in main loop to read incoming data
+   * This method should be called as often as possible to ensure the GPS
+   * buffer is being read and NMEA sentences are being assembled.
+   */
+  virtual void update() = 0;
+
+  /**
    * @brief Read current GPS data
-   * @param gps Pointer to IMU protobuf to populate with data
+   * @param gps Pointer to GPS protobuf to populate with data
    * @return true if data was successfully read, false otherwise
    */
   virtual bool read(GPSData* gps) = 0;
