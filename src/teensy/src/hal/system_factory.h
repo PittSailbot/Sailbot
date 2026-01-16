@@ -216,6 +216,50 @@ class SystemFactory {
 
   ~SystemFactory() = default;
 
+  bool readWindVane(WindVane* wind_data) {
+#ifdef HAS_WINDVANE
+    if (windvane) {
+      return windvane->read(wind_data);
+    }
+#endif
+    return false;
+  }
+
+  bool readIMU(IMU* imu_data) {
+#ifdef HAS_IMU
+    if (imu) {
+      return imu->read(imu_data);
+    }
+#endif
+    return false;
+  }
+
+  bool readControllerState(RCData* controller_data) {
+#ifdef HAS_RECEIVER
+    if (receiver) {
+      return receiver->readControllerState(controller_data);
+    }
+#endif
+    return false;
+  }
+
+  bool readServos(Servos* servos) {
+#ifdef HAS_SAIL
+    servos->sail = sail_servo->read();
+#endif
+#ifdef HAS_RUDDER
+    servos->rudder = rudder_servo->read();
+#endif
+
+#ifdef HAS_JIB
+    servos->jib = jib_servo->read();
+#else
+    servos->jib = -1;
+#endif
+
+    return true;
+  }
+
   void scanI2C() {
     if (this->initialized) {
       Serial.println(
