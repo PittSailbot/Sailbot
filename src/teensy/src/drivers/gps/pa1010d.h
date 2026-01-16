@@ -9,7 +9,9 @@ class PA1010D_GPS : public GPSInterface {
   Adafruit_GPS gps;
 
  public:
-  PA1010D_GPS(HardwareSerial* port);
+  PA1010D_GPS(HardwareSerial* port);  // Configure GPS over UART
+  PA1010D_GPS();                      // Configure GPS over I2C
   bool begin() override;
+  void update() override;  // Call frequently to read GPS data
   bool read(GPSData* data) override;
 };

@@ -9,48 +9,41 @@
 PA1010D_GPS::PA1010D_GPS(HardwareSerial* port) : gps(port) {
 }
 
+PA1010D_GPS::PA1010D_GPS() : gps() {
+}
+
 bool PA1010D_GPS::begin() {
-  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
-  if (!gps.begin(115200)) {
-    return false;
-  }
-  
-  gps.begin(0x10);  // The I2C address to use is 0x10
+  // Initialize GPS over I2C at address 0x10s
+  gps.begin(0x10);
 
-  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
   gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  // uncomment this line to turn on only the "minimum recommended" data
-  // gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
 
-  // Set the update rate
-  gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);  // 1 Hz update rate
-  // For the parsing code to work nicely and have time to sort thru the data, and
-  // print it out we don't suggest using anything higher than 1 Hz
+  // Set the update rate to 1 Hz
+  gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
 
-  // Request updates on antenna status, comment out to keep quiet
-  // GPS.sendCommand(PGCMD_ANTENNA);
   Serial.println("I: Started GPS");
   return true;
 }
 
-bool PA1010D_GPS::read(GPSData* data) {
+void PA1010D_GPS::update() {
+  // Read characters from I2C - call this frequently in main loop
   char c = gps.read();
+  if (GPSECHO && c) Serial.print(c);
+}
 
-  // if a sentence is received, we can check the checksum, parse it...
+bool PA1010D_GPS::read(GPSData* data) {
+  // Check if a complete NMEA sentence was received
   if (gps.newNMEAreceived()) {
-    // a tricky thing here is if we print the NMEA sentence, or data
-    // we end up not listening and catching other sentences!
-    // so be very wary if using OUTPUT_ALLDATA and trying to print out data
-    Serial.print(gps.lastNMEA());    // this also sets the newNMEAreceived() flag to false
-    if (!gps.parse(gps.lastNMEA()))  // this also sets the newNMEAreceived() flag to false
-      return false;  // we can fail to parse a sentence in which case we should just wait for
-                     // another
+    if (!gps.parse(gps.lastNMEA())) {
+      return false;  // Failed to parse, wait for another sentence
+    }
   }
 
-  // if (!gps.fix){
-  //   Serial.println("no fix");
-  //   return false;
-  // }
+  if (!gps.fix) {
+    // Serial.println("I: no fix");
+    return false;
+  }
   data->lat = gps.latitudeDegrees;
   data->lon = gps.longitudeDegrees;
   data->speed = gps.speed * 0.5144;  // knots -> m/s
