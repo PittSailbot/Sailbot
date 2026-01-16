@@ -9,6 +9,8 @@
 #include "protobuf.h"
 #include "teensy.pb.h"
 
+#define DEBUG  // Enable to print out protobuf in a human-readable format instead of binary
+
 // Global platform instance
 // Includes all sensors, servos, etc.
 std::unique_ptr<Sailbot::SystemFactory> platform;
@@ -149,6 +151,6 @@ void loop() {
 
 // Debug output, print protobuf in human-readable format
 #ifdef DEBUG
-// printTeensyProtobuf(&teensy_data);
+  printTeensyProtobuf(&teensy_data);
 #endif
 }
