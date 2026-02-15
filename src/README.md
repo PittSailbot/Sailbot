@@ -1,0 +1,1 @@
+All our source code for running on our microcontroller. Interfaces with servos, sensors, etc. and handles moving the actual parts of the boat by communicating with the higher-level navigation on the Pi5

@@ -17,7 +17,7 @@ This is Sailbot's custom HAL (Hardware Abstraction Layer) for making code hardwa
 1. In `/layouts` add a new header file and fill in the pinouts using other files as an example
    - Pinout definitions *must* be spelled the same
 2. Include the new layout in `system_factory.h`
-3. Add the name to the `PCB_SPEC` enum in `components.h`
+3. Add the PCB definition to `hal_config.h` and add an ifdef check to include the relevant layout header
 
 ### Adding a new component
 1. Add/extend a new interface in the relevant component header (`gps.h`, `imu.h`, etc.)
@@ -80,7 +80,7 @@ To use components:
 ```cpp
 // Control servos (pins automatically mapped from layout)
 #if HAS_SAIL_SERVO
-  platform->setSail(45);
+  platform->sail_servo->write(45);
 #endif
 
 // Read sensors (only compiled if available)
@@ -97,10 +97,9 @@ To use components:
 Why did we make a HAL? What problems does it try to solve? What are its limitations?
 
 ## The Problem
-So what's the point of all this stuff? As our club has grown we've had to support an increasing amount
-of legacy and new electronics. So far we've had (as of 2025):
+So what's the point of all this stuff? As our club has grown we've had to support an increasing amount of legacy and new electronics. So far we've had (as of 2026):
 
-- 4 different PCBs (soon to be 6+) along with undefined breadboard testing
+- 4 different PCBs (soon to be 6+) along with handling undefined breadboard testing
   - Leo PCB
   - Tom PCB
   - Stan PCB 2
@@ -123,9 +122,7 @@ of legacy and new electronics. So far we've had (as of 2025):
   - FrSky X9 Lite
   - FlySky IA6B
 
-You don't need to do the permutations to tell that there's a lot of different ways to configure our boats. Plus
-with how robotics goes, there's a very real chance that something fries and we're forced to use an older sensor 
-or even different PCB. Swapping components shouldn't require a full code rewrite.
+You don't need to do the permutations to tell that there's a lot of different ways to configure our boats. Plus with how robotics goes, there's a very real chance that something fries and we're forced to use an older sensor or even different PCB. Swapping components shouldn't require a full code rewrite.
 
 ## The Goal
 Ultimately this library is supposed to make your life easier. To do so, I've taken the following architectural choices:
@@ -153,9 +150,10 @@ Since most of our electronics already have built in drivers from their vendors (
 
 
 ### Limitations
-- There's no differentiation between the boat and PCB used. This means that if the PCB supports GPS/IMU/WindVane it'll use all of those even if you're just testing RC and those components aren't plugged in. This can cause errors unless you temporarily disable those components by commenting them out.s
+- There's no differentiation between the boat and PCB used. This means that if the PCB supports GPS/IMU/WindVane it'll use all of those even if you're just testing RC and those components aren't plugged in. This can cause errors unless you temporarily disable those components by commenting them out.
 - The current implementation is locked into using protobuf by expecting each abstracted component to return some data type defined in the .proto. This isn't really best practice, but it does reduce the chance of breaking changes. If you want to abstract the communication protocol to allow JSON/Serial/etc. between the MCU and the Pi you would need to use structs or convert proto to your desired format (inefficient).
 - There's currently no way to have both GPIO & I2C servos at the same time (ie. rudder connected over PWM, sail over I2C)
 - RCData .proto assumes a single controller layout even though our two controllers have different switches
 - Switch UP/DOWN macro, etc. assumed to be same across receivers
-- enums don't seem to work with intellisense 'dead-code' checking (ServoType::GPIO doesn't invalidate ServoType::ADAFRUIT_I2C_DRIVER)
+- Stuck using the preprocessor #ifdef for specific driver inclusion
+  - enums don't seem to work with intellisense 'dead-code' checking (ServoType::GPIO doesn't invalidate ServoType::ADAFRUIT_I2C_DRIVER)
