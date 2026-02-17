@@ -1,28 +1,27 @@
 #pragma once
-
-#include "teensy.pb.h"
 #include <Arduino.h>
 
-class RotaryWindVane {
- private:
-  uint8_t pinA;
-  uint8_t pinB;
-  
-  volatile int encoderValue;
-  volatile bool hasChanged;
-  float filteredEncoderValue;
-  
-  static const int ENCODER_ROTATION = 256;
-  static const float FILTER_ALPHA;
-  
-  // Static instance pointer for ISR
-  static RotaryWindVane* instance;
-  
-  int filterValue(int rawValue);
-  static void encoderISR();
+#include "teensy.pb.h"
 
+/**
+ * @brief Base template class for windvane/rotary-encoder implementations
+ */
+class WindVaneInterface {
  public:
-  RotaryWindVane(uint8_t encoderPinA, uint8_t encoderPinB);
-  bool begin();
-  bool read(WindVane* data);
+  bool initialized = false;
+
+  virtual ~WindVaneInterface() = default;
+
+  /**
+   * @brief Initialize the encoder
+   * @return true on success, false on fail
+   */
+  virtual bool begin() = 0;
+
+  /**
+   * @brief Read the current encoder data
+   * @param windvane pointer to WindVane protobuf to populate with data
+   * @return true if valid data was read, false otherwise
+   */
+  virtual bool read(WindVane* windvane) = 0;
 };
