@@ -37,6 +37,9 @@
 
 // ===== WINDVANES =====
 #define WINDVANE_ROTARY_ENCODER 1
+#define WINDVANE_P3022 \
+  2  // CLAY Hall Effect Absolute Potentiometer
+     // https://www.amazon.com/Effect-Potentiometer-Sensor-Measuring-Voltage/dp/B09VXRMC91?th=1
 
 // ===== WATER SENSORS =====
 #define WATER_SENSOR_ADAFRUIT_SOIL \

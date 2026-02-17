@@ -19,7 +19,12 @@
 #endif
 
 #ifdef HAS_WINDVANE
-#include "windvane.h"
+#include "drivers/windvane/windvane.h"
+#if HAL_WINDVANE == WINDVANE_ROTARY_ENCODER
+#include "drivers/windvane/relative.h"
+#elif HAL_WINDVANE == WINDVANE_P3022
+#include "drivers/windvane/p3022.h"
+#endif
 #endif
 
 #ifdef HAS_IMU
@@ -193,16 +198,20 @@ class SystemFactory {
 #endif
 
 #ifdef HAS_WINDVANE
-    // Use layout-defined windvane pins
 #if HAL_WINDVANE == WINDVANE_ROTARY_ENCODER
-    windvane = nullptr  // TODO: std::make_unique<RotaryEncoderWindVane>(WINDVANE_ENCODER_A_PIN,
-                        // WINDVANE_ENCODER_B_PIN);
-                        // windvane->setup();
+    windvane = std::make_unique<Relative_WindVane>(WINDVANE_ENCODER_A_PIN, WINDVANE_ENCODER_B_PIN);
+    windvane->begin() ? Serial.println("I: Started Relative WindVane")
+                      : Serial.println("E: Failed to start Relative WindVane");
+#elif HAL_Windvane == WINDVANE_P3022
+    windvane = std::make_unique<P3022_WindVane>(WINDVANE_MISO_PIN, WINDVANE_CS_PIN,
+                                                WINDVANE_SCK_PIN) windvane->begin()
+                   ? Serial.println("I: Started P3022 WindVane")
+                   : Serial.println("E: Failed to start P3022 WindVane");
 #endif
 #endif
 
 #ifdef HAS_WATER_SENSORS
-        water_sensor1 = nullptr;  // TODO: WaterSensor implementation
+    water_sensor1 = nullptr;  // TODO: WaterSensor implementation
     water_sensor2 = nullptr;
 #endif
 
@@ -350,13 +359,6 @@ class SystemFactory {
     result += "  WindVane: ";
 #ifdef HAS_WINDVANE
     result += (windvane != nullptr) ? "Initialized" : "Not initialized";
-    if (windvane != nullptr) {
-      result += " (Pins A: ";
-      result += WINDVANE_ENCODER_A_PIN;
-      result += ", B: ";
-      result += WINDVANE_ENCODER_B_PIN;
-      result += ")";
-    }
 #else
     result += "Disabled";
 #endif

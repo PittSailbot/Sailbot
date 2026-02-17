@@ -14,7 +14,7 @@
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
 #define HAL_IMU IMU_BNO055
 #define HAL_GPS GPS_ADAFRUIT_PA1010D
-// #define HAL_WINDVANE             WINDVANE_ROTARY_ENCODER
+#define HAL_WINDVANE WINDVANE_P3022
 // #define HAL_WATER_SENSOR         // None
 
 // ============================================================================
@@ -27,8 +27,11 @@
 #define JIB_SERVO_PIN 255
 
 // Sensor pins
-#define WINDVANE_ENCODER_A_PIN 6
-#define WINDVANE_ENCODER_B_PIN 7
+// #define WINDVANE_ENCODER_A_PIN 6
+// #define WINDVANE_ENCODER_B_PIN 7
+#define WINDVANE_MISO_PIN 4
+#define WINDVANE_CS_PIN 5
+#define WINDVANE_SCK_PIN 2
 
 // Communication pins
 #define I2C_SDA_PIN 16
