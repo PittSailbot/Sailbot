@@ -6,8 +6,6 @@
 
 #include <sstream>
 
-#include "transceiver.h"
-
 uint8_t teensy_buffer[TEENSY_PB_H_MAX_SIZE];
 uint8_t pi_buffer[PI_PB_H_MAX_SIZE];
 
