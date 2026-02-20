@@ -1,0 +1,41 @@
+[project]
+name = "sailbot"
+version = "0.1.0"
+description = "Main repository for controlling our sailboat"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.3",
+    "nanopb",
+    "flask",
+    "pyopenssl",
+    "geopy",
+    "odrive",
+    "pyserial",
+    "smbus2",
+    "protobuf",
+    "matplotlib",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.3.1",
+    "black==23.3.0",
+    "isort==5.12.0",
+    "pre-commit==3.3.3",
+    "clang-format==16.0.0",
+]
+pi = [
+    "RPi.GPIO",
+    "google",
+    "adafruit-blinka",
+    "adafruit-circuitpython-gps",
+]
+
+[tool.black]
+line-length = 200
+force-exclude = '.*src\/teensy\/.*|.*src\/sailbot\/sailbot\/protobuf\/.*'
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
