@@ -120,7 +120,7 @@ void loop() {
 #endif
 
 #ifdef HAS_WINDVANE
-    teensy_data.has_windvane = platform->readWindVane(&teensy_data.windvane);
+    teensy_data.has_windvane = platform->windvane->read(&teensy_data.windvane);
 #endif
 
     timer_10HZ = 0;

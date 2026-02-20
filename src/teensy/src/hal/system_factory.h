@@ -202,11 +202,11 @@ class SystemFactory {
     windvane = std::make_unique<Relative_WindVane>(WINDVANE_ENCODER_A_PIN, WINDVANE_ENCODER_B_PIN);
     windvane->begin() ? Serial.println("I: Started Relative WindVane")
                       : Serial.println("E: Failed to start Relative WindVane");
-#elif HAL_Windvane == WINDVANE_P3022
-    windvane = std::make_unique<P3022_WindVane>(WINDVANE_MISO_PIN, WINDVANE_CS_PIN,
-                                                WINDVANE_SCK_PIN) windvane->begin()
-                   ? Serial.println("I: Started P3022 WindVane")
-                   : Serial.println("E: Failed to start P3022 WindVane");
+#elif HAL_WINDVANE == WINDVANE_P3022
+    windvane =
+        std::make_unique<P3022_WindVane>(WINDVANE_MISO_PIN, WINDVANE_CS_PIN, WINDVANE_SCK_PIN);
+    windvane->begin() ? Serial.println("I: Started P3022 WindVane")
+                      : Serial.println("E: Failed to start P3022 WindVane");
 #endif
 #endif
 
@@ -224,15 +224,6 @@ class SystemFactory {
   }
 
   ~SystemFactory() = default;
-
-  bool readWindVane(WindVane* wind_data) {
-#ifdef HAS_WINDVANE
-    if (windvane) {
-      return windvane->read(wind_data);
-    }
-#endif
-    return false;
-  }
 
   bool readIMU(IMU* imu_data) {
 #ifdef HAS_IMU
