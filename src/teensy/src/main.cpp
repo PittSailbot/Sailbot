@@ -105,7 +105,9 @@ void loop() {
     if (timer_10HZ > 150) {
       Serial.printf("W: MCU failing to meet 10hz timer %.2fhz\n", 1000.0 / timer_10HZ);
     }
+#ifdef HAS_RECEIVER
     teensy_data.has_rc_data = platform->receiver->readControllerState(&teensy_data.rc_data);
+#endif
 
 #ifdef HAS_SERVOS
     if (teensy_data.has_rc_data) {
