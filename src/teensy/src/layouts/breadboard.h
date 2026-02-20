@@ -6,14 +6,14 @@
 // COMPONENTS
 // ============================================================================
 
-#define HAL_MICROCONTROLLER MCU_CYTRON
-#define HAL_RECEIVER RECEIVER_SBUS
-#define HAL_SERVO_TYPE SERVO_PROTOCOL_GPIO
-#define HAL_SAIL_SERVO_SPEC ServoSpecs::JOY880545
-#define HAL_RUDDER_SERVO_SPEC ServoSpecs::JOY881504
+#define HAL_MICROCONTROLLER MCU_PICO2
+// #define HAL_RECEIVER RECEIVER_SBUS
+// #define HAL_SERVO_TYPE SERVO_PROTOCOL_GPIO
+// #define HAL_SAIL_SERVO_SPEC ServoSpecs::JOY880545
+// #define HAL_RUDDER_SERVO_SPEC ServoSpecs::JOY881504
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
-#define HAL_IMU IMU_BNO055
-#define HAL_GPS GPS_ADAFRUIT_PA1010D
+// #define HAL_IMU IMU_BNO055
+// #define HAL_GPS GPS_ADAFRUIT_PA1010D
 #define HAL_WINDVANE WINDVANE_P3022
 // #define HAL_WATER_SENSOR         // None
 
