@@ -49,7 +49,7 @@
 #endif
 #endif
 
-#ifdef MCU_PICO2
+#if HAL_MICROCONTROLLER == MCU_PICO2
 #include <SerialPIO.h>
 #endif
 
