@@ -90,3 +90,7 @@
 #ifdef HAL_WATER_SENSOR
 #define HAS_WATER_SENSORS
 #endif
+
+#ifdef LED_PIN
+#define HAS_LED
+#endif

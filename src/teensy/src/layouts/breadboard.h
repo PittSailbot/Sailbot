@@ -40,6 +40,9 @@
 // #define TRANSCEIVER_SERIAL &Serial  // GP9 for Teensy
 // #define GPS_SERIAL &Serial // Init GPS over UART
 
+// Debug LED
+#define LED_PIN 25  // Onboard Pico2 LED
+
 // Water sensor I2C addresses
 #define WATER_SENSOR1_ADDR 0x36
 #define WATER_SENSOR2_ADDR 0x39

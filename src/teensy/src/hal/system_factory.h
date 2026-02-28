@@ -49,6 +49,10 @@
 #endif
 #endif
 
+#ifdef HAS_LED
+#include "drivers/led/led.h"
+#endif
+
 #if HAL_MICROCONTROLLER == MCU_PICO2
 #include <SerialPIO.h>
 #endif
@@ -91,6 +95,9 @@ class SystemFactory {
 #ifdef HAS_WATER_SENSORS
   std::unique_ptr<WaterSensorInterface> water_sensor1;
   std::unique_ptr<WaterSensorInterface> water_sensor2;
+#endif
+#ifdef HAS_LED
+  std::unique_ptr<Status_Led> led;
 #endif
 
   /**
@@ -213,6 +220,11 @@ class SystemFactory {
 #ifdef HAS_WATER_SENSORS
     water_sensor1 = nullptr;  // TODO: WaterSensor implementation
     water_sensor2 = nullptr;
+#endif
+
+#ifdef HAS_LED
+    led = std::make_unique<Status_Led>(LED_PIN);
+    Serial.println("I: Started LED");
 #endif
 
     Serial.println("I: Platform created successfully");

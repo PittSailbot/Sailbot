@@ -40,6 +40,9 @@
 #define WATER_SENSOR1_ADDR 0x36
 #define WATER_SENSOR2_ADDR 0x39
 
+// Debug LED
+#define LED_PIN 25  // Onboard Pico2 LED
+
 // ============================================================================
 // SENSOR CONFIG
 // ============================================================================
