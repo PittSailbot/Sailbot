@@ -101,12 +101,20 @@ void loop() {
 
   teensy_data = TeensyData_init_default;
 
+#ifdef HAS_LED
+  platform->led->Update();
+#endif
+
   if (timer_10HZ > 10) {
     if (timer_10HZ > 150) {
       Serial.printf("W: MCU failing to meet 10hz timer %.2fhz\n", 1000.0 / timer_10HZ);
     }
 #ifdef HAS_RECEIVER
     teensy_data.has_rc_data = platform->receiver->readControllerState(&teensy_data.rc_data);
+#ifdef HAS_LED
+    teensy_data.has_rc_data ? platform->led->lower(Status_Led::Mode::RC_OFF)
+                            : platform->led->raise(Status_Led::Mode::RC_OFF);
+#endif
 #endif
 
 #ifdef HAS_SERVOS
@@ -119,10 +127,18 @@ void loop() {
 
 #ifdef HAS_IMU
     teensy_data.has_imu = platform->imu->read(&teensy_data.imu);
+#ifdef HAS_LED
+    teensy_data.has_imu ? platform->led->lower(Status_Led::Mode::IMU_CAL)
+                        : platform->led->raise(Status_Led::Mode::IMU_CAL);
+#endif
 #endif
 
 #ifdef HAS_WINDVANE
     teensy_data.has_windvane = platform->windvane->read(&teensy_data.windvane);
+#ifdef HAS_LED
+    teensy_data.has_windvane ? platform->led->lower(Status_Led::Mode::WINDVANE_FAIL)
+                             : platform->led->raise(Status_Led::Mode::WINDVANE_FAIL);
+#endif
 #endif
 
     timer_10HZ = 0;
