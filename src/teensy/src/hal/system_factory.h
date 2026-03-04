@@ -210,8 +210,8 @@ class SystemFactory {
     windvane->begin() ? Serial.println("I: Started Relative WindVane")
                       : Serial.println("E: Failed to start Relative WindVane");
 #elif HAL_WINDVANE == WINDVANE_P3022
-    windvane =
-        std::make_unique<P3022_WindVane>(WINDVANE_MISO_PIN, WINDVANE_CS_PIN, WINDVANE_SCK_PIN);
+    windvane = std::make_unique<P3022_WindVane>(WINDVANE_MISO_PIN, WINDVANE_MOSI_PIN,
+                                                WINDVANE_CS_PIN, WINDVANE_SCK_PIN);
     windvane->begin() ? Serial.println("I: Started P3022 WindVane")
                       : Serial.println("E: Failed to start P3022 WindVane");
 #endif
