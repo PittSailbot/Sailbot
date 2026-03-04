@@ -22,9 +22,9 @@
 // ============================================================================
 
 // Servo pins
-#define SAIL_SERVO_PIN 14    // S3
-#define RUDDER_SERVO_PIN 15  // S2
-#define JIB_SERVO_PIN 16     // S1
+#define SAIL_SERVO_PIN 11    // S1
+#define RUDDER_SERVO_PIN 12  // S2
+#define JIB_SERVO_PIN 13     // S3
 
 // Sensor pins
 #define WINDVANE_MOSI_PIN 19

@@ -12,7 +12,7 @@
  * 3. Only components with HAS_* = 1 will be compiled into the firmware
  */
 
-//  #define DEBUG // Uncomment to enable debug mode
+#define DEBUG  // Uncomment to enable debug mode
 
 // ===== PLATFORM SELECTION =====
 // Uncomment ONE of these to select your complete platform configuration
@@ -20,8 +20,8 @@
 // #define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
 // #define DAN_MARINA_LEO_PCB   // Mini boat + Pico + Leo PCB
 // #define DRAGONFORCE_65      // Mini boat autonomy testing platform
-// #define PROTOBOARD            // Prototype board for Mini Boat PCB
-#define BREADBOARD
+#define PROTOBOARD  // Prototype board for Mini Boat PCB
+// #define BREADBOARD
 
 // ===== PLATFORM CONFIGURATIONS =====
 /**
