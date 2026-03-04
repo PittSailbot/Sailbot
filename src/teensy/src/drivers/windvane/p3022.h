@@ -11,11 +11,12 @@
 class P3022_WindVane : public WindVaneInterface {
  private:
   const int miso_pin;
+  const int mosi_pin;
   const int cs_pin;
   const int sck_pin;
 
  public:
-  P3022_WindVane(int miso_pin, int cs_pin, int sck_pin);
+  P3022_WindVane(int miso_pin, int mosi_pin, int cs_pin, int sck_pin);
   bool begin() override;
   bool read(WindVane* windvane) override;
 };

@@ -5,14 +5,17 @@
 
 static SPISettings sensorSettings(1000000, MSBFIRST, SPI_MODE1);
 
-P3022_WindVane::P3022_WindVane(int miso_pin, int cs_pin, int sck_pin)
-    : miso_pin(miso_pin), cs_pin(cs_pin), sck_pin(sck_pin) {
+P3022_WindVane::P3022_WindVane(int miso_pin, int mosi_pin, int cs_pin, int sck_pin)
+    : miso_pin(miso_pin), mosi_pin(mosi_pin), cs_pin(cs_pin), sck_pin(sck_pin) {
 }
 
 bool P3022_WindVane::begin() {
   pinMode(cs_pin, OUTPUT);
   digitalWrite(cs_pin, HIGH);
   SPI.setMISO(miso_pin);
+  // Windvane needs MOSI pin pulled to 3.3V to function--even though no data is transmitted
+  pinMode(mosi_pin, OUTPUT);
+  digitalWrite(mosi_pin, HIGH);
   SPI.setSCK(sck_pin);
 
   SPI.begin();
