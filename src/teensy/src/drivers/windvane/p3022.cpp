@@ -15,7 +15,6 @@ bool P3022_WindVane::begin() {
   SPI.setMISO(miso_pin);
   // Windvane needs MOSI pin pulled to 3.3V to function--even though no data is transmitted
   pinMode(mosi_pin, OUTPUT);
-  digitalWrite(mosi_pin, HIGH);
   SPI.setSCK(sck_pin);
 
   SPI.begin();
@@ -29,6 +28,8 @@ bool P3022_WindVane::read(WindVane* windvane) {
     Serial.println("W: Trying to read from uninitialized WindVane");
     return false;
   }
+
+  digitalWrite(mosi_pin, HIGH);
 
   // begin the transaction with the previous settings, and set the slave select pin (cs_pin) to LOW
   // to indicate that we will be using this device to receive data
