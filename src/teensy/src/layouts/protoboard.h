@@ -27,7 +27,7 @@
 #define JIB_SERVO_PIN 13     // S3
 
 // Sensor pins
-#define WINDVANE_MOSI_PIN 19
+#define WINDVANE_MOSI_PIN 19  // Should be connected to 3.3V
 #define WINDVANE_MISO_PIN 16
 #define WINDVANE_CS_PIN 17
 #define WINDVANE_SCK_PIN 18
