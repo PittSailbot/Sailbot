@@ -63,9 +63,9 @@ COPY pyproject.toml uv.lock /workspace/
 # Install Python dependencies
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
-        uv sync --system --no-dev --group pi --no-install-project --directory /workspace; \
+        uv sync --no-dev --group pi --no-install-project --directory /workspace; \
     else \
-        uv sync --system --no-dev --no-install-project --directory /workspace; \
+        uv sync --no-dev --no-install-project --directory /workspace; \
     fi
 
 # Clean up apt cache and temporary files
