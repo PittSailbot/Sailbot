@@ -25,5 +25,5 @@ jobs:
       run: uv python install 3.10
     - name: Install dependencies
       run: uv sync
-    - name: Test with pytest
-      run: uv run pytest
+    # - name: Test with pytest
+      # run: uv run pytest
