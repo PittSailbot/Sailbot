@@ -1,6 +1,6 @@
 #ifndef WATER_SENSORS_H
 #define WATER_SENSORS_H
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 // Reading levels from the capacitve sensors (low = dry, high = fully submerged)
 // When submerged, readings jump from ~350-650 nearly instantly then slowly climb to 700 until it is

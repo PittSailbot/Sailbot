@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "drivers/windvane/windvane.h"
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 /**
  * @brief Any relative rotary encoder using an A/B GPIO pins

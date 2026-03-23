@@ -5,9 +5,9 @@
 #include "elapsedMillis.h"
 #include "hal/hal_config.h"
 #include "hal/system_factory.h"
+#include "mcu.pb.h"
 #include "pi.pb.h"
 #include "protobuf.h"
-#include "teensy.pb.h"
 
 // Global platform instance
 // Includes all sensors, servos, etc.

@@ -1,9 +1,9 @@
-// Return data from all the sensors on the teensy to be read by the pi
+// Return data from all the sensors on the microcontroller to be read by the pi
 
-// RECOMPILE teensy_pb2.py IF THIS FILE IS CHANGED!
+// RECOMPILE mcu_pb2.py IF THIS FILE IS CHANGED!
 // https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
-// 1. Compile .proto with `protoc src\teensy\proto\teensy.proto  --python_out=./`
-// 2. Copy and replace "src\sailbot\sailbot\protobuf\teensy_pb2.py" with the new version
+// 1. Compile .proto with `protoc src\mcu\proto\mcu.proto  --python_out=./`
+// 2. Copy and replace "src\sailbot\sailbot\protobuf\mcu_pb2.py" with the new version
 
 syntax = "proto3";
 

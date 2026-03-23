@@ -6,12 +6,12 @@
 
 #include <sstream>
 
-uint8_t teensy_buffer[TEENSY_PB_H_MAX_SIZE];
+uint8_t mcu_buffer[MCU_PB_H_MAX_SIZE];
 uint8_t pi_buffer[PI_PB_H_MAX_SIZE];
 
 void readProtobufFromPi(PiData* pi_data) {
   pb_istream_t istream = pb_istream_from_buffer(pi_buffer, sizeof(pi_buffer));
-  memset(teensy_buffer, 0, sizeof(teensy_buffer));
+  memset(mcu_buffer, 0, sizeof(mcu_buffer));
   bool status = pb_decode(&istream, PiData_fields, pi_data);
 
   if (!status) {
@@ -21,8 +21,8 @@ void readProtobufFromPi(PiData* pi_data) {
 }
 
 void writeProtobufToPi(TeensyData* teensy_data) {
-  pb_ostream_t ostream = pb_ostream_from_buffer(teensy_buffer, sizeof(teensy_buffer));
-  memset(teensy_buffer, 0, sizeof(teensy_buffer));
+  pb_ostream_t ostream = pb_ostream_from_buffer(mcu_buffer, sizeof(mcu_buffer));
+  memset(mcu_buffer, 0, sizeof(mcu_buffer));
   bool status = pb_encode(&ostream, TeensyData_fields, teensy_data);
 
   if (!status) {
@@ -31,7 +31,7 @@ void writeProtobufToPi(TeensyData* teensy_data) {
   }
 
   if (ostream.bytes_written > 0) {
-    Serial.write(teensy_buffer, ostream.bytes_written);
+    Serial.write(mcu_buffer, ostream.bytes_written);
     Serial.write("\n");
     // Serial.printf(
     //     "V: Wrote protobuf to Pi:\

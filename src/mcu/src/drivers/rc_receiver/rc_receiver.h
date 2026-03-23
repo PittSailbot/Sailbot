@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 // Macro assumes switch up/down is the same across all receivers which might not be true
 #define SWITCH_UP 1

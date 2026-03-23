@@ -3,7 +3,7 @@
 // #include <Adafruit_PWMServoDriver.h>
 
 // #include "teensy.h"
-// #include "teensy.pb.h"
+// #include "mcu.pb.h"
 
 // int last_camera_yaw;
 // int last_camera_pitch;

@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 /**
  * @brief Base template class for windvane/rotary-encoder implementations

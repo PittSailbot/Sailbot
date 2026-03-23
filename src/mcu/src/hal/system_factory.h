@@ -3,7 +3,7 @@
 
 #include "hal.h"
 #include "hal_config.h"
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 #ifdef HAS_SERVOS
 #include "servos.h"

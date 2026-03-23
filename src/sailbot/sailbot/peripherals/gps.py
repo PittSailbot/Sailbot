@@ -23,7 +23,7 @@ from serial.tools import list_ports
 from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
-from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
+from sailbot.telemetry.protobuf import controlsData_pb2, mcu_pb2
 from sailbot.utils import boatMath
 
 # from geographic_msgs.msg import GeoPose, GeoPoint

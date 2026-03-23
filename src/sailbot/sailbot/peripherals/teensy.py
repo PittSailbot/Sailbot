@@ -16,7 +16,7 @@ from serial.tools import list_ports
 from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
-from sailbot.protobuf import teensy_pb2
+from sailbot.protobuf import mcu_pb2
 from sailbot.utils import boatMath
 from sailbot.utils.utils import ControlState, ImuData, Waypoint
 
@@ -181,7 +181,7 @@ class Teensy(Node):
             _ = self.ser.read(self.ser.in_waiting)
         # self.logging.warning(msg)
         try:
-            message = teensy_pb2.Data()
+            message = mcu_pb2.Data()
             ret_val = message.ParseFromString(msg)
             # self.logging.warning("ret_val:" + str(ret_val))
 
@@ -200,7 +200,7 @@ class Teensy(Node):
             self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
         return None
 
-    def publish_controller(self, controller: teensy_pb2.RCData):
+    def publish_controller(self, controller: mcu_pb2.RCData):
         """Publishes the keybind/meaning of each controller input to the relevant topic.
         Editing this function will 'rebind' what an input does.
 

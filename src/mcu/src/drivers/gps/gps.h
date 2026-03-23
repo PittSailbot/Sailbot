@@ -1,5 +1,5 @@
 #pragma once
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 /**
  * @brief Common interface for all GPS implementations

@@ -1,6 +1,6 @@
 #ifndef CAMERA_SERVOS_H
 #define CAMERA_SERVOS_H
-#include "teensy.pb.h"
+#include "mcu.pb.h"
 
 #define YAW_SERVO 1
 #define PITCH_SERVO 0

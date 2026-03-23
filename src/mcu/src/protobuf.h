@@ -2,8 +2,8 @@
 #define PROTOBUF_H
 #include <string>
 
+#include "mcu.pb.h"
 #include "pi.pb.h"
-#include "teensy.pb.h"
 
 extern void readProtobufFromPi(PiData*);
 extern void writeProtobufToPi(TeensyData*);
