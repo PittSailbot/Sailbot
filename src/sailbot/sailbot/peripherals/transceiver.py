@@ -94,7 +94,7 @@ class Transceiver(Node):
             raise Exception("No connected devices found")
 
         for i, port in enumerate(found_ports):
-            if not (str(c.config["TRANSCEIVER"]["transceiver_hwid"]).strip().lower().replace('"', "").replace("'", "")) in str(found_hwids[i]).strip().lower().replace('"', "").replace("'", ""):
+            if not (str(c.config["TRANSCEIVER"]["usb_mcu_name"]).strip().lower().replace('"', "").replace("'", "")) in str(found_descriptions[i]).strip().lower().replace('"', "").replace("'", ""):
                 self.logging.info(str(found_hwids[i]))
                 if i == len(found_ports) - 1:
                     self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
@@ -172,13 +172,13 @@ class Transceiver(Node):
     def read(self):
         """Reads incoming data from the Teensy"""
         msg = self.ser.readline().strip()
-        if self.ser.in_waiting > 0:
-            # empty queue
-            _ = self.ser.read(self.ser.in_waiting)
+        if not msg:
+            return None
+        self.logging.debug(str(msg))
         # self.logging.warning(msg)
         try:
-            message = mcu_pb2.Data()
-            ret_val = message.ParseFromString(msg)
+            message = mcu_pb2.TeensyData()
+            message.ParseFromString(msg)
             # self.logging.warning("ret_val:" + str(ret_val))
 
             if str(message).strip() != "":
@@ -270,7 +270,8 @@ class Transceiver(Node):
 
 
 def main(args=None):
-    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/transceiver"
+    ros_log_base = os.getenv("ROS_LOG_DIR_BASE", "/tmp/ros_logs")
+    os.environ["ROS_LOG_DIR"] = ros_log_base + "/transceiver"
     rclpy.init(args=args)
     transceiver = Transceiver()
     rclpy.spin(transceiver)

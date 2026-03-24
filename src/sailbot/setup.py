@@ -41,7 +41,6 @@ setup(
     maintainer_email="pi@todo.todo",
     description="Pitt's Sailbot code!",
     license="See LICENSE",
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "motorDrivers = sailbot.peripherals.motorDrivers:main",

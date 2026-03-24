@@ -7,12 +7,15 @@
 	"dockerFile": "../Dockerfile",
 	"runArgs": [
 		"--privileged",
-		"--network=host"
+		"--network=host",
+			"--device=/dev/ttyUSB0",
+		"--device=/dev/ttyACM0"
 	],
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
 	"workspaceFolder": "/workspace",
 	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/vscode/.bash_history,type=bind"//,
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/vscode/.bash_history,type=bind",	// Bind local OS & virtual docker directories, changes on one end will update the other
+		// "source=/dev/,target=/dev/,type=bind,consistency=consistent"
 		//"source=${localWorkspaceFolder},target=/workspace,type=bind"
 	],
 
@@ -41,7 +44,8 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
-	// Enable auto black and isort styling before commit
-	"postStartCommand": "pre-commit install"
+	"postStartCommand": [
+		// "sudo service udev restart", 
+		"pre-commit install"  // Enable auto black and isort styling before commit
+	]
 }
