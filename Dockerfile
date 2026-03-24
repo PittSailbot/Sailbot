@@ -60,13 +60,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 # Copy project files to leverage Docker cache
 COPY pyproject.toml uv.lock /workspace/
 
-# Install Python dependencies
+# Install Python dependencies into system Python (not /workspace/.venv)
+# so they are still available when VS Code bind-mounts /workspace.
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
-        uv sync --no-dev --group pi --no-install-project --directory /workspace; \
+        uv export --frozen --no-dev --group pi --no-emit-project --format requirements.txt --directory /workspace --output-file /tmp/requirements.txt; \
     else \
-        uv sync --no-dev --no-install-project --directory /workspace; \
-    fi
+        uv export --frozen --no-dev --no-emit-project --format requirements.txt --directory /workspace --output-file /tmp/requirements.txt; \
+    fi && \
+    uv pip install --system --break-system-packages -r /tmp/requirements.txt && \
+    rm -f /tmp/requirements.txt
+
 
 # Clean up apt cache and temporary files
 RUN apt-get clean && \
