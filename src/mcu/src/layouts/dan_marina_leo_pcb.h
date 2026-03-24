@@ -33,7 +33,7 @@
 // Communication pins
 #define I2C_SDA_PIN 4
 #define I2C_SCL_PIN 5
-#define TRANSCEIVER_SERIAL &Serial1
+#define MCU_SERIAL &Serial1
 #define GPS_SERIAL &Serial2
 
 // Water sensor I2C addresses

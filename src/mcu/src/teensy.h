@@ -86,7 +86,7 @@
 
 #define PUMP1 AUXFET4
 
-#define TRANSCEIVER_SERIAL &Serial1  // Serial2 wizard shit, Serial1 works through PCB?
+#define MCU_SERIAL &Serial1  // Serial2 wizard shit, Serial1 works through PCB?
 
 #endif
 
@@ -95,7 +95,7 @@
 #define JIB_SERVO 24
 #define RUDDER_SERVO 9
 
-#define TRANSCEIVER_SERIAL &Serial1
+#define MCU_SERIAL &Serial1
 
 #define WINDVANE_ENCODER_A -1
 #define WINDVANE_ENCODER_B -1

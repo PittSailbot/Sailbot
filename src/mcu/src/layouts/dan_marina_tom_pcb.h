@@ -66,7 +66,7 @@ and sometimes just stops working.
 // Communication pins
 #define I2C_SDA_PIN 18
 #define I2C_SCL_PIN 19
-#define TRANSCEIVER_SERIAL &Serial1
+#define MCU_SERIAL &Serial1
 #define GPS_SERIAL &Serial3
 
 // Water sensor I2C addresses

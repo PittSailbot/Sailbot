@@ -44,7 +44,7 @@ setup(
     entry_points={
         "console_scripts": [
             "motorDrivers = sailbot.peripherals.motorDrivers:main",
-            "transceiver = sailbot.peripherals.transceiver:main",
+            "mcu_bridge = sailbot.peripherals.mcu_proto_bridge:main",
             "gps = sailbot.peripherals.gps:main",
             "cameraServos = sailbot.peripherals.cameraServos:main",
             "main = sailbot.main:main",

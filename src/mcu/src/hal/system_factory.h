@@ -168,7 +168,7 @@ class SystemFactory {
 #if HAL_RECEIVER == RECEIVER_SBUS
 #if HAL_MICROCONTROLLER == MCU_TEENSY41
     // Teensy has native SBUS signal inversion so no need to flip
-    receiver = std::make_unique<SBusReceiver>(TRANSCEIVER_SERIAL);
+    receiver = std::make_unique<SBusReceiver>(MCU_SERIAL);
 #elif HAL_MICROCONTROLLER == MCU_PICO2
 #define NOPIN 255
     SerialPIO sbusSerial(NOPIN, 13);  // invert SBUS signal -> UART using PIO block
@@ -180,7 +180,7 @@ class SystemFactory {
     receiver->begin() ? Serial.println("I: Started SBUS Receiver")
                       : Serial.println("E: Failed to start SBUS Receiver");
 #elif HAL_RECEIVER == RECEIVER_IBUS
-    receiver = std::make_unique<IBusReceiver>(TRANSCEIVER_SERIAL);
+    receiver = std::make_unique<IBusReceiver>(MCU_SERIAL);
     receiver->begin() ? Serial.println("I: Started IBUS Receiver")
                       : Serial.println("E: Failed to start IBUS Receiver");
 #endif

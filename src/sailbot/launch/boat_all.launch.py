@@ -33,8 +33,8 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="transceiver",
-                name="node_Transceiver",
+                executable="mcu_bridge",
+                name="node_MCUBridge",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
             ),

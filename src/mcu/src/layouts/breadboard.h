@@ -37,7 +37,7 @@
 #define I2C_SDA_PIN 0
 #define I2C_SCL_PIN 1
 #define TRANSCEIVER_RX_PIN 17  // GP5 for SerialPIO SBUS on RP2040 (avoid conflicts)
-// #define TRANSCEIVER_SERIAL &Serial  // GP9 for Teensy
+// #define MCU_SERIAL &Serial  // GP9 for Teensy
 // #define GPS_SERIAL &Serial // Init GPS over UART
 
 // Debug LED

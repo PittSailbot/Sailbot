@@ -1,5 +1,7 @@
 """
-Reads and sends data from the connected USB transceiver
+Brokers messages between ROS2 and the microcontroller using protobuf over USB Serial
+- Messages incoming from mcu are converted into ROS2 messages and republished
+- Messages going to the mcu are converted into protobuf
 """
 
 import os
@@ -23,21 +25,25 @@ from sailbot.utils.utils import ControlState, ImuData, Waypoint
 # from geographic_msgs.msg import GeoPose, GeoPoint
 
 
-class Transceiver(Node):
-    """Handles all communication between the boat and shore. Also publishes all sensors on the Teensy.
+class MCUBridge(Node):
+    """Handles communication between the microcontroller and pi.
     Functions:
-        send(): sends a string to the to the transmitter
+        send(): sends a string to the to the microcontroller
         read(): reads the state of the Teensy
 
     Publishes to:
-        - /cmd_sail
-        - /offset_sail
-        - /cmd_rudder
-        - /offset_rudder
+        - /sail
+        - /jib
+        - /rudder
         - /navigation TODO: Autonomy ON/OFF
         - /wind_angle
         - /position
         - /speed
+
+    Subscribes to:
+        - /cmd_sail
+        - /cmd_jib
+        - /cmd_rudder
     """
 
     def __init__(self):
@@ -51,7 +57,7 @@ class Transceiver(Node):
         self.last_motor_offset_state = None
 
         self.ser = None
-        error = self.setup_coms()
+        error = self.setup_com()
         if error:
             raise error
 
@@ -87,56 +93,50 @@ class Transceiver(Node):
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
 
-    def setup_coms(self):
+    def setup_com(self, port_description=str(c.config["MCU_BRIDGE"]["usb_mcu_name"])):
+        """Initializes a Serial connection on the USB device matching the desired name"""
         found_ports, found_descriptions, found_hwids = self.list_ports()
 
         if len(found_ports) == 0:
             raise Exception("No connected devices found")
 
         for i, port in enumerate(found_ports):
-            if not (str(c.config["TRANSCEIVER"]["usb_mcu_name"]).strip().lower().replace('"', "").replace("'", "")) in str(found_descriptions[i]).strip().lower().replace('"', "").replace("'", ""):
-                self.logging.info(str(found_hwids[i]))
+            if not (port_description.strip().lower().replace('"', "").replace("'", "")) in str(found_descriptions[i]).strip().lower().replace('"', "").replace("'", ""):
                 if i == len(found_ports) - 1:
-                    self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
-                    debug_str = "Found ports are: \n"
+                    debug_str = f"Failed to find device matching name: '{c.config['MCU_BRIDGE']['usb_mcu_name']}'\n"
+                    debug_str += "Found ports are: \n"
                     for i in range(len(found_ports)):
                         debug_str += f"\tPort: [{found_ports[i]}], Name: [{found_descriptions[i]}] HWID: [{found_hwids[i]}]\n"
-                    debug_str += f'Failed to find HWID: {c.config["TRANSCEIVER"]["transceiver_hwid"]}\n'
-                    self.logging.warning(debug_str)
-                    return RuntimeError("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                    self.logging.fatal(debug_str)
+                    return RuntimeError("Failed to find any matching USB devices.")
                 else:
                     continue
             try:
-                self.logging.info("match " + str(found_hwids[i]))
+                self.logging.debug("Found USB device HWID:" + str(found_hwids[i]))
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
-                # May cause runtime latency if not threaded and the transceiver arduino code isn't writing anything to serial
-                self.ser = serial.Serial(port, int(c.config["TRANSCEIVER"]["baudrate"]), timeout=5, exclusive=False)
+                # May cause runtime latency if not threaded and the microcontroller arduino code isn't writing anything to serial
+                self.ser = serial.Serial(port, int(c.config["MCU_BRIDGE"]["baudrate"]), timeout=5, exclusive=False)
 
                 assert self.ser.readline() is not None
-                self.logging.info("ser setup")
                 self.last_successful_message = time.time()
 
             except Exception as e:
-                self.logging.error(f"Failed to read from port: {port}")
-                self.logging.fatal("Failed to read from all transceiver ports! Is the transceiver plugged in?")
+                self.logging.error(f"Failed to read from port: {port}. No data sent.")
                 return e
 
             else:
-                self.logging.info(f"Transceiver initialized with port: {port}")
+                self.logging.info(f"Serial initialized with port: {port}")
                 return
 
-        raise Exception("Should be unreachable")
-
     def timer_callback(self):
-        """Publishes all data received from the teensy onto the relevant topics
+        """Publishes all data received from the mcu onto the relevant topics
         Read the string into a protobuf object using controlsData_pb2.ParseFromString(msg)"""
-        # TODO: try except to echo published non-protobuf error strings from Teensy
         try:
             teensy_data = self.read()
         except Exception as e:
-            self.logging.error(f"Error while reading teensy: {e}")
+            self.logging.error(f"Error while reading from mcu: {e}")
             self.timer.cancel()
-            self.setup_coms()
+            self.setup_com()
             sleep(1)
             self.timer.reset()
             return
@@ -271,10 +271,10 @@ class Transceiver(Node):
 
 def main(args=None):
     ros_log_base = os.getenv("ROS_LOG_DIR_BASE", "/tmp/ros_logs")
-    os.environ["ROS_LOG_DIR"] = ros_log_base + "/transceiver"
+    os.environ["ROS_LOG_DIR"] = ros_log_base + "/mcu_bridge"
     rclpy.init(args=args)
-    transceiver = Transceiver()
-    rclpy.spin(transceiver)
+    mcu_bridge = MCUBridge()
+    rclpy.spin(mcu_bridge)
 
 
 if __name__ == "__main__":
