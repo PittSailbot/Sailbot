@@ -33,19 +33,16 @@
 		"vscode": {			
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				//"platformio.platformio-ide",
 				"ms-python.python",
 				"ms-vscode-remote.remote-ssh",
 				"ms-iot.vscode-ros",
 				"eamodio.gitlens"
+				// "platformio.platformio-ide"
 			]
 		}
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-	"postStartCommand": [
-		// "sudo service udev restart", 
-		"pre-commit install"  // Enable auto black and isort styling before commit
-	]
+	"postStartCommand": "UV_PROJECT_ENVIRONMENT=.uv-venv uv sync --group dev && pre-commit install"  // Sync .uv-venv and initialize pre-commit hooks
 }
