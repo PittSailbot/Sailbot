@@ -50,11 +50,16 @@ class MCUBridge(Node):
         super().__init__("transceiver")
         self.logging = self.get_logger()
 
+        self._frame_magic = bytes([0xA5, 0x5A])
+        self._frame_header_len = 4
+        self._max_payload_len = 4096
+        self._rx_buffer = bytearray()
+
         self.timer = self.create_timer(0.1, self.timer_callback)
 
-        self.sail_offset_last_message_value = None
-        self.rudder_offset_last_message_value = None
-        self.last_motor_offset_state = None
+        self.sail_offset_last_message_value = 0
+        self.rudder_offset_last_message_value = 0
+        self.last_motor_offset_state = 0
 
         self.ser = None
         error = self.setup_com()
@@ -116,8 +121,7 @@ class MCUBridge(Node):
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the microcontroller arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["MCU_BRIDGE"]["baudrate"]), timeout=5, exclusive=False)
-
-                assert self.ser.readline() is not None
+                self.ser.reset_input_buffer()
                 self.last_successful_message = time.time()
 
             except Exception as e:
@@ -154,11 +158,11 @@ class MCUBridge(Node):
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
 
-        # if teensy_data.HasField("gps"):
-        #     self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-        #     msg = String()
-        #     msg.data = str(teensy_data.gps.speed)
-        #     self.speed_pub.publish(msg)
+        if teensy_data.HasField("gps"):
+            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
+            msg = String()
+            msg.data = str(teensy_data.gps.speed)
+            self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
             imu = teensy_data.imu
@@ -170,23 +174,51 @@ class MCUBridge(Node):
         self.ser.write(str(data).encode())
 
     def read(self):
-        """Reads incoming data from the Teensy"""
-        msg = self.ser.readline().strip()
-        if not msg:
-            return None
-        self.logging.debug(str(msg))
-        # self.logging.warning(msg)
-        try:
-            message = mcu_pb2.TeensyData()
-            message.ParseFromString(msg)
-            # self.logging.warning("ret_val:" + str(ret_val))
+        """Reads framed incoming protobuf data from the MCU.
 
-            if str(message).strip() != "":
-                self.last_successful_message = time.time()
-                return message
-        except Exception as e:
-            # self.logging.warning(F"Exception: [{e}] raised when processing: {msg}")
-            pass
+        Frame format:
+            [0xA5, 0x5A, payload_len_lo, payload_len_hi, payload...]
+        """
+        if self.ser.in_waiting > 0:
+            self._rx_buffer.extend(self.ser.read(self.ser.in_waiting))
+
+        while len(self._rx_buffer) >= self._frame_header_len:
+            start = self._rx_buffer.find(self._frame_magic)
+            if start < 0:
+                # Keep one byte to allow matching magic across read boundaries.
+                if len(self._rx_buffer) > 1:
+                    del self._rx_buffer[:-1]
+                break
+
+            if start > 0:
+                del self._rx_buffer[:start]
+
+            if len(self._rx_buffer) < self._frame_header_len:
+                break
+
+            payload_len = self._rx_buffer[2] | (self._rx_buffer[3] << 8)
+            if payload_len <= 0 or payload_len > self._max_payload_len:
+                # Invalid header; resync at next byte.
+                del self._rx_buffer[0]
+                continue
+
+            frame_len = self._frame_header_len + payload_len
+            if len(self._rx_buffer) < frame_len:
+                # Need more bytes.
+                break
+
+            payload = bytes(self._rx_buffer[self._frame_header_len : frame_len])
+            del self._rx_buffer[:frame_len]
+
+            try:
+                message = mcu_pb2.TeensyData()
+                message.ParseFromString(payload)
+                if str(message).strip() != "":
+                    self.last_successful_message = time.time()
+                    return message
+            except Exception:
+                # Ignore malformed frame and continue scanning.
+                continue
 
         if (time.time() - self.last_successful_message) > 10:
             self.usbReset_pub.publish(String(data=""))
