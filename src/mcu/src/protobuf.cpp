@@ -6,6 +6,11 @@
 
 #include <sstream>
 
+namespace {
+constexpr uint8_t kFrameMagic0 = 0xA5;
+constexpr uint8_t kFrameMagic1 = 0x5A;
+}  // namespace
+
 uint8_t mcu_buffer[MCU_PB_H_MAX_SIZE];
 uint8_t pi_buffer[PI_PB_H_MAX_SIZE];
 
@@ -31,8 +36,15 @@ void writeProtobufToPi(TeensyData* teensy_data) {
   }
 
   if (ostream.bytes_written > 0) {
-    Serial.write(mcu_buffer, ostream.bytes_written);
-    Serial.write("\n");
+    const uint16_t payload_len = static_cast<uint16_t>(ostream.bytes_written);
+    uint8_t header[4] = {
+        kFrameMagic0,
+        kFrameMagic1,
+        static_cast<uint8_t>(payload_len & 0xFF),
+        static_cast<uint8_t>((payload_len >> 8) & 0xFF),
+    };
+    Serial.write(header, sizeof(header));
+    Serial.write(mcu_buffer, payload_len);
     // Serial.printf(
     //     "V: Wrote protobuf to Pi:\
     // RC: %d\
