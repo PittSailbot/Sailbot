@@ -152,8 +152,8 @@ class MCUBridge(Node):
 
         if teensy_data.HasField("rc_data"):
             self.publish_controller(teensy_data.rc_data)
-        else:
-            self.logging.warning("No RC data", throttle_duration_sec=3)
+        # else:
+        # self.logging.warning("No RC data", throttle_duration_sec=60)
 
         if teensy_data.HasField("windvane"):
             self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
