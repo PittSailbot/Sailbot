@@ -266,10 +266,10 @@ class MCUBridge(Node):
 
         if (time.time() - self.last_successful_message) > 10:
             self.usbReset_pub.publish(String(data=""))
-            self.logging.error("Resetting transceiver", throttle_duration_sec=1)
+            self.logging.error("Resetting usb", throttle_duration_sec=1)
 
         if (time.time() - self.last_successful_message) > 3:  # seconds
-            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=10)
+            self.logging.error("No valid message recived in awhile, check microcontroller", throttle_duration_sec=10)
         return None
 
     def publish_controller(self, controller: mcu_pb2.RCData):
