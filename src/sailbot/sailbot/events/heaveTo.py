@@ -36,10 +36,10 @@ class HeaveTo(Event):
 
         super().__init__(event_info)
 
-        self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
-        self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
+        self.sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
+        self.rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
 
-        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 1)
+        self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 1)
         self.control_state = None
 
         self.start_time = time.time()

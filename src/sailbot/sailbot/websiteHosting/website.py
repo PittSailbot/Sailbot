@@ -246,23 +246,23 @@ class Website(Node):
         self.auto_rudder_angle = 0.0
         self.imu = None
 
-        self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
-        self.compass_offset_pub = self.create_publisher(Float32, "/boat/offset_compass", 10)
-        self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
-        self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
+        self.camera_servo_pub = self.create_publisher(String, "/cam_servo_control", 10)
+        self.compass_offset_pub = self.create_publisher(Float32, "/offset_compass", 10)
+        self.setEventPub = self.create_publisher(String, "/setEvent", 10)
+        self.setEventTargetPub = self.create_publisher(String, "/set_event_target", 10)
 
         # subscriptions should be started as the last step of init
-        self.gps_subscription = self.create_subscription(String, "/boat/GPS", self.ROS_GPSCallback, 10)
-        self.imu_subscription = self.create_subscription(String, "/boat/imu", self.ROS_imuCallback, 10)
-        self.windvane_subscription = self.create_subscription(String, "/boat/wind_angle", self.ROS_windvaneCallback, 10)
+        self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
+        self.imu_subscription = self.create_subscription(String, "imu", self.ROS_imuCallback, 10)
+        self.windvane_subscription = self.create_subscription(String, "/wind_angle", self.ROS_windvaneCallback, 10)
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
-        self.boat_state_subscription = self.create_subscription(String, "/boat/next_gps", self.ROS_nextGpsCallback, 10)
-        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.ROS_controlStateCallback, 2)
-        self.queued_waypoints_subscription = self.create_subscription(String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
+        self.boat_state_subscription = self.create_subscription(String, "/next_gps", self.ROS_nextGpsCallback, 10)
+        self.control_state_sub = self.create_subscription(String, "/control_state", self.ROS_controlStateCallback, 2)
+        self.queued_waypoints_subscription = self.create_subscription(String, "/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/cmd_sail", self.ROS_sailCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.ROS_rudderCmd_callback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()

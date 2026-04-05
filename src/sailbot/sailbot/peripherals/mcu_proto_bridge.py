@@ -84,17 +84,17 @@ class MCUBridge(Node):
         # self.speed_pub = self.create_publisher(String, "speed", 1)
 
         self.imu_pub = self.create_publisher(String, "imu", 1)
-        self.compass_offset_sub = self.create_subscription(Float32, "/boat/offset_compass", self.compass_offset_callback, 1)
+        self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
         self.compass_offset = 0
 
         self.usbReset_pub = self.create_publisher(String, "usbReset", 1)
 
-        self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
+        self.event_control_sub = self.create_subscription(Int32, "/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
 
-        self.cmd_sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.cmd_sail_callback, 1)
-        self.cmd_jib_sub = self.create_subscription(Float32, "/boat/cmd_jib", self.cmd_jib_callback, 1)
-        self.cmd_rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.cmd_rudder_callback, 1)
+        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_sail", self.cmd_sail_callback, 1)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_jib", self.cmd_jib_callback, 1)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.cmd_rudder_callback, 1)
 
     def compass_offset_callback(self, msg):
         self.compass_offset = float(msg.data)

@@ -34,7 +34,7 @@ class Event(Node):
         super().__init__(self.__class__.__name__)
         self.logging = self.get_logger()
 
-        self.event_control_state = self.create_publisher(Int32, "/boat/event_control_state", 1)
+        self.event_control_state = self.create_publisher(Int32, "/event_control_state", 1)
         timer_period = 1.0  # seconds
         self.control_state_timer = self.create_timer(timer_period, self.control_state_timer_callback)
 

@@ -47,16 +47,16 @@ class Navigation(Node):
         self.boat_speed = float("inf")  # change this to boat speed once available
         self.aborted_tacks = 0
 
-        self.next_gps_sub = self.create_subscription(String, "/boat/next_gps", self.next_gps_callback, 2)
-        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 2)
-        self.imu_sub = self.create_subscription(String, "/boat/imu", self.imu_callback, 2)
-        self.windvane_sub = self.create_subscription(String, "/boat/wind_angle", self.windvane_callback, 2)
-        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.control_state_callback, 2)
+        self.next_gps_sub = self.create_subscription(String, "/next_gps", self.next_gps_callback, 2)
+        self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 2)
+        self.imu_sub = self.create_subscription(String, "imu", self.imu_callback, 2)
+        self.windvane_sub = self.create_subscription(String, "/wind_angle", self.windvane_callback, 2)
+        self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 2)
 
-        self.auto_sail_pub = self.create_publisher(Float32, "/boat/cmd_auto_sail", 10)
-        self.sail_pub = self.create_publisher(Float32, "/boat/cmd_sail", 10)
-        self.auto_rudder_pub = self.create_publisher(Float32, "/boat/cmd_auto_rudder", 10)
-        self.rudder_pub = self.create_publisher(Float32, "/boat/cmd_rudder", 10)
+        self.auto_sail_pub = self.create_publisher(Float32, "/cmd_auto_sail", 10)
+        self.sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
+        self.auto_rudder_pub = self.create_publisher(Float32, "/cmd_auto_rudder", 10)
+        self.rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
 
         self.go_to_gps_timer = self.create_timer(0.2, self.go_to_gps)
         self.sail_adjust_timer = self.create_timer(0.5, self.auto_adjust_sail)
