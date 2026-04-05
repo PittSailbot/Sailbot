@@ -1,0 +1,7 @@
+# Source - https://stackoverflow.com/a/71674232
+# Posted by Mateusz Przybylek
+# Retrieved 2026-04-04, License - CC BY-SA 4.0
+
+* text=auto
+*.sh text eol=lf
+*.conf text eol=lf
