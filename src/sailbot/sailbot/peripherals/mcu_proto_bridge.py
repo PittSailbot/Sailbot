@@ -92,9 +92,9 @@ class MCUBridge(Node):
         self.event_control_sub = self.create_subscription(Int32, "/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
 
-        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_sail", self.cmd_sail_callback, 1)
-        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_jib", self.cmd_jib_callback, 1)
-        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.cmd_rudder_callback, 1)
+        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_auto_sail", self.cmd_sail_callback, 1)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_auto_jib", self.cmd_jib_callback, 1)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_auto_rudder", self.cmd_rudder_callback, 1)
 
     def compass_offset_callback(self, msg):
         self.compass_offset = float(msg.data)
@@ -110,6 +110,21 @@ class MCUBridge(Node):
 
     def cmd_rudder_callback(self, msg: Float32):
         self.send_cmd(cmd_rudder=msg.data)
+
+    def _log_mcu_text_line(self, line: bytes):
+        text = line.decode("utf-8", errors="replace").strip()
+        if not text:
+            return
+
+        prefix = text[:2]
+        if prefix == "E:":
+            self.logging.error(f"MCU: {text}")
+        elif prefix == "W:":
+            self.logging.warning(f"MCU: {text}")
+        elif prefix in ("D:", "V:"):
+            self.logging.debug(f"MCU: {text}")
+        else:
+            self.logging.info(f"MCU: {text}")
 
     def setup_com(self, port_description=str(c.config["MCU_BRIDGE"]["usb_mcu_name"])):
         """Initializes a Serial connection on the USB device matching the desired name"""
@@ -197,7 +212,7 @@ class MCUBridge(Node):
 
     def _to_servo_percent(self, value: float) -> int:
         # Keep command values within the expected -100..100 percentage range.
-        return max(-100, min(100, int(round(value))))
+        return max(0, min(100, int(round(value))))
 
     def send_cmd(self, cmd_sail: float = None, cmd_jib: float = None, cmd_rudder: float = None):
         pi_msg = pi_pb2.PiData()
@@ -213,6 +228,7 @@ class MCUBridge(Node):
             return
 
         try:
+            self.logging.debug(f"Sending PiData to MCU: {pi_msg}")
             self.send(pi_msg.SerializeToString())
         except Exception as e:
             self.logging.error(f"Failed to send command protobuf to mcu: {e}")
@@ -224,18 +240,41 @@ class MCUBridge(Node):
             [0xA5, 0x5A, payload_len_lo, payload_len_hi, payload...]
         """
         if self.ser.in_waiting > 0:
-            self._rx_buffer.extend(self.ser.read(self.ser.in_waiting))
+            incoming = self.ser.read(self.ser.in_waiting)
+            if incoming:
+                self._rx_buffer.extend(incoming)
+                self.last_successful_message = time.time()
 
-        while len(self._rx_buffer) >= self._frame_header_len:
+        while self._rx_buffer:
             start = self._rx_buffer.find(self._frame_magic)
+            newline = self._rx_buffer.find(b"\n")
+
             if start < 0:
-                # Keep one byte to allow matching magic across read boundaries.
-                if len(self._rx_buffer) > 1:
-                    del self._rx_buffer[:-1]
+                if newline >= 0:
+                    line = bytes(self._rx_buffer[: newline + 1])
+                    del self._rx_buffer[: newline + 1]
+                    self._log_mcu_text_line(line)
+                    self.last_successful_message = time.time()
+                    continue
+
+                if len(self._rx_buffer) > 4096:
+                    # Drop unexpectedly long unframed data instead of letting the buffer grow forever.
+                    self._log_mcu_text_line(bytes(self._rx_buffer))
+                    self._rx_buffer.clear()
                 break
 
+            if newline >= 0 and newline < start:
+                line = bytes(self._rx_buffer[: newline + 1])
+                del self._rx_buffer[: newline + 1]
+                self._log_mcu_text_line(line)
+                self.last_successful_message = time.time()
+                continue
+
             if start > 0:
+                text = bytes(self._rx_buffer[:start])
                 del self._rx_buffer[:start]
+                self._log_mcu_text_line(text)
+                self.last_successful_message = time.time()
 
             if len(self._rx_buffer) < self._frame_header_len:
                 break
