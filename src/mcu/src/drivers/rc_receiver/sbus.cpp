@@ -61,8 +61,25 @@ bool SBusReceiver::readControllerState(RCData* controller) {
   if (sbus_rx->Read()) {
     *data = sbus_rx->data();
 
+    // Ignore invalid frames so higher-level logic can enter RC-off handling.
+    if (data->failsafe || data->lost_frame) {
+      valid_frame_streak = 0;
+      return false;
+    }
+
+    // Reject implausible channel values that usually indicate garbage input.
+    constexpr int MIN_VALID_CH = RC_LOW - 50;
+    constexpr int MAX_VALID_CH = RC_HIGH + 100;
+    for (int ch = 0; ch <= 9; ch++) {
+      if (data->ch[ch] < MIN_VALID_CH || data->ch[ch] > MAX_VALID_CH) {
+        valid_frame_streak = 0;
+        return false;
+      }
+    }
+
     // Data channels = 0 when controller is disconnected
     if (data->ch[0] == 0) {
+      valid_frame_streak = 0;
       return false;
     }
 
@@ -79,5 +96,11 @@ bool SBusReceiver::readControllerState(RCData* controller) {
 
     return true;
   }
+
+  if (valid_frame_streak < MIN_VALID_FRAME_STREAK) {
+    valid_frame_streak++;
+    return false;
+  }
+  valid_frame_streak = 0;
   return false;
 }

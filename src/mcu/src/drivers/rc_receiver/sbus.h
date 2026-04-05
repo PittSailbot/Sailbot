@@ -17,6 +17,8 @@ class SBusReceiver : public RCReceiver {
   bfs::SbusData* data;
   static constexpr int RC_LOW = 150;
   static constexpr int RC_HIGH = 1811;
+  static constexpr uint8_t MIN_VALID_FRAME_STREAK = 3;
+  uint8_t valid_frame_streak = 0;
 
  public:
   SBusReceiver(HardwareSerial* port);
