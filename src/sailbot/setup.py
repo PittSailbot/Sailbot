@@ -52,7 +52,6 @@ setup(
             "virtualGPS = sailbot.virtualPeripherals.GPS:main",
             "virtualCompass = sailbot.virtualPeripherals.compass:main",
             "virtualWindvane = sailbot.virtualPeripherals.windvane:main",
-            "rosTest = sailbot.rosTest:main",
             "networkLogger = sailbot.utils.NetworkLogger:main",
             "dummyEvent = sailbot.events.DummyEvent:main",
             "searchEvent = sailbot.events.DummyEventSearch:main",
