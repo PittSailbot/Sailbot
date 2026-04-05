@@ -19,7 +19,7 @@
 
 // #define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
 // #define DAN_MARINA_LEO_PCB   // Mini boat + Pico + Leo PCB
-// #define DRAGONFORCE_65      // Mini boat autonomy testing platform
+// #define DRAGONFORCE_65  // Mini boat autonomy testing platform
 #define PROTOBOARD  // Prototype board for Mini Boat PCB
 // #define BREADBOARD
 
