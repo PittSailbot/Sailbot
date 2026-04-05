@@ -14,7 +14,7 @@
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
 	"workspaceFolder": "/workspace",
 	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/vscode/.bash_history,type=bind",	// Bind local OS & virtual docker directories, changes on one end will update the other
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/vscode/.bash_history,type=bind"	// Bind local OS & virtual docker directories, changes on one end will update the other
 		// "source=/dev/,target=/dev/,type=bind,consistency=consistent"
 		//"source=${localWorkspaceFolder},target=/workspace,type=bind"
 	],
@@ -31,6 +31,18 @@
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {			
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"terminal.integrated.profiles.linux": {
+					"bash": {
+						"path": "/bin/bash",
+						"args": [
+							"-lc",
+							"if [ -f /workspace/install/setup.bash ]; then source /workspace/install/setup.bash; fi; exec bash -l"
+						]
+					}
+				}
+			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"ms-python.python",
