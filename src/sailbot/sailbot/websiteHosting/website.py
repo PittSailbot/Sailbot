@@ -1,5 +1,3 @@
-# be sure to export FLASK_APP=websiteNoROS.py if you want this to run when doing 'flask run'
-
 # run the exiting tileserver container with docker start <tile_server_name>
 # make a new tile server using: sudo docker run -p 8080:80 -v osm-data:/data/database -d overv/openstreetmap-tile-server run
 # see https://switch2osm.org/serving-tiles/using-a-docker-container/
