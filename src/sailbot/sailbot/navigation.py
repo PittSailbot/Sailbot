@@ -120,7 +120,7 @@ class Navigation(Node):
                 self.rudder_pub.publish(Float32(data=0.0))
             return
 
-        target_angle = boatMath.angleToPoint(self.position.lat, self.position.lon, target.lat, target.lon)
+        target_angle = boatMath.angle_to_point(self.position.lat, self.position.lon, target.lat, target.lon)
         delta_angle = (target_angle - self.compass_angle) % 360
         if delta_angle > 180:
             delta_angle -= 360
@@ -263,7 +263,7 @@ class Navigation(Node):
         if not self.manualRudder:
             self.rudder_pub.publish(msg)
 
-        self.logging.info(f"continuing {tack_or_jibe}")
+        self.logging.info(f"continuing {tack_or_jibe}", throttle_duration_sec=5)
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
