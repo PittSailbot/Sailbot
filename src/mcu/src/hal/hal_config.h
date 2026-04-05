@@ -19,7 +19,6 @@
 
 // #define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
 // #define DAN_MARINA_LEO_PCB   // Mini boat + Pico + Leo PCB
-// #define DRAGONFORCE_65  // Mini boat autonomy testing platform
 #define PROTOBOARD  // Prototype board for Mini Boat PCB
 // #define BREADBOARD
 
@@ -34,9 +33,6 @@
 
 #elif defined(DAN_MARINA_LEO_PCB)
 #include "layouts/dan_marina_leo_pcb.h"
-
-#elif defined(DRAGONFORCE_65)
-#include "layouts/dragonforce_65.h"
 
 #elif defined(PROTOBOARD)
 #include "layouts/protoboard.h"
