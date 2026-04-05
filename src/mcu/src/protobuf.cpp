@@ -14,15 +14,80 @@ constexpr uint8_t kFrameMagic1 = 0x5A;
 uint8_t mcu_buffer[MCU_PB_H_MAX_SIZE];
 uint8_t pi_buffer[PI_PB_H_MAX_SIZE];
 
-void readProtobufFromPi(PiData* pi_data) {
-  pb_istream_t istream = pb_istream_from_buffer(pi_buffer, sizeof(pi_buffer));
-  memset(mcu_buffer, 0, sizeof(mcu_buffer));
-  bool status = pb_decode(&istream, PiData_fields, pi_data);
+bool readProtobufFromPi(PiData* pi_data) {
+  constexpr size_t kHeaderLen = 4;
+  static uint8_t rx_buffer[PI_PB_H_MAX_SIZE + kHeaderLen];
+  static size_t rx_len = 0;
 
-  if (!status) {
-    Serial.printf("Failed to read protobuf from Pi: %s\n", istream.errmsg);
+  while (Serial.available() > 0) {
+    uint8_t next = static_cast<uint8_t>(Serial.read());
+    if (rx_len < sizeof(rx_buffer)) {
+      rx_buffer[rx_len++] = next;
+      continue;
+    }
+
+    // Prevent overflow by dropping oldest byte when buffer is full.
+    memmove(rx_buffer, rx_buffer + 1, sizeof(rx_buffer) - 1);
+    rx_buffer[sizeof(rx_buffer) - 1] = next;
   }
-  return;
+
+  while (rx_len >= kHeaderLen) {
+    size_t start = 0;
+    while (start + 1 < rx_len) {
+      if (rx_buffer[start] == kFrameMagic0 && rx_buffer[start + 1] == kFrameMagic1) {
+        break;
+      }
+      start++;
+    }
+
+    if (start + 1 >= rx_len) {
+      // Keep one byte to support matching magic across serial read boundaries.
+      if (rx_len > 0) {
+        rx_buffer[0] = rx_buffer[rx_len - 1];
+        rx_len = 1;
+      }
+      return false;
+    }
+
+    if (start > 0) {
+      memmove(rx_buffer, rx_buffer + start, rx_len - start);
+      rx_len -= start;
+    }
+
+    if (rx_len < kHeaderLen) {
+      return false;
+    }
+
+    const uint16_t payload_len =
+        static_cast<uint16_t>(rx_buffer[2]) | (static_cast<uint16_t>(rx_buffer[3]) << 8);
+    if (payload_len == 0 || payload_len > PI_PB_H_MAX_SIZE) {
+      // Corrupt header; shift by one byte and resync.
+      memmove(rx_buffer, rx_buffer + 1, rx_len - 1);
+      rx_len -= 1;
+      continue;
+    }
+
+    const size_t frame_len = kHeaderLen + payload_len;
+    if (rx_len < frame_len) {
+      return false;
+    }
+
+    *pi_data = PiData_init_default;
+    pb_istream_t istream = pb_istream_from_buffer(rx_buffer + kHeaderLen, payload_len);
+    const bool status = pb_decode(&istream, PiData_fields, pi_data);
+
+    memmove(rx_buffer, rx_buffer + frame_len, rx_len - frame_len);
+    rx_len -= frame_len;
+
+    if (!status) {
+      Serial.printf("E: Failed to read protobuf from Pi: %s\n", istream.errmsg);
+      continue;
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 void writeProtobufToPi(TeensyData* teensy_data) {

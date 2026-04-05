@@ -90,7 +90,7 @@ void loop() {
   if (Serial.available()) {
     while (Serial.read() != -1) {
     };  // temp
-    // readProtobufFromPi(&pi_data); TEMP DISABLE
+    readProtobufFromPi(&pi_data);
   }
 
 #ifdef HAS_GPS

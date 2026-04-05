@@ -18,7 +18,7 @@ from serial.tools import list_ports
 from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
-from sailbot.protobuf import mcu_pb2
+from sailbot.protobuf import mcu_pb2, pi_pb2
 from sailbot.utils import boatMath
 from sailbot.utils.utils import ControlState, ImuData, Waypoint
 
@@ -92,11 +92,24 @@ class MCUBridge(Node):
         self.event_control_sub = self.create_subscription(Int32, "/boat/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
 
+        self.cmd_sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.cmd_sail_callback, 1)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/boat/cmd_jib", self.cmd_jib_callback, 1)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.cmd_rudder_callback, 1)
+
     def compass_offset_callback(self, msg):
         self.compass_offset = float(msg.data)
 
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
+
+    def cmd_sail_callback(self, msg: Float32):
+        self.send_cmd(cmd_sail=msg.data)
+
+    def cmd_jib_callback(self, msg: Float32):
+        self.send_cmd(cmd_jib=msg.data)
+
+    def cmd_rudder_callback(self, msg: Float32):
+        self.send_cmd(cmd_rudder=msg.data)
 
     def setup_com(self, port_description=str(c.config["MCU_BRIDGE"]["usb_mcu_name"])):
         """Initializes a Serial connection on the USB device matching the desired name"""
@@ -170,8 +183,39 @@ class MCUBridge(Node):
             self.imu_pub.publish(msg)
             self.logging.debug('Publishing: "%s"' % msg.data)
 
-    def send(self, data):
-        self.ser.write(str(data).encode())
+    def send(self, payload: bytes):
+        if self.ser is None or not self.ser.is_open:
+            raise RuntimeError("Serial connection is not open")
+
+        payload_len = len(payload)
+        if payload_len <= 0 or payload_len > self._max_payload_len:
+            raise ValueError(f"Invalid payload length: {payload_len}")
+
+        header = self._frame_magic + payload_len.to_bytes(2, byteorder="little", signed=False)
+        self.ser.write(header)
+        self.ser.write(payload)
+
+    def _to_servo_percent(self, value: float) -> int:
+        # Keep command values within the expected -100..100 percentage range.
+        return max(-100, min(100, int(round(value))))
+
+    def send_cmd(self, cmd_sail: float = None, cmd_jib: float = None, cmd_rudder: float = None):
+        pi_msg = pi_pb2.PiData()
+
+        if cmd_sail is not None:
+            pi_msg.cmd_sail = self._to_servo_percent(cmd_sail)
+        if cmd_jib is not None:
+            pi_msg.cmd_jib = self._to_servo_percent(cmd_jib)
+        if cmd_rudder is not None:
+            pi_msg.cmd_rudder = self._to_servo_percent(cmd_rudder)
+
+        if not pi_msg.ListFields():
+            return
+
+        try:
+            self.send(pi_msg.SerializeToString())
+        except Exception as e:
+            self.logging.error(f"Failed to send command protobuf to mcu: {e}")
 
     def read(self):
         """Reads framed incoming protobuf data from the MCU.
@@ -224,8 +268,8 @@ class MCUBridge(Node):
             self.usbReset_pub.publish(String(data=""))
             self.logging.error("Resetting transceiver", throttle_duration_sec=1)
 
-        if (time.time() - self.last_successful_message) > 1:  # seconds
-            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=1)
+        if (time.time() - self.last_successful_message) > 3:  # seconds
+            self.logging.error("No valid message recived in awhile, check transceiver", throttle_duration_sec=10)
         return None
 
     def publish_controller(self, controller: mcu_pb2.RCData):
