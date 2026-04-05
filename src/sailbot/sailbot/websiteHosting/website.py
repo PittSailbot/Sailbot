@@ -186,6 +186,27 @@ class LogDatabase:
 
         return coords
 
+    def rotate_logs(self):
+        os.makedirs("sailbot_logs", exist_ok=True)
+
+        log_count = 0
+        with self.get_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM logs")
+            row = cursor.fetchone()
+            cursor.close()
+            if row:
+                log_count = int(row[0])
+
+        if log_count > 0:
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            db_basename = os.path.basename(self.db_path)
+            db_root, db_ext = os.path.splitext(db_basename)
+            archive_path = os.path.join("sailbot_logs", f"{db_root}_{timestamp}{db_ext}")
+            os.replace(self.db_path, archive_path)
+
+        self.create_table()
+
 
 class Website(Node):
     def __init__(self):
@@ -453,6 +474,12 @@ def logs(logMessages=None):
         msg["timestamp"] = convert_timestamp_to_local(msg["timestamp"])
 
     return render_template("logs.html", logMessages=logMessages)
+
+
+@app.route("/logs/reset", methods=["POST"])
+def reset_logs():
+    DATA.logDB.rotate_logs()
+    return redirect("/logs")
 
 
 @app.route("/log_search")

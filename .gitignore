@@ -18,3 +18,4 @@ log_database.db
 *.code-workspace
 raspi-config_*.deb
 /site
+sailbot_logs/
