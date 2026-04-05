@@ -197,8 +197,6 @@ class Website(Node):
         self.dataDict = {
             "gps": f"{self.gps.latitude},{self.gps.longitude}",
             "compass": f"{self.compass.angle}",
-            "odrive_axis0": f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}",
-            "odrive_axis1": f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}",
         }
 
         self.logDB = LogDatabase(self)
@@ -232,7 +230,6 @@ class Website(Node):
         self.gps_subscription = self.create_subscription(String, "/boat/GPS", self.ROS_GPSCallback, 10)
         self.imu_subscription = self.create_subscription(String, "/boat/imu", self.ROS_imuCallback, 10)
         self.windvane_subscription = self.create_subscription(String, "/boat/wind_angle", self.ROS_windvaneCallback, 10)
-        self.odrive_subscription = self.create_subscription(String, "/boat/odriveStatus", self.ROS_odriveCallback, 10)
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
         self.boat_state_subscription = self.create_subscription(String, "/boat/next_gps", self.ROS_nextGpsCallback, 10)
         self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.ROS_controlStateCallback, 2)
@@ -251,21 +248,6 @@ class Website(Node):
 
         self.compass = DummyObject()
         self.compass.angle = -1
-
-        self.odrive = DummyObject()
-        self.odrive.axis0 = DummyObject()
-        self.odrive.axis0.requested_state = -1
-        self.odrive.axis0.targetPos = -1
-        self.odrive.axis0.pos = -1
-        self.odrive.axis0.velocity = -1
-        self.odrive.axis0.currentDraw = -1
-
-        self.odrive.axis1 = DummyObject()
-        self.odrive.axis1.requested_state = -1
-        self.odrive.axis1.targetPos = -1
-        self.odrive.axis1.pos = -1
-        self.odrive.axis1.velocity = -1
-        self.odrive.axis1.currentDraw = -1
 
     def addLogMessage(self, message):
         filename = message.file.replace("/workspace/install/sailbot/lib/sailbot/", "") if message.file.startswith("/workspace/install/sailbot/lib/sailbot/") else message.file
@@ -318,24 +300,6 @@ class Website(Node):
     def ROS_windvaneCallback(self, string):
         angle = float(string.data)
         self.relative_wind = angle
-
-    def ROS_odriveCallback(self, string):
-        string = string.data
-        axis0Data = string.split(":")[0]
-        axis1Data = string.split(":")[1]
-
-        for axis, axisData in [
-            (self.odrive.axis0, axis0Data),
-            (self.odrive.axis1, axis1Data),
-        ]:
-            axis.requested_state = axisData[0]
-            axis.pos = axisData[1]
-            axis.targetPos = axisData[2]
-            axis.velocity = axisData[3]
-            axis.currentDraw = axisData[4]
-
-        self.dataDict["odrive_axis0"] = f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
-        self.dataDict["odrive_axis1"] = f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
 
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
@@ -613,16 +577,6 @@ def circles():
 @app.route("/compass")
 def compass():
     return f"{DATA.compass.angle}"
-
-
-@app.route("/axis0")
-def axis0():
-    return DATA.dataDict["odrive_axis0"]
-
-
-@app.route("/axis1")
-def axis1():
-    return DATA.dataDict["odrive_axis1"]
 
 
 @app.route("/map")
