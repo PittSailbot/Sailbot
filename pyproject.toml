@@ -10,7 +10,6 @@ dependencies = [
     "flask",
     "pyopenssl",
     "geopy",
-    "odrive",
     "pyserial",
     "smbus2",
     "protobuf",

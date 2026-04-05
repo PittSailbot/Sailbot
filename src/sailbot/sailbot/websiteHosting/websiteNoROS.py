@@ -82,8 +82,6 @@ class WebsiteData:
         self.dataDict = {
             "gps": f"{self.gps.latitude},{self.gps.longitude}",
             "compass": f"{self.compass.angle}",
-            "odrive_axis0": f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}",
-            "odrive_axis1": f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}",
         }
 
         self.displayedBreadcrumbs = []

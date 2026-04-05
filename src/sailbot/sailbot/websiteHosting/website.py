@@ -304,7 +304,6 @@ class Website(Node):
         lat, long = gpsJson["lat"], gpsJson["lon"]
         self.gps.latitude = float(lat)
         self.gps.longitude = float(long)
-        self.gps.track_angle_deg = float(gpsJson["track_angle"])
         self.gps.velocity = float(gpsJson["velocity"])
 
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
