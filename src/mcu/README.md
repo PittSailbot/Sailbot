@@ -1,0 +1,2 @@
+All our source code for running on our microcontroller. Interfaces with servos, sensors, etc. and handles moving the actual parts of the boat by communicating with the higher-level navigation on the Pi5.
+Changing these scripts *will not* automatically update them. You must connect to the specific board over USB and upload the new script using PlatformIO or Arduino IDE.
