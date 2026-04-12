@@ -685,7 +685,14 @@ def convert_timestamp_to_local(timestamp_utc_str):
 def ros_main():
     global DATA, app
 
-    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/website"
+    ros_log_dir_base = os.environ.get("ROS_LOG_DIR_BASE")
+    if ros_log_dir_base:
+        ros_log_dir = os.path.join(ros_log_dir_base, "website")
+    else:
+        ros_log_dir = os.path.join(os.getcwd(), "ros_logs", "website")
+
+    os.makedirs(ros_log_dir, exist_ok=True)
+    os.environ["ROS_LOG_DIR"] = ros_log_dir
     rclpy.init()
     DATA = Website()
     DATA.logging.info(f"Website available at https://localhost:{PORT} and http://{MY_IP}:{PORT}")
