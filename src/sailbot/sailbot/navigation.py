@@ -113,7 +113,7 @@ class Navigation(Node):
         if boatMath.distance_between(self.position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
-            self.auto_sail_pub.publish(Float32(data=0.0))
+            self.auto_sail_pub.publish(Float32(data=0.0))  # TODO: make heave to
             self.auto_rudder_pub.publish(Float32(data=0.0))
             if not self.manualRudder:
                 self.sail_pub.publish(Float32(data=0.0))
@@ -179,12 +179,12 @@ class Navigation(Node):
             no_go_distance += self.jibe_angle_increase
         distance_to_target = boatMath.degrees_between(self.compass_angle, target_angle)
 
-        self.logging.info(str((turning_left, is_no_go_zone_left, distance_to_target, no_go_distance)))
+        self.logging.info(str((turning_left, is_no_go_zone_left, distance_to_target, no_go_distance)), throttle_duration_sec=5)
         need_to_tack = not turning_left and not is_no_go_zone_left and distance_to_target > no_go_distance
         need_to_tack = need_to_tack or (turning_left and is_no_go_zone_left and distance_to_target > no_go_distance)
 
-        self.logging.info(str((turning_left, is_no_go_zone_left, distance_to_target, no_go_distance)))
-        self.logging.info(str(need_to_tack))
+        self.logging.info(str((turning_left, is_no_go_zone_left, distance_to_target, no_go_distance)), throttle_duration_sec=5)
+        self.logging.info(str(need_to_tack), throttle_duration_sec=5)
 
         if need_to_tack:
             # Shortest path to target is across the no-go-zone
@@ -200,10 +200,10 @@ class Navigation(Node):
             target_angle = no_go_zone_right_bound
 
         if turning_left:
-            self.logging.info(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees")
+            self.logging.info(f"Turning left from {self.compass_angle} degrees to {target_angle} degrees", throttle_duration_sec=1)
             rudder_angle = self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
         else:
-            self.logging.info(f"Turning right from {self.compass_angle} degrees to {target_angle} degrees")
+            self.logging.info(f"Turning right from {self.compass_angle} degrees to {target_angle} degrees", throttle_duration_sec=1)
             rudder_angle = -self.SMOOTHING_CONSTANT * abs(self.compass_angle - target_angle)
 
         rudder_angle = min(rudder_angle, float(c.config["RUDDER"]["max_angle"]))

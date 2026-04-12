@@ -131,7 +131,7 @@ class MCUBridge(Node):
         found_ports, found_descriptions, found_hwids = self.list_ports()
 
         if len(found_ports) == 0:
-            raise Exception("No connected devices found")
+            raise Exception("No connected devices found. If this is in WSL2 you must attach the USB device with usbipd & reboot the container.")
 
         for i, port in enumerate(found_ports):
             if not (port_description.strip().lower().replace('"', "").replace("'", "")) in str(found_descriptions[i]).strip().lower().replace('"', "").replace("'", ""):
@@ -222,7 +222,7 @@ class MCUBridge(Node):
         if cmd_jib is not None:
             pi_msg.cmd_jib = self._to_servo_percent(cmd_jib)
         if cmd_rudder is not None:
-            pi_msg.cmd_rudder = self._to_servo_percent(cmd_rudder)
+            pi_msg.cmd_rudder = int(cmd_rudder)
 
         if not pi_msg.ListFields():
             return
