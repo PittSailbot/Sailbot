@@ -34,7 +34,7 @@ setup(
     packages=find_packages(where=package_name),
     package_dir={"": "sailbot"},
     data_files=data_files,
-    include_package_data=True,
+    include_package_data=False,
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="Pitt Sailbot",
