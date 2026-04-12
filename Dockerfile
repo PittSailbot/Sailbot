@@ -71,21 +71,14 @@ RUN ARCH=$(uname -m) && \
     uv pip install --system --break-system-packages -r /tmp/requirements.txt && \
     rm -f /tmp/requirements.txt
 
-# Create .uv-venv in /workspace for dev container consistency
-# This ensures the venv exists and has all dependencies with catkin_pkg
-RUN cd /workspace && \
-    uv venv .uv-venv && \
-    uv pip install -p .uv-venv --break-system-packages \
-        catkin_pkg \
-        rosdistro && \
-    .uv-venv/bin/pip install -e . --no-deps 2>/dev/null || true
-
 
 # Clean up apt cache and temporary files
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /workspace
+
+# uv add catkin_pkg --active`
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]

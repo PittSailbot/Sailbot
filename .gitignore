@@ -15,6 +15,7 @@ log_database.db
 /.pytest_cache
 /venv
 /.venv
+/.uv-venv
 *.code-workspace
 raspi-config_*.deb
 /site
