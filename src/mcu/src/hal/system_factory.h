@@ -24,6 +24,8 @@
 #include "drivers/windvane/relative.h"
 #elif HAL_WINDVANE == WINDVANE_P3022
 #include "drivers/windvane/p3022.h"
+#elif HAL_WINDVANE == WINDVANE_AS5600
+#include "drivers/windvane/as5600.h"
 #endif
 #endif
 
@@ -214,6 +216,10 @@ class SystemFactory {
                                                 WINDVANE_CS_PIN, WINDVANE_SCK_PIN);
     windvane->begin() ? Serial.println("I: Started P3022 WindVane")
                       : Serial.println("E: Failed to start P3022 WindVane");
+#elif HAL_WINDVANE == WINDVANE_AS5600
+    windvane = std::make_unique<AS5600_WindVane>();
+    windvane->begin() ? Serial.println("I: Started AS5600 WindVane")
+                      : Serial.println("E: Failed to start AS5600 WindVane");
 #endif
 #endif
 

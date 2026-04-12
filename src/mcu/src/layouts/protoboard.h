@@ -14,7 +14,7 @@
 // #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
 #define HAL_IMU IMU_BNO055
 #define HAL_GPS GPS_ADAFRUIT_PA1010D
-#define HAL_WINDVANE WINDVANE_P3022
+#define HAL_WINDVANE WINDVANE_AS5600
 // #define HAL_WATER_SENSOR         // None
 
 // ============================================================================
@@ -27,10 +27,10 @@
 #define JIB_SERVO_PIN 13     // S3
 
 // Sensor pins
-#define WINDVANE_MOSI_PIN 19  // Should be connected to 3.3V
-#define WINDVANE_MISO_PIN 16
-#define WINDVANE_CS_PIN 17
-#define WINDVANE_SCK_PIN 18
+// #define WINDVANE_MOSI_PIN 19  // Should be connected to 3.3V
+// #define WINDVANE_MISO_PIN 16
+// #define WINDVANE_CS_PIN 17
+// #define WINDVANE_SCK_PIN 18
 
 // Communication pins
 #define I2C_SDA_PIN 20
