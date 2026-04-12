@@ -20,3 +20,5 @@ log_database.db
 raspi-config_*.deb
 /site
 sailbot_logs/
+cert.pem
+key.pem
