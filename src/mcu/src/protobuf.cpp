@@ -84,6 +84,27 @@ bool readProtobufFromPi(PiData* pi_data) {
       continue;
     }
 
+    // if (pi_data->has_cmd_yaw || pi_data->has_cmd_pitch || pi_data->has_cmd_sail ||
+    //     pi_data->has_cmd_jib || pi_data->has_cmd_rudder) {
+    //   Serial.printf("I: PiData received:");
+    //   if (pi_data->has_cmd_yaw) {
+    //     Serial.printf(" yaw=%d", pi_data->cmd_yaw);
+    //   }
+    //   if (pi_data->has_cmd_pitch) {
+    //     Serial.printf(" pitch=%d", pi_data->cmd_pitch);
+    //   }
+    //   if (pi_data->has_cmd_sail) {
+    //     Serial.printf(" sail=%d", pi_data->cmd_sail);
+    //   }
+    //   if (pi_data->has_cmd_jib) {
+    //     Serial.printf(" jib=%d", pi_data->cmd_jib);
+    //   }
+    //   if (pi_data->has_cmd_rudder) {
+    //     Serial.printf(" rudder=%d", pi_data->cmd_rudder);
+    //   }
+    //   Serial.println();
+    // }
+
     return true;
   }
 
