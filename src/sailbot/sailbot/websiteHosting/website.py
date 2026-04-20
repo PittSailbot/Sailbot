@@ -241,8 +241,10 @@ class Website(Node):
         self.error_count = 0
         self.relative_wind = None
         self.sail_angle = 0.0
+        self.jib_angle = 0.0
         self.rudder_angle = 0.0
         self.auto_sail_angle = 0.0
+        self.auto_jib_angle = 0.0
         self.auto_rudder_angle = 0.0
         self.imu = None
 
@@ -259,10 +261,12 @@ class Website(Node):
         self.boat_state_subscription = self.create_subscription(String, "/next_gps", self.ROS_nextGpsCallback, 10)
         self.control_state_sub = self.create_subscription(String, "/control_state", self.ROS_controlStateCallback, 2)
         self.queued_waypoints_subscription = self.create_subscription(String, "/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/cmd_sail", self.ROS_sailCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.ROS_rudderCmd_callback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/sail", self.ROS_sailCmd_callback, 10)
+        self.jib_sub = self.create_subscription(Float32, "/jib", self.ROS_jibCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/rudder", self.ROS_rudderCmd_callback, 10)
+        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_sail", self.ROS_sailAutoCmd_callback, 10)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_jib", self.ROS_jibAutoCmd_callback, 10)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.ROS_rudderAutoCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()
@@ -350,11 +354,17 @@ class Website(Node):
     def ROS_sailCmd_callback(self, msg):
         self.sail_angle = float(msg.data)
 
+    def ROS_jibCmd_callback(self, msg):
+        self.jib_angle = float(msg.data)
+
     def ROS_rudderCmd_callback(self, msg):
         self.rudder_angle = float(msg.data)
 
     def ROS_sailAutoCmd_callback(self, msg):
         self.auto_sail_angle = float(msg.data)
+
+    def ROS_jibAutoCmd_callback(self, msg):
+        self.auto_jib_angle = float(msg.data)
 
     def ROS_rudderAutoCmd_callback(self, msg):
         self.auto_rudder_angle = float(msg.data)
@@ -446,11 +456,13 @@ def dataJSON():
         "pitch_dir": DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
+        "jib_angle": DATA.jib_angle,
         "rudder_angle": DATA.rudder_angle - RUDDER_CENTER_ANGLE,
         "speed": DATA.gps.velocity,
         "polygon_coords": get_no_go_zone_polygon(),
         "heading_polyline_coords": get_heading_coords(),
         "auto_sail": DATA.auto_sail_angle,
+        "auto_jib": DATA.auto_jib_angle,
         "auto_rudder": DATA.auto_rudder_angle,
     }
     return jsonDict

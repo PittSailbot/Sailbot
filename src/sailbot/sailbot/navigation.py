@@ -53,10 +53,8 @@ class Navigation(Node):
         self.windvane_sub = self.create_subscription(String, "/wind_angle", self.windvane_callback, 2)
         self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 2)
 
-        self.auto_sail_pub = self.create_publisher(Float32, "/cmd_auto_sail", 10)
-        self.sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
-        self.auto_rudder_pub = self.create_publisher(Float32, "/cmd_auto_rudder", 10)
-        self.rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
+        self.cmd_sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
+        self.cmd_rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
 
         self.go_to_gps_timer = self.create_timer(0.2, self.go_to_gps)
         self.sail_adjust_timer = self.create_timer(0.5, self.auto_adjust_sail)
@@ -113,12 +111,8 @@ class Navigation(Node):
         if boatMath.distance_between(self.position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
-            self.auto_sail_pub.publish(Float32(data=0.0))  # TODO: make heave to
-            self.auto_rudder_pub.publish(Float32(data=0.0))
-            if not self.manualRudder:
-                self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=0.0))
-            return
+            self.cmd_sail_pub.publish(Float32(data=0.0))  # TODO: make heave to
+            self.cmd_rudder_pub.publish(Float32(data=0.0))
 
         target_angle = boatMath.angle_to_point(self.position.lat, self.position.lon, target.lat, target.lon)
         delta_angle = (target_angle - self.compass_angle) % 360
@@ -166,7 +160,7 @@ class Navigation(Node):
             self.logging.info(f"Holding boat at {target_angle} degrees")
             msg = Float32()
             msg.data = 0.0 * self.rudderMult
-            self.auto_rudder_pub.publish(msg)
+            self.cmd_rudder_pub.publish(msg)
             if not self.manualRudder:
                 self.rudder_pub.publish(msg)
             return
@@ -211,7 +205,7 @@ class Navigation(Node):
 
         msg = Float32()
         msg.data = rudder_angle * self.rudderMult
-        self.auto_rudder_pub.publish(msg)
+        self.cmd_rudder_pub.publish(msg)
         if not self.manualRudder:
             self.rudder_pub.publish(msg)
 
@@ -259,7 +253,7 @@ class Navigation(Node):
 
         msg = Float32()
         msg.data = rudder_angle * self.rudderMult
-        self.auto_rudder_pub.publish(msg)
+        self.cmd_rudder_pub.publish(msg)
         if not self.manualRudder:
             self.rudder_pub.publish(msg)
 
@@ -280,9 +274,7 @@ class Navigation(Node):
 
         msg = Float32()
         msg.data = float(sail_angle)
-        self.auto_sail_pub.publish(msg)
-        if not self.manualSails:
-            self.sail_pub.publish(msg)
+        self.cmd_sail_pub.publish(msg)
 
 
 def main(args=None):

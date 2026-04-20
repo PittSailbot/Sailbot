@@ -315,11 +315,17 @@
             <div id="sailText">
                 Sail angle:
             </div>
+            <div id="jibText">
+                Jib angle:
+            </div>
             <div id="rudderText">
                 Rudder angle:
             </div>
             <div id="autoSailText">
                 Auto Sail desired angle:
+            </div>
+            <div id="autoJibText">
+                Auto Jib desired angle:
             </div>
             <div id="autoRudderText">
                 Auto Rudder desired angle:
@@ -997,10 +1003,22 @@
                     sailText = document.getElementById('sailText');
                     sailText.innerHTML = `Sail angle: ${sailAngle.toFixed(2)}`
 
+                    // update Jib rotation
+                    // jibAngle = json.jib_angle
+                    // jibOrientationImage = document.getElementById('jibOrientationImage');
+                    // jibOrientationImageFlipped = document.getElementById('jibOrientationImageFlipped');
+                    // jibText = document.getElementById('jibText');
+                    // jibText.innerHTML = `Sail angle: ${jibAngle.toFixed(2)}`
+
                     // update auto Sail text
                     autoSailAngle = json.auto_sail
                     autoSailText = document.getElementById('autoSailText');
                     autoSailText.innerHTML = `Auto Sail desired angle: ${autoSailAngle.toFixed(2)}`
+
+                    // update auto Jib text
+                    // autoJibAngle = json.auto_jib
+                    // autoJibText = document.getElementById('autoJibText');
+                    // autoJibText.innerHTML = `Auto Jib desired angle: ${autoSailAngle.toFixed(2)}`
 
                     // Update auto Rudder text
                     autoRudderAngle = json.auto_rudder

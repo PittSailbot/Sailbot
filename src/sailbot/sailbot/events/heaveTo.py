@@ -36,8 +36,8 @@ class HeaveTo(Event):
 
         super().__init__(event_info)
 
-        self.sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
-        self.rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
+        self.cmd_sail_pub = self.create_publisher(Float32, "/cmd_sail", 10)
+        self.cmd_rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
 
         self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 1)
         self.control_state = None
@@ -57,12 +57,12 @@ class HeaveTo(Event):
         if self.control_state and self.control_state.full_auto:
             if time.time() > (self.start_time + 290):
                 self.logging.info("Leaving")
-                self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=0.0))
+                self.cmd_sail_pub.publish(Float32(data=0.0))
+                self.cmd_rudder_pub.publish(Float32(data=0.0))
             else:
                 self.logging.info(f"Heaving for {time.time() - self.start_time}s. {(self.start_time + 290) - time.time()}s left.")
-                self.sail_pub.publish(Float32(data=0.0))
-                self.rudder_pub.publish(Float32(data=c.config["RUDDER"]["max_angle"]))
+                self.cmd_sail_pub.publish(Float32(data=0.0))
+                self.cmd_rudder_pub.publish(Float32(data=float(c.config["RUDDER"]["max_angle"])))
 
         return Waypoint(None, None)
 

@@ -72,8 +72,9 @@ class MCUBridge(Node):
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.control_state_pub = self.create_publisher(String, "control_state", 1)
 
-        self.sail_pub = self.create_publisher(Float32, "cmd_sail", 1)
-        self.rudder_pub = self.create_publisher(Float32, "cmd_rudder", 1)
+        self.sail_pub = self.create_publisher(Float32, "sail", 1)
+        self.jib_pub = self.create_publisher(Float32, "jib", 1)
+        self.rudder_pub = self.create_publisher(Float32, "rudder", 1)
 
         self.sail_offset_pub = self.create_publisher(Float32, "offset_sail", 1)
         self.rudder_offset_pub = self.create_publisher(Float32, "offset_rudder", 1)
@@ -92,9 +93,9 @@ class MCUBridge(Node):
         self.event_control_sub = self.create_subscription(Int32, "/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO
 
-        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_auto_sail", self.cmd_sail_callback, 1)
-        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_auto_jib", self.cmd_jib_callback, 1)
-        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_auto_rudder", self.cmd_rudder_callback, 1)
+        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_sail", self.cmd_sail_callback, 1)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_jib", self.cmd_jib_callback, 1)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.cmd_rudder_callback, 1)
 
     def compass_offset_callback(self, msg):
         self.compass_offset = float(msg.data)
