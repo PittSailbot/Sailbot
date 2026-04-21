@@ -45,7 +45,7 @@ class CameraServos(Node):
         self.bus = smbus.SMBus(1)
         self.reset()
 
-        self.servo_sub = self.create_subscription(String, "cam_servo_control", self.ROS_servo_control_callback, 10)
+        self.servo_sub = self.create_subscription(String, "/cam_servo_control", self.ROS_servo_control_callback, 10)
 
     def __del__(self):
         self.reset()

@@ -32,9 +32,9 @@ class Compass(Node):
         self.logging = self.get_logger()
         self.rudder_angle = 0
         self.velocity = 0.0
-        self.rudder_sub = self.create_subscription(Float32, "cmd_rudder", self.rudder_callback, 10)
-        self.pub = self.create_publisher(String, "imu", 10)
-        self.gps_subscription = self.create_subscription(String, "GPS", self.ROS_GPSCallback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.rudder_callback, 10)
+        self.pub = self.create_publisher(String, "/imu", 10)
+        self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
         self.timer = self.create_timer(1.0, self.timer_callback)
 
         self.compassAngle = 90

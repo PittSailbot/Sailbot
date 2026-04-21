@@ -15,11 +15,11 @@ class ActionManager(Node):
         super().__init__("ActionManager")
         self.logging = self.get_logger()
 
-        self.event_shutdown_pub = self.create_publisher(String, "event_shutdown", 10)
+        self.event_shutdown_pub = self.create_publisher(String, "/event_shutdown", 10)
 
-        self.event_change_subscription = self.create_subscription(String, "setEvent", self.ROS_eventChange_callback, 10)
+        self.event_change_subscription = self.create_subscription(String, "/setEvent", self.ROS_eventChange_callback, 10)
 
-        self.usbReset_subscription = self.create_subscription(String, "usbReset", self.ROS_USB_Reset, 1)
+        self.usbReset_subscription = self.create_subscription(String, "/usbReset", self.ROS_USB_Reset, 1)
 
         self.logging.info("starting Action Manager")
 

@@ -255,7 +255,7 @@ class Website(Node):
 
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
-        self.imu_subscription = self.create_subscription(String, "imu", self.ROS_imuCallback, 10)
+        self.imu_subscription = self.create_subscription(String, "/imu", self.ROS_imuCallback, 10)
         self.windvane_subscription = self.create_subscription(String, "/wind_angle", self.ROS_windvaneCallback, 10)
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
         self.boat_state_subscription = self.create_subscription(String, "/next_gps", self.ROS_nextGpsCallback, 10)

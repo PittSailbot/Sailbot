@@ -43,7 +43,7 @@ class NavigationStrategy(Node):
 
         self.next_gps_sub = self.create_subscription(String, "/next_gps", self.next_gps_callback, 2)
         self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 2)
-        self.imu_sub = self.create_subscription(String, "imu", self.imu_callback, 2)
+        self.imu_sub = self.create_subscription(String, "/imu", self.imu_callback, 2)
         self.windvane_sub = self.create_subscription(String, "/wind_angle", self.windvane_callback, 2)
         self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 2)
 

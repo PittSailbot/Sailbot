@@ -68,27 +68,27 @@ class MCUBridge(Node):
 
         # self.I2Cbus = smbus.SMBus(1)
 
-        # self.controller_pub = self.create_publisher(String, "controller_state", 10)
+        # self.controller_pub = self.create_publisher(String, "/controller_state", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.control_state_pub = self.create_publisher(String, "control_state", 1)
+        self.control_state_pub = self.create_publisher(String, "/control_state", 1)
 
-        self.sail_pub = self.create_publisher(Float32, "sail", 1)
-        self.jib_pub = self.create_publisher(Float32, "jib", 1)
-        self.rudder_pub = self.create_publisher(Float32, "rudder", 1)
+        self.sail_pub = self.create_publisher(Float32, "/sail", 1)
+        self.jib_pub = self.create_publisher(Float32, "/jib", 1)
+        self.rudder_pub = self.create_publisher(Float32, "/rudder", 1)
 
-        self.sail_offset_pub = self.create_publisher(Float32, "offset_sail", 1)
-        self.rudder_offset_pub = self.create_publisher(Float32, "offset_rudder", 1)
+        self.sail_offset_pub = self.create_publisher(Float32, "/offset_sail", 1)
+        self.rudder_offset_pub = self.create_publisher(Float32, "/offset_rudder", 1)
 
-        self.wind_angle_pub = self.create_publisher(String, "wind_angle", 1)
+        self.wind_angle_pub = self.create_publisher(String, "/wind_angle", 1)
 
-        # self.position_pub = self.create_publisher(String, "position", 1)
-        # self.speed_pub = self.create_publisher(String, "speed", 1)
+        self.position_pub = self.create_publisher(String, "/GPS", 1)
+        # self.speed_pub = self.create_publisher(String, "/speed", 1)
 
-        self.imu_pub = self.create_publisher(String, "imu", 1)
+        self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
         self.compass_offset = 0
 
-        self.usbReset_pub = self.create_publisher(String, "usbReset", 1)
+        self.usbReset_pub = self.create_publisher(String, "/usbReset", 1)
 
         self.event_control_sub = self.create_subscription(Int32, "/event_control_state", self.event_control_state_callback, 1)
         self.event_control_state = ControlState.AUTO

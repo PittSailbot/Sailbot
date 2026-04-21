@@ -30,11 +30,11 @@ class WindVane(Node):
         self.wind_source_angle = 0.0
         self.compass_yaw = 0.0
 
-        self.pub = self.create_publisher(String, "wind_angle", 10)
+        self.pub = self.create_publisher(String, "/wind_angle", 10)
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-        self.compass_subscription = self.create_subscription(String, "imu", self.ROS_compassCallback, 10)
+        self.compass_subscription = self.create_subscription(String, "/imu", self.ROS_compassCallback, 10)
 
         self._angle = 0
 

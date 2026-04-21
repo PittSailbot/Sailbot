@@ -51,7 +51,7 @@ class Endurance(Event):
         # TODO: ADD ROUNDING BUFFER to waypoints
         rounding_buffer = c.config["ENDURANCE"]["rounding_buffer"]
 
-        self.gps_subscription = self.create_subscription(String, "GPS", self.gps_callback, 10)
+        self.gps_subscription = self.create_subscription(String, "/GPS", self.gps_callback, 10)
         self.position = Waypoint(0, 0)
 
     def gps_callback(self, msg):
