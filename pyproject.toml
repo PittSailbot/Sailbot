@@ -40,3 +40,6 @@ force-exclude = '.*src\/mcu\/.*|.*src\/sailbot\/sailbot\/protobuf\/.*'
 [tool.isort]
 profile = "black"
 skip_gitignore = true
+
+[tool.pyright]
+extraPaths = ["src/sailbot"]
