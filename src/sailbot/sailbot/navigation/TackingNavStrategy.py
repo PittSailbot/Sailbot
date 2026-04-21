@@ -9,7 +9,7 @@ import rclpy
 from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
-from sailbot.navigation import NavigationStrategy
+from sailbot.navigation.navStrategy import NavigationStrategy
 from sailbot.utils import boatMath, utils
 
 
