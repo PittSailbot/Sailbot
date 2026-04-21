@@ -1,6 +1,6 @@
 import numpy as np
 
-from sailbot.utils import boatMath
+from sailbot.utils import boatMath, eventUtils, utils
 
 
 class WaypointPlanner:
@@ -31,11 +31,6 @@ class WaypointPlanner:
             # If waypoint not in list, add it and set as target
             self.waypoints.append(waypoint)
             self.current_waypoint_index = len(self.waypoints) - 1
-
-    def update(self, agent_pos):
-        """Readjust target waypoint based on agent position"""
-        if self.get_distance_to_current_waypoint(agent_pos) < self.waypoint_tolerance:
-            self.current_waypoint_index += 1
 
     def set_waypoint_sequence(self, waypoints):
         """Set a complete sequence of waypoints to navigate through"""
