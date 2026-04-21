@@ -25,7 +25,7 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="navigation",
+                executable="tack_navigation",
                 name="node_Navigation",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
