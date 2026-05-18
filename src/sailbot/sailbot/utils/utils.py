@@ -37,7 +37,7 @@ class Waypoint:
         return msg
 
     def from_msg(jsonString: String):
-        if jsonString == "":
+        if not jsonString.data:
             return Waypoint(-1, -1)
 
         gpsJson = json.loads(jsonString.data)

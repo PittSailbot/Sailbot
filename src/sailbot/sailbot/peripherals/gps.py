@@ -23,7 +23,7 @@ from serial.tools import list_ports
 from std_msgs.msg import Float32, Int32, String
 
 from sailbot import constants as c
-from sailbot.telemetry.protobuf import controlsData_pb2, teensy_pb2
+from sailbot.telemetry.protobuf import controlsData_pb2, mcu_pb2
 from sailbot.utils import boatMath
 
 # from geographic_msgs.msg import GeoPose, GeoPoint
@@ -47,10 +47,12 @@ class GPS(Node):
 
         self.gps.send_command(b"PMTK220,1000")
 
-        self.pub = self.create_publisher(String, "/boat/GPS", 1)
+        self.pub = self.create_publisher(String, "/GPS", 1)
 
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
+
+        self.last_fix = time.time()
 
     def timer_callback(self):
         self.gps.update()
@@ -61,6 +63,9 @@ class GPS(Node):
             self.logging.info(str(msg.data))
             self.pub.publish(msg)
             self.logging.debug(f'GPS Publishing: "{msg.data}"')
+            self.last_fix = time.time()
+        else:
+            self.logging.warning(f"Waiting for fix ({round(time.time() - self.last_fix)}s)", throttle_duration_sec=5)
 
     # # Main loop runs forever printing the location, etc. every second.
     # last_print = time.monotonic()

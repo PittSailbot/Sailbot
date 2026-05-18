@@ -1,12 +1,10 @@
+# Automatic hooks ran before a commit. Used to standardize formatting and reduce git diffs.
 repos:
   - repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
       - id: black
         language_version: python3.10
-        args: [
-          '--config', 'sailbot.toml',
-        ]
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
@@ -15,5 +13,11 @@ repos:
           "--profile", "black",
           "--filter-files",
           "--skip", "src/sailbot/sailbot/protobuf",
-          "--skip", "src/teensy/proto"
+          "--skip", "src/mcu/proto"
         ]
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v16.0.0
+    hooks:
+      - id: clang-format
+        args: ['--style=file', '-i']
+        files: \.(cpp|h|hpp|c|ino)$

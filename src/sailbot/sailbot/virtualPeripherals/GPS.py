@@ -42,13 +42,13 @@ class GPS(Node):
 
         super().__init__("GPS")
         self.logging = self.get_logger()
-        self.pub = self.create_publisher(String, "GPS", 10)
-        self.control_state_pub = self.create_publisher(String, "control_state", 10)
+        self.pub = self.create_publisher(String, "/GPS", 10)
+        self.control_state_pub = self.create_publisher(String, "/control_state", 10)
 
-        self.compass_subscription = self.create_subscription(String, "imu", self.ROS_compassCallback, 10)
-        self.windvane_subscription = self.create_subscription(String, "wind_angle", self.ROS_windvaneCallback, 10)
+        self.compass_subscription = self.create_subscription(String, "/imu", self.ROS_compassCallback, 10)
+        self.windvane_subscription = self.create_subscription(String, "/wind_angle", self.ROS_windvaneCallback, 10)
 
-        self.sail_sub = self.create_subscription(Float32, "cmd_sail", self.sail_callback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/cmd_sail", self.sail_callback, 10)
 
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)

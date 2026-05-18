@@ -47,15 +47,15 @@ class DummyEventSearch(Event):
             target = self.get_parameter(param).value
             self.queuedWaypoints.append(Waypoint(target[0], target[1]))
 
-        self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
+        self.camera_servo_pub = self.create_publisher(String, "/cam_servo_control", 10)
 
-        self.pub_queuedWaypoints = self.create_publisher(String, "queued_waypoints", 10)
+        self.pub_queuedWaypoints = self.create_publisher(String, "/queued_waypoints", 10)
         timer_period = 10.0  # seconds
         self.timer = self.create_timer(timer_period, self.publish_queued_waypoints)
 
-        self.set_event_subscription = self.create_subscription(String, "set_event_target", self.ROS_setEventCallback, 10)
+        self.set_event_subscription = self.create_subscription(String, "/set_event_target", self.ROS_setEventCallback, 10)
 
-        self.gps_sub = self.create_subscription(String, "/boat/GPS", self.gps_callback, 1)
+        self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 1)
 
         self.position = None
         self.cameraLoc = 0

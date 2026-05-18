@@ -1,5 +1,3 @@
-# be sure to export FLASK_APP=websiteNoROS.py if you want this to run when doing 'flask run'
-
 # run the exiting tileserver container with docker start <tile_server_name>
 # make a new tile server using: sudo docker run -p 8080:80 -v osm-data:/data/database -d overv/openstreetmap-tile-server run
 # see https://switch2osm.org/serving-tiles/using-a-docker-container/
@@ -42,7 +40,9 @@ from sailbot.utils.utils import (
     create_directory_if_not_exists,
 )
 
-MY_IP = "192.168.8.246"
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 1))  # connect() for UDP doesn't send packets
+MY_IP = s.getsockname()[0]  # or set to static '192.168.1.x'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"
@@ -51,18 +51,21 @@ DOCKER = os.environ.get("IS_DOCKER", False)
 DOCKER = True if str(DOCKER).lower() == "true" else False
 PI_DOCKER = os.environ.get("IS_PI_DOCKER", False)
 PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
-if DOCKER:
-    PORTS = os.environ.get("PORTS", "5000:5000")
-    PORT = int(PORTS.split(":")[0])
-    TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
-elif PI_DOCKER:
-    PORTS = os.environ.get("PORTS", "5000:5000")
-    PORT = int(PORTS.split(":")[0])
-    # IMPORTANT: Be sure to visit this address and accept the certificate if the map is not being displayed
-    TILE_SERVER = "https://" + MY_IP + ":443/tile/{z}/{x}/{y}.png"
-    # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
-else:
-    raise Exception("configure ports and tile server")
+
+# Allow runtime overrides without forcing a specific deployment mode.
+PORTS = os.environ.get("PORTS", "5000:5000")
+PORT = int(PORTS.split(":")[0])
+TILE_SERVER = os.environ.get("TILE_SERVER")
+
+if not TILE_SERVER:
+    if DOCKER:
+        TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    elif PI_DOCKER:
+        # IMPORTANT: Be sure to visit this address and accept the certificate if the map is not being displayed
+        TILE_SERVER = "https://" + MY_IP + ":443/tile/{z}/{x}/{y}.png"
+        # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
+    else:
+        TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
@@ -72,6 +75,7 @@ TIMEZONE = "America/New_York"
 
 RUDDER_MIN_ANGLE = int(c.config["RUDDER"]["min_angle"])
 RUDDER_MAX_ANGLE = int(c.config["RUDDER"]["max_angle"])
+RUDDER_CENTER_ANGLE = (RUDDER_MIN_ANGLE + RUDDER_MAX_ANGLE) / 2
 
 SAIL_MIN_ANGLE = int(c.config["SAIL"]["min_angle"])
 SAIL_MAX_ANGLE = int(c.config["SAIL"]["max_angle"])
@@ -183,6 +187,27 @@ class LogDatabase:
 
         return coords
 
+    def rotate_logs(self):
+        os.makedirs("sailbot_logs", exist_ok=True)
+
+        log_count = 0
+        with self.get_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM logs")
+            row = cursor.fetchone()
+            cursor.close()
+            if row:
+                log_count = int(row[0])
+
+        if log_count > 0:
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            db_basename = os.path.basename(self.db_path)
+            db_root, db_ext = os.path.splitext(db_basename)
+            archive_path = os.path.join("sailbot_logs", f"{db_root}_{timestamp}{db_ext}")
+            os.replace(self.db_path, archive_path)
+
+        self.create_table()
+
 
 class Website(Node):
     def __init__(self):
@@ -197,8 +222,6 @@ class Website(Node):
         self.dataDict = {
             "gps": f"{self.gps.latitude},{self.gps.longitude}",
             "compass": f"{self.compass.angle}",
-            "odrive_axis0": f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}",
-            "odrive_axis1": f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}",
         }
 
         self.logDB = LogDatabase(self)
@@ -218,29 +241,32 @@ class Website(Node):
         self.error_count = 0
         self.relative_wind = None
         self.sail_angle = 0.0
+        self.jib_angle = 0.0
         self.rudder_angle = 0.0
         self.auto_sail_angle = 0.0
+        self.auto_jib_angle = 0.0
         self.auto_rudder_angle = 0.0
         self.imu = None
 
-        self.camera_servo_pub = self.create_publisher(String, "/boat/cam_servo_control", 10)
-        self.compass_offset_pub = self.create_publisher(Float32, "/boat/offset_compass", 10)
-        self.setEventPub = self.create_publisher(String, "/boat/setEvent", 10)
-        self.setEventTargetPub = self.create_publisher(String, "/boat/set_event_target", 10)
+        self.camera_servo_pub = self.create_publisher(String, "/cam_servo_control", 10)
+        self.compass_offset_pub = self.create_publisher(Float32, "/offset_compass", 10)
+        self.setEventPub = self.create_publisher(String, "/setEvent", 10)
+        self.setEventTargetPub = self.create_publisher(String, "/set_event_target", 10)
 
         # subscriptions should be started as the last step of init
-        self.gps_subscription = self.create_subscription(String, "/boat/GPS", self.ROS_GPSCallback, 10)
-        self.imu_subscription = self.create_subscription(String, "/boat/imu", self.ROS_imuCallback, 10)
-        self.windvane_subscription = self.create_subscription(String, "/boat/wind_angle", self.ROS_windvaneCallback, 10)
-        self.odrive_subscription = self.create_subscription(String, "/boat/odriveStatus", self.ROS_odriveCallback, 10)
+        self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
+        self.imu_subscription = self.create_subscription(String, "/imu", self.ROS_imuCallback, 10)
+        self.windvane_subscription = self.create_subscription(String, "/wind_angle", self.ROS_windvaneCallback, 10)
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
-        self.boat_state_subscription = self.create_subscription(String, "/boat/next_gps", self.ROS_nextGpsCallback, 10)
-        self.control_state_sub = self.create_subscription(String, "/boat/control_state", self.ROS_controlStateCallback, 2)
-        self.queued_waypoints_subscription = self.create_subscription(String, "/boat/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_sail", self.ROS_sailCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_rudder", self.ROS_rudderCmd_callback, 10)
-        self.sail_sub = self.create_subscription(Float32, "/boat/cmd_auto_sail", self.ROS_sailAutoCmd_callback, 10)
-        self.rudder_sub = self.create_subscription(Float32, "/boat/cmd_auto_rudder", self.ROS_rudderAutoCmd_callback, 10)
+        self.boat_state_subscription = self.create_subscription(String, "/next_gps", self.ROS_nextGpsCallback, 10)
+        self.control_state_sub = self.create_subscription(String, "/control_state", self.ROS_controlStateCallback, 2)
+        self.queued_waypoints_subscription = self.create_subscription(String, "/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
+        self.sail_sub = self.create_subscription(Float32, "/sail", self.ROS_sailCmd_callback, 10)
+        self.jib_sub = self.create_subscription(Float32, "/jib", self.ROS_jibCmd_callback, 10)
+        self.rudder_sub = self.create_subscription(Float32, "/rudder", self.ROS_rudderCmd_callback, 10)
+        self.cmd_sail_sub = self.create_subscription(Float32, "/cmd_sail", self.ROS_sailAutoCmd_callback, 10)
+        self.cmd_jib_sub = self.create_subscription(Float32, "/cmd_jib", self.ROS_jibAutoCmd_callback, 10)
+        self.cmd_rudder_sub = self.create_subscription(Float32, "/cmd_rudder", self.ROS_rudderAutoCmd_callback, 10)
 
     def createDummyObjs(self):
         self.gps = DummyObject()
@@ -251,21 +277,6 @@ class Website(Node):
 
         self.compass = DummyObject()
         self.compass.angle = -1
-
-        self.odrive = DummyObject()
-        self.odrive.axis0 = DummyObject()
-        self.odrive.axis0.requested_state = -1
-        self.odrive.axis0.targetPos = -1
-        self.odrive.axis0.pos = -1
-        self.odrive.axis0.velocity = -1
-        self.odrive.axis0.currentDraw = -1
-
-        self.odrive.axis1 = DummyObject()
-        self.odrive.axis1.requested_state = -1
-        self.odrive.axis1.targetPos = -1
-        self.odrive.axis1.pos = -1
-        self.odrive.axis1.velocity = -1
-        self.odrive.axis1.currentDraw = -1
 
     def addLogMessage(self, message):
         filename = message.file.replace("/workspace/install/sailbot/lib/sailbot/", "") if message.file.startswith("/workspace/install/sailbot/lib/sailbot/") else message.file
@@ -302,7 +313,6 @@ class Website(Node):
         lat, long = gpsJson["lat"], gpsJson["lon"]
         self.gps.latitude = float(lat)
         self.gps.longitude = float(long)
-        self.gps.track_angle_deg = float(gpsJson["track_angle"])
         self.gps.velocity = float(gpsJson["velocity"])
 
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
@@ -319,24 +329,6 @@ class Website(Node):
     def ROS_windvaneCallback(self, string):
         angle = float(string.data)
         self.relative_wind = angle
-
-    def ROS_odriveCallback(self, string):
-        string = string.data
-        axis0Data = string.split(":")[0]
-        axis1Data = string.split(":")[1]
-
-        for axis, axisData in [
-            (self.odrive.axis0, axis0Data),
-            (self.odrive.axis1, axis1Data),
-        ]:
-            axis.requested_state = axisData[0]
-            axis.pos = axisData[1]
-            axis.targetPos = axisData[2]
-            axis.velocity = axisData[3]
-            axis.currentDraw = axisData[4]
-
-        self.dataDict["odrive_axis0"] = f"{self.odrive.axis0.requested_state},{self.odrive.axis0.pos},{self.odrive.axis0.targetPos},{self.odrive.axis0.velocity},{self.odrive.axis0.currentDraw}"
-        self.dataDict["odrive_axis1"] = f"{self.odrive.axis1.requested_state},{self.odrive.axis1.pos},{self.odrive.axis1.targetPos},{self.odrive.axis1.velocity},{self.odrive.axis1.currentDraw}"
 
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
@@ -362,11 +354,17 @@ class Website(Node):
     def ROS_sailCmd_callback(self, msg):
         self.sail_angle = float(msg.data)
 
+    def ROS_jibCmd_callback(self, msg):
+        self.jib_angle = float(msg.data)
+
     def ROS_rudderCmd_callback(self, msg):
         self.rudder_angle = float(msg.data)
 
     def ROS_sailAutoCmd_callback(self, msg):
         self.auto_sail_angle = float(msg.data)
+
+    def ROS_jibAutoCmd_callback(self, msg):
+        self.auto_jib_angle = float(msg.data)
 
     def ROS_rudderAutoCmd_callback(self, msg):
         self.auto_rudder_angle = float(msg.data)
@@ -458,11 +456,13 @@ def dataJSON():
         "pitch_dir": DATA.imu.pitch if DATA.imu else 0.0,
         "relative_target": calculate_cardinal_direction(DATA.gps.latitude, DATA.gps.longitude, target.lat, target.lon) - DATA.compass.angle if target.lat is not None else 0.0,
         "sail_angle": DATA.sail_angle,
-        "rudder_angle": DATA.rudder_angle,  # remap(DATA.rudder_angle, RUDDER_MIN_ANGLE, RUDDER_MAX_ANGLE, -90, 90),
+        "jib_angle": DATA.jib_angle,
+        "rudder_angle": DATA.rudder_angle - RUDDER_CENTER_ANGLE,
         "speed": DATA.gps.velocity,
         "polygon_coords": get_no_go_zone_polygon(),
         "heading_polyline_coords": get_heading_coords(),
         "auto_sail": DATA.auto_sail_angle,
+        "auto_jib": DATA.auto_jib_angle,
         "auto_rudder": DATA.auto_rudder_angle,
     }
     return jsonDict
@@ -487,6 +487,12 @@ def logs(logMessages=None):
         msg["timestamp"] = convert_timestamp_to_local(msg["timestamp"])
 
     return render_template("logs.html", logMessages=logMessages)
+
+
+@app.route("/logs/reset", methods=["POST"])
+def reset_logs():
+    DATA.logDB.rotate_logs()
+    return redirect("/logs")
 
 
 @app.route("/log_search")
@@ -616,16 +622,6 @@ def compass():
     return f"{DATA.compass.angle}"
 
 
-@app.route("/axis0")
-def axis0():
-    return DATA.dataDict["odrive_axis0"]
-
-
-@app.route("/axis1")
-def axis1():
-    return DATA.dataDict["odrive_axis1"]
-
-
 @app.route("/map")
 def websiteMap():
     return render_template("map.html", tileServer=TILE_SERVER)
@@ -701,13 +697,21 @@ def convert_timestamp_to_local(timestamp_utc_str):
 def ros_main():
     global DATA, app
 
-    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/website"
+    ros_log_dir_base = os.environ.get("ROS_LOG_DIR_BASE")
+    if ros_log_dir_base:
+        ros_log_dir = os.path.join(ros_log_dir_base, "website")
+    else:
+        ros_log_dir = os.path.join(os.getcwd(), "ros_logs", "website")
+
+    os.makedirs(ros_log_dir, exist_ok=True)
+    os.environ["ROS_LOG_DIR"] = ros_log_dir
     rclpy.init()
     DATA = Website()
-    DATA.logging.info(f"Website available at https://localhost:{PORT}")
+    DATA.logging.info(f"Website available at https://localhost:{PORT} and http://{MY_IP}:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"))  # debug true causes the process to fork which causes problems
+    app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"), threaded=True)  # debug true causes the process to fork which causes problems
+    # rclpy.spin(DATA)
 
 
 def calculate_cardinal_direction(lat1, lon1, lat2, lon2):
