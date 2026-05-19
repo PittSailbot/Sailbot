@@ -77,6 +77,10 @@ bool P3022_WindVane::read(WindVane* windvane) {
 
     float angleInDegrees = (float)angleData / 16384.0f * 360.0f;
 
+    // Convert headwind reading 180 degrees to 0/360 degrees
+    // This is when the flat notch of the shaft lines up with the single screw
+    angleInDegrees = fmod(angleInDegrees + 180.0f, 360.0f);
+
     windvane->wind_angle = angleInDegrees;
     return true;
   }
