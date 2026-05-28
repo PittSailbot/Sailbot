@@ -9,12 +9,12 @@
 #define HAL_MICROCONTROLLER MCU_PICO2
 #define HAL_RECEIVER RECEIVER_SBUS
 #define HAL_SERVO_TYPE SERVO_PROTOCOL_GPIO
-#define HAL_SAIL_SERVO_SPEC ServoSpecs::JOY880545
+#define HAL_SAIL_SERVO_SPEC ServoSpecs::DEFAULT
 #define HAL_RUDDER_SERVO_SPEC ServoSpecs::JOY881504
-// #define HAL_JIB_SERVO_SPEC       // No jib servo on mini boat
+// #define HAL_JIB_SERVO_SPEC ServoSpecs::DEFAULT
 #define HAL_IMU IMU_BNO055
 #define HAL_GPS GPS_ADAFRUIT_PA1010D
-// #define HAL_WINDVANE WINDVANE_P3022
+#define HAL_WINDVANE WINDVANE_P3022
 // #define HAL_WATER_SENSOR         // None
 
 // ============================================================================
@@ -22,18 +22,19 @@
 // ============================================================================
 
 // Servo pins
-#define SAIL_SERVO_PIN 4    // MS
-#define RUDDER_SERVO_PIN 5  // RS
-#define JIB_SERVO_PIN NO_PIN     // A1? 7.4v
+#define SAIL_SERVO_PIN 6    // MS 5-7.5V GP4
+#define RUDDER_SERVO_PIN 5  // RS 5-7.5V GP5
+// #define JIB_SERVO_PIN 6     // JS 5-7.5V GP6
 
+// A1 GP28 5-7.5V
 // A2 GP8 5v
 // A3 GP22 5v
 
 // Sensor pins
-// #define WINDVANE_MOSI_PIN 19  // Should be connected to 3.3V
-// #define WINDVANE_MISO_PIN 9 //GP9
-// #define WINDVANE_CS_PIN 13 //GP13
-// #define WINDVANE_SCK_PIN 14 //GP14
+#define WINDVANE_MOSI_PIN 19  // Should be connected to 3.3V or GP19
+#define WINDVANE_MISO_PIN 16 //GP16
+#define WINDVANE_CS_PIN 17 //GP17
+#define WINDVANE_SCK_PIN 18 //GP18
 
 // JST-SH
 // 3.3V
