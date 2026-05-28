@@ -298,6 +298,7 @@ class SystemFactory {
         Serial.println(addr, HEX);
       }
     }
+    delay(5000);
   }
 
   /**

@@ -25,7 +25,6 @@ bool PA1010D_GPS::begin() {
   // Set the update rate to 1 Hz
   gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
 
-  Serial.println("I: Started GPS");
   this->initialized = true;
   return true;
 }

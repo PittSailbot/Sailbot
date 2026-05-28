@@ -52,8 +52,8 @@ void mapControls(RCData* controller) {
       platform->sail_servo->writePercent(controller->left_analog_y);
       platform->rudder_servo->writePercent(controller->right_analog_x);
 
-#if HAS_JIB_SERVO
-      platform->jib_servo->writePercent(controller->left_analog_x);
+#ifdef HAS_JIB
+      platform->jib_servo->writePercent(controller->potentiometer);
 #endif
       break;
 
@@ -61,7 +61,7 @@ void mapControls(RCData* controller) {
       if (pi_data.has_cmd_sail) {
         platform->sail_servo->writePercent(pi_data.cmd_sail);
       }
-#if HAS_JIB_SERVO
+#ifdef HAS_JIB
       if (pi_data.has_cmd_jib) {
         platform->jib_servo->writePercent(pi_data.cmd_jib);
       }
@@ -73,7 +73,7 @@ void mapControls(RCData* controller) {
       if (pi_data.has_cmd_sail) {
         platform->sail_servo->writePercent(pi_data.cmd_sail);
       }
-#if HAS_JIB_SERVO
+#ifdef HAS_JIB
       if (pi_data.has_cmd_jib) {
         platform->jib_servo->writePercent(pi_data.cmd_jib);
       }
