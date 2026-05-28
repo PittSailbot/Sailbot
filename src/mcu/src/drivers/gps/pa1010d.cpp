@@ -13,8 +13,11 @@ PA1010D_GPS::PA1010D_GPS() : gps() {
 }
 
 bool PA1010D_GPS::begin() {
-  // Initialize GPS over I2C at address 0x10s
-  gps.begin(0x10);
+  // Initialize GPS over I2C at address 0x10
+  if (!this->gps.begin(0x10)) {
+    Serial.println("E: Failed to find BNO055 IMU... Check your wiring or I2C ADDR!");
+    return false;
+  }
 
   // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
   gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
@@ -23,6 +26,7 @@ bool PA1010D_GPS::begin() {
   gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
 
   Serial.println("I: Started GPS");
+  this->initialized = true;
   return true;
 }
 
@@ -33,6 +37,10 @@ void PA1010D_GPS::update() {
 }
 
 bool PA1010D_GPS::read(GPSData* data) {
+  if (!this->initialized) {
+    Serial.println("W: Trying to read from uninitialized GPS");
+    return false;
+  }
   // Check if a complete NMEA sentence was received
   if (gps.newNMEAreceived()) {
     if (!gps.parse(gps.lastNMEA())) {
