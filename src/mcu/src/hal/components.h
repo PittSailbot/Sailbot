@@ -30,6 +30,7 @@
 // Preprocessor-compatible constants for conditional compilation
 #define IMU_BNO055 1  // Adafruit BNO055 9-DOF
 #define IMU_LSM6DS 2  // LSM6DS + LIS3MDL combo
+#define IMU_BNO085 3  // Adafruit BNO085 9-DOF
 
 // ===== GPSs =====
 #define GPS_ADAFRUIT_PA1616S 1  // Adafruit Ultimate GPS https://www.adafruit.com/product/746

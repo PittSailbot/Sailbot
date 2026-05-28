@@ -33,6 +33,8 @@
 #include "drivers/imu/imu.h"
 #if HAL_IMU == IMU_BNO055
 #include "drivers/imu/bno055.h"
+#elif HAL_IMU == IMU_BNO085
+#include "drivers/imu/bno085.h"
 #elif HAL_IMU == IMU_LSM6DS
 #include "drivers/imu/lsm6ds_lis3mdl.h"
 #else
@@ -158,6 +160,10 @@ class SystemFactory {
     imu = std::make_unique<BNO055_IMU>();
     imu->begin() ? Serial.println("I: Started BNO055 IMU")
                  : Serial.println("E: Failed to start BNO055 IMU");
+#elif HAL_IMU == IMU_BNO085
+    imu = std::make_unique<BNO085_IMU>();
+    imu->begin() ? Serial.println("I: Started BNO085 IMU")
+                 : Serial.println("E: Failed to start BNO085 IMU");
 #elif HAL_IMU == IMU_LSM6DS
     imu = std::make_unique<LSM6DS_IMU>();
     imu->begin() ? Serial.println("I: Started LSM6DS IMU")
