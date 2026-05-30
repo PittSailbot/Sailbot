@@ -707,7 +707,7 @@ def ros_main():
     os.environ["ROS_LOG_DIR"] = ros_log_dir
     rclpy.init()
     DATA = Website()
-    DATA.logging.info(f"Website available at https://localhost:{PORT} and http://{MY_IP}:{PORT}")
+    DATA.logging.info(f"Website available at https://localhost:{PORT} and https://{MY_IP}:{PORT}")
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
     app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"), threaded=True)  # debug true causes the process to fork which causes problems
