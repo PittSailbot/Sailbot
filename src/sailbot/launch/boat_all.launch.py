@@ -70,5 +70,13 @@ def generate_launch_description():
                 ],
                 parameters=[config],
             ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="website",
+                name="node_Website",
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
         ]
     )
