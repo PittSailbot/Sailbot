@@ -8,7 +8,8 @@ from datetime import datetime
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
@@ -18,10 +19,17 @@ def generate_launch_description():
     os.environ["ROS_LOG_DIR_BASE"] = f"/workspace/ros_logs/{str(datetime.now()).replace(' ', '_')}"
 
     config = os.path.join(get_package_share_directory("sailbot"), "config", "params_eventDefaults.yaml")
+    rtk_script = os.path.join(get_package_share_directory("sailbot"), "scripts", "startRtk.bash")
 
     return LaunchDescription(
         [
             DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
+            DeclareLaunchArgument("start_rtk", default_value=TextSubstitution(text=str("true"))),
+            ExecuteProcess(
+                cmd=["bash", rtk_script],
+                output="screen",
+                condition=IfCondition(LaunchConfiguration("start_rtk")),
+            ),
             Node(
                 package="sailbot",
                 namespace="boat",
