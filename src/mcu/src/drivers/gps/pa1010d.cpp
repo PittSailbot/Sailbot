@@ -9,13 +9,13 @@
 PA1010D_GPS::PA1010D_GPS(HardwareSerial* port) : gps(port) {
 }
 
-PA1010D_GPS::PA1010D_GPS() : gps() {
+PA1010D_GPS::PA1010D_GPS() : gps(&Wire) {
 }
 
 bool PA1010D_GPS::begin() {
   // Initialize GPS over I2C at address 0x10
   if (!this->gps.begin(0x10)) {
-    Serial.println("E: Failed to find BNO055 IMU... Check your wiring or I2C ADDR!");
+    Serial.println("E: Failed to find PA1010D GPS... Check your wiring or I2C ADDR!");
     return false;
   }
 
@@ -33,6 +33,10 @@ void PA1010D_GPS::update() {
   // Read characters from I2C - call this frequently in main loop
   char c = gps.read();
   if (GPSECHO && c) Serial.print(c);
+
+  if (gps.newNMEAreceived()) {
+    gps.parse(gps.lastNMEA());
+  }
 }
 
 bool PA1010D_GPS::read(GPSData* data) {
@@ -40,15 +44,9 @@ bool PA1010D_GPS::read(GPSData* data) {
     Serial.println("W: Trying to read from uninitialized GPS");
     return false;
   }
-  // Check if a complete NMEA sentence was received
-  if (gps.newNMEAreceived()) {
-    if (!gps.parse(gps.lastNMEA())) {
-      return false;  // Failed to parse, wait for another sentence
-    }
-  }
 
   if (!gps.fix) {
-    // Serial.println("I: no fix");
+    Serial.println("I: no fix");
     return false;
   }
   data->lat = gps.latitudeDegrees;
