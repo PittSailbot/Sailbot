@@ -313,7 +313,7 @@ class Website(Node):
         lat, long = gpsJson["lat"], gpsJson["lon"]
         self.gps.latitude = float(lat)
         self.gps.longitude = float(long)
-        self.gps.velocity = float(gpsJson["velocity"])
+        # self.gps.velocity = float(gpsJson["velocity"])
 
         self.dataDict["gps"] = f"{self.gps.latitude},{self.gps.longitude}"
         self.displayedBreadcrumbs.append(Waypoint(self.gps.latitude, self.gps.longitude))
