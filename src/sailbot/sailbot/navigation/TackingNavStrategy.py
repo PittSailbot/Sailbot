@@ -34,6 +34,7 @@ class TackingNavigationStrategy(NavigationStrategy):
     """
 
     def __init__(self):
+        super().__init__()
         self.boat_speed = float("inf")  # change this to boat speed once available
         self.aborted_tacks = 0
 
@@ -51,6 +52,13 @@ class TackingNavigationStrategy(NavigationStrategy):
         """Update Navigation decision-making, setting sail/jib/rudder"""
         target = self.latest_waypoint
 
+        if target is None:
+            self.logging.debug("No target for autonomy to navigate to")
+            return
+        elif self.position is None:
+            self.logging.warning("No GPS for autonomy to function")
+            return
+
         if boatMath.distance_between(self.position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
             self.logging.info(f"Reached {target}. Heaving.")
             self.latest_waypoint = None
@@ -65,6 +73,7 @@ class TackingNavigationStrategy(NavigationStrategy):
         Args:
             target (Waypoint): the GPS point to go to
         """
+        self.logging.info(f"Navigating to {target}")
         target_angle = boatMath.angle_to_point(self.position.lat, self.position.lon, target.lat, target.lon)
         delta_angle = (target_angle - self.compass_angle) % 360
         if delta_angle > 180:
