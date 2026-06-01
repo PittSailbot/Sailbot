@@ -35,14 +35,14 @@ class NavigationStrategy(Node):
         super().__init__("navigation")
         self.logging = self.get_logger()
 
-        self.position = Waypoint(0, 0)  # Position of the boat
-        self.compass_angle = 0  # Heading of the boat
+        self.boat_speed = 0
         self.wind_angle = 0
         self.no_go_zone_left_bound = 0  # Left-side close-haul to wind
         self.no_go_zone_right_bound = 0  # Right-side close-haul to wind
 
         self.next_gps_sub = self.create_subscription(String, "/next_gps", self.next_gps_callback, 2)
         self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 2)
+        self.speed_sub = self.create_subscription(String, "/speed", self.speed_callback, 2)
         self.imu_sub = self.create_subscription(String, "/imu", self.imu_callback, 2)
         self.windvane_sub = self.create_subscription(String, "/wind_angle", self.windvane_callback, 2)
         self.control_state_sub = self.create_subscription(String, "/control_state", self.control_state_callback, 2)
@@ -76,7 +76,9 @@ class NavigationStrategy(Node):
         self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
 
     def gps_callback(self, msg):
-        self.position = Waypoint.from_msg(msg)
+
+    def speed_callback(self, msg):
+        self.boat_speed = float(msg.data)
 
     def __str__(self):
         if self.wp.target_waypoint is not None and self.wp.waypoints is not None:

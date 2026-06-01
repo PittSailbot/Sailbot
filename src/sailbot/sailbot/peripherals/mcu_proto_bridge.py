@@ -81,14 +81,12 @@ class MCUBridge(Node):
 
         self.wind_angle_pub = self.create_publisher(String, "/wind_angle", 1)
 
-        self.position_pub = self.create_publisher(String, "/GPS", 1)
-        # self.speed_pub = self.create_publisher(String, "/speed", 1)
-
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
         self.compass_offset = 0
 
         self.gps_pub = self.create_publisher(String, "/GPS", 1)
+        self.speed_pub = self.create_publisher(Float32, "/speed", 1)
 
         self.usbReset_pub = self.create_publisher(String, "/usbReset", 1)
 
@@ -191,9 +189,9 @@ class MCUBridge(Node):
 
         if teensy_data.HasField("gps"):
             self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-            # msg = Int32()
-            # msg.data = teensy_data.gps.speed
-            # self.speed_pub.publish(msg)
+            msg = Float32()
+            msg.data = teensy_data.gps.speed
+            self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
             imu = teensy_data.imu
