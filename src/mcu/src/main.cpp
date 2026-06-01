@@ -127,7 +127,7 @@ void loop() {
         platform->sail_servo->writePercent(pi_data.cmd_sail);
       }
       if (pi_data.has_cmd_rudder) {
-        Serial.printf("I: SET SAIL %d\n", pi_data.cmd_sail);
+        Serial.printf("I: SET RUDDER %d\n", pi_data.cmd_rudder);
         platform->rudder_servo->write(pi_data.cmd_rudder);
       }
     }
