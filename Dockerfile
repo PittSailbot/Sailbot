@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-rosdep \
     python3-vcstool \
     dos2unix \
+    unzip \
     python3-venv \
     net-tools \
     iproute2 \

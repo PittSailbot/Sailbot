@@ -25,6 +25,10 @@ def generate_launch_description():
         [
             DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
             DeclareLaunchArgument("start_rtk", default_value=TextSubstitution(text=str("true"))),
+            DeclareLaunchArgument("start_mcu_bridge", default_value=TextSubstitution(text=str("true"))),
+            DeclareLaunchArgument("start_gps", default_value=TextSubstitution(text=str("true"))),
+            DeclareLaunchArgument("start_motor_drivers", default_value=TextSubstitution(text=str("false"))),
+            DeclareLaunchArgument("start_camera_servos", default_value=TextSubstitution(text=str("true"))),
             ExecuteProcess(
                 cmd=["bash", rtk_script],
                 output="screen",
@@ -45,6 +49,7 @@ def generate_launch_description():
                 name="node_MCUBridge",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
+                condition=IfCondition(LaunchConfiguration("start_mcu_bridge")),
             ),
             Node(
                 package="sailbot",
@@ -53,6 +58,7 @@ def generate_launch_description():
                 name="node_Gps",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
+                condition=IfCondition(LaunchConfiguration("start_gps")),
             ),
             Node(
                 package="sailbot",
@@ -61,6 +67,7 @@ def generate_launch_description():
                 name="node_motorDrivers",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
+                condition=IfCondition(LaunchConfiguration("start_motor_drivers")),
             ),
             Node(
                 package="sailbot",
@@ -73,6 +80,7 @@ def generate_launch_description():
                     LaunchConfiguration("log_level"),
                 ],
                 parameters=[config],
+                condition=IfCondition(LaunchConfiguration("start_camera_servos")),
             ),
             Node(
                 package="sailbot",
