@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-static SPISettings sensorSettings(1000000, MSBFIRST, SPI_MODE1);
+static SPISettings sensorSettings(500000, MSBFIRST, SPI_MODE1);
 
 P3022_WindVane::P3022_WindVane(int miso_pin, int mosi_pin, int cs_pin, int sck_pin)
     : miso_pin(miso_pin), mosi_pin(mosi_pin), cs_pin(cs_pin), sck_pin(sck_pin) {
