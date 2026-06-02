@@ -152,7 +152,7 @@ class TackingNavigationStrategy(NavigationStrategy):
             allow_tacking (bool): whether the boat is allowed to turn through the 'no go zone'
         """
         if boatMath.is_within_angle(target_angle, (self.boat_heading - self.ACCEPTABLE_ERROR) % 360, (self.boat_heading + self.ACCEPTABLE_ERROR) % 360):
-            self.status += f"\n  Holding boat at {target_angle} degrees")
+            self.status += f"\n  Holding boat at {target_angle} degrees"
             msg = Float32()
             msg.data = self.RUDDER_CENTER
             self.cmd_rudder_pub.publish(msg)
