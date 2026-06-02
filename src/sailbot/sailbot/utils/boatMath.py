@@ -33,7 +33,6 @@ def distance_between(waypoint1, waypoint2) -> float:
     return distance
 
 
-# TODO: check
 def angle_between(waypoint1, waypoint2) -> float:
     """Calculates the angle from waypoint1 to waypoint2 relative to north
     # Args:
@@ -42,18 +41,23 @@ def angle_between(waypoint1, waypoint2) -> float:
     # Returns:
         - angle between points relative to north (float)
     """
-    theta1 = math.radians(waypoint1.lat)
-    theta2 = math.radians(waypoint2.lat)
-    delta2 = math.radians(waypoint2.lon - waypoint1.lon)
+    return angle_to_point(waypoint1.lat, waypoint1.lon, waypoint2.lat, waypoint2.lon)
 
-    y = math.sin(delta2) * math.cos(theta2)
-    x = math.cos(theta1) * math.sin(theta2) - math.sin(theta1) * math.cos(theta2) * math.cos(delta2)
-    brng = math.atan(y / x)
-    brng *= 180 / math.pi
-
-    brng = (brng + 360) % 360
-
-    return brng
+def cross_track_error(start_wp, end_wp, curr_wp) -> float:
+    """Calculates the cross track error (XTE) in meters
+    Positive if the current point is to the right of the track.
+    Negative if to the left.
+    """
+    dist_start_curr = distance_between(start_wp, curr_wp)
+    if dist_start_curr == 0:
+        return 0.0
+    
+    brng_start_end = angle_to_point(start_wp.lat, start_wp.lon, end_wp.lat, end_wp.lon)
+    brng_start_curr = angle_to_point(start_wp.lat, start_wp.lon, curr_wp.lat, curr_wp.lon)
+    
+    delta_brng = math.radians(brng_start_curr - brng_start_end)
+    xte = dist_start_curr * math.sin(delta_brng)
+    return xte
 
 
 def angle_to_point(lat1, lon1, lat2, lon2):

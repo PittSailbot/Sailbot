@@ -82,6 +82,21 @@ class TackingNavigationStrategy(NavigationStrategy):
         
         target_angle = boatMath.angle_to_point(self.boat_position.lat, self.boat_position.lon, target.lat, target.lon)
 
+        start_wp = None
+        if hasattr(self.wp, 'current_waypoint_index') and self.wp.current_waypoint_index > 0:
+            start_wp = self.wp.waypoints[self.wp.current_waypoint_index - 1]
+
+        # Cross track error compensation
+        if start_wp is not None:
+            xte = boatMath.cross_track_error(start_wp, target, self.boat_position)
+            # Simple proportional XTE correction to compensate for leeway
+            xte_gain = float(c.config.get("NAVIGATION", {}).get("xte_gain", 5.0))
+            max_xte_correction = float(c.config.get("NAVIGATION", {}).get("max_xte_correction", 45.0))
+            correction = max(-max_xte_correction, min(max_xte_correction, xte * xte_gain))
+            
+            # Apply XTE correction to target_angle (positive XTE -> steer left -> decrease angle)
+            target_angle = (target_angle - correction) % 360
+
         delta_angle = (target_angle - self.boat_heading) % 360
         if delta_angle > 180:
             delta_angle -= 360
@@ -96,15 +111,31 @@ class TackingNavigationStrategy(NavigationStrategy):
                 self.mode = Mode.TACKING_STARBOARD
 
         elif self.mode is None and boatMath.is_within_angle(target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
-            # Need to go upwind
-            # Stick to the closest angle until we can sail directly to target
+            # Target is in no-go zone, implement cross-track corridor hysteresis (laylines)
+            cross_track_corridor = float(c.config.get("NAVIGATION", {}).get("cross_track_corridor", 20.0))
+            
+            if not hasattr(self, 'current_upwind_tack') or self.current_upwind_tack is None:
+                if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+                    self.current_upwind_tack = Mode.TACKING_PORT
+                else:
+                    self.current_upwind_tack = Mode.TACKING_STARBOARD
 
-            if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+            if start_wp is not None:
+                if xte > cross_track_corridor and self.current_upwind_tack == Mode.TACKING_STARBOARD:
+                    self.current_upwind_tack = Mode.TACKING_PORT
+                    self.logging.info("Cross-track corridor exceeded to the right. Switching to PORT tack.")
+                elif xte < -cross_track_corridor and self.current_upwind_tack == Mode.TACKING_PORT:
+                    self.current_upwind_tack = Mode.TACKING_STARBOARD
+                    self.logging.info("Cross-track corridor exceeded to the left. Switching to STARBOARD tack.")
+
+            if self.current_upwind_tack == Mode.TACKING_PORT:
                 target_angle = self.no_go_zone_left_bound
             else:
                 target_angle = self.no_go_zone_right_bound
 
-            self.logging.info(f"Need to go upwind, setting target angle to {target_angle}")
+            self.logging.info(f"Need to go upwind, setting target angle to {target_angle} on tack {self.current_upwind_tack}")
+        else:
+            self.current_upwind_tack = None
 
         if self.mode is not None:
             # turn as fast as possible to complete tack
