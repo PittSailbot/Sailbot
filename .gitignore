@@ -22,3 +22,4 @@ raspi-config_*.deb
 sailbot_logs/
 cert.pem
 key.pem
+.devcontainer/devcontainer-lock.json
