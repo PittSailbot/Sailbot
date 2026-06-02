@@ -1,10 +1,12 @@
 import numpy as np
 
-from sailbot.utils import boatMath, eventUtils, utils
+from sailbot.utils import boatMath, eventUtils, utils, Waypoint
 
 
-class WaypointPlanner:
-    """Manages sequential waypoint navigation and completion tracking"""
+class WaypointPlanner():
+    """Manages sequential waypoint navigation and completion tracking
+    - Automatically assigns next waypoint (target_waypoint) when the boat reaches previous
+    """
 
     def __init__(self, waypoint_tolerance=2.0):
         """
@@ -41,11 +43,23 @@ class WaypointPlanner:
         """Add a single waypoint to the sequence"""
         self.waypoints.append(waypoint)
 
+    def next_waypoint(self):
+        """Move to next available waypoint, or None of no more waypoints"""
+        self.current_waypoint_index += 1
+        if self.current_waypoint_index >= len(self.waypoints):
+            return None
+
     def clear(self):
         """Clear all waypoints and reset to initial state"""
         self.waypoints = []
         self.current_waypoint_index = 0
         self.target_waypoint = None
+
+    def update_position(self, boat_position: Waypoint):
+        if self.target_waypoint is not None:
+            if boatMath.distance_between(boat_position, self.target_waypoint) < self.waypoint_tolerance:
+                self.logging.info(f"Reached {target}")
+                self.next_waypoint()
 
     def __str__(self):
         if self.target_waypoint is not None:

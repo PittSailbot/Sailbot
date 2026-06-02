@@ -25,7 +25,7 @@ class NavigationStrategy(Node):
     SMOOTHING_CONSTANT = float(c.config["RUDDER"]["smooth_const"])
     RUDDER_MIN = float(c.config["RUDDER"]["min_angle"])
     RUDDER_MAX = float(c.config["RUDDER"]["max_angle"])
-    RUDDER_CENTER = (RUDDER_MAX - RUDDER_MIN) / 2
+    RUDDER_CENTER = (RUDDER_MAX + RUDDER_MIN) / 2
 
     def __init__(self, waypoint_tolerance=2.0):
         """
@@ -35,7 +35,13 @@ class NavigationStrategy(Node):
         super().__init__("navigation")
         self.logging = self.get_logger()
 
+        self.last_gps_time = self.get_clock().now()
+        self.last_imu_time = self.get_clock().now()
+        self.last_wind_time = self.get_clock().now()
+
+        self.boat_position = Waypoint(0, 0)
         self.boat_speed = 0
+        self.boat_heading = 0
         self.wind_angle = 0
         self.no_go_zone_left_bound = 0  # Left-side close-haul to wind
         self.no_go_zone_right_bound = 0  # Right-side close-haul to wind
@@ -66,16 +72,24 @@ class NavigationStrategy(Node):
         self.control_state = ControlState.fromRosMessage(msg)
 
     def windvane_callback(self, msg):
+        self.last_wind_time = self.get_clock().now()
         angle = float(msg.data)
         self.wind_angle = angle % 360
-        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
+        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.boat_heading)
 
     def imu_callback(self, msg):
+        self.last_imu_time = self.get_clock().now()
         imu_data = ImuData.fromRosMessage(msg)
-        self.compass_angle = (imu_data.yaw) % 360
-        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.compass_angle)
+        self.boat_heading = (imu_data.yaw) % 360
+        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.boat_heading)
 
     def gps_callback(self, msg):
+        now = self.get_clock().now()
+        new_pos = Waypoint.from_msg(msg)
+
+        self.last_gps_time = now
+        self.boat_position = new_pos
+        self.wp.update_position(self.boat_position)
 
     def speed_callback(self, msg):
         self.boat_speed = float(msg.data)
@@ -86,7 +100,7 @@ class NavigationStrategy(Node):
             if isinstance(self.wp.target_waypoint, dict) and "name" in self.wp.target_waypoint:
                 target_name = self.wp.target_waypoint["name"]
             else:
-                target_name = "Position"  # Fallback for non-dict targets
+                target_name = "waypoint"  # Fallback for non-dict targets
             return f"""Navigating to {target_name}: ({self.wp.current_waypoint_index}/{len(self.wp.waypoints)} waypoints complete)"""
         else:
             return f"""Idle: Station keeping"""
@@ -97,15 +111,27 @@ class NavigationStrategy(Node):
 
     def auto_adjust_sail(self):
         """Adjusts the sail to the optimal angle for speed"""
-        # TODO: Test & validate
-
-        if self.wind_angle > 180:
-            wind_angle = 180 - (self.wind_angle - 180)
+        # https://www.cal-sailing.org/blogfrontpage/recent-blog-posts/entry/demystifying-apparent-wind-part-1
+        apparent_wind_angle = self.wind_angle if self.wind_angle <= 180 else 360 - self.wind_angle
+        
+        # Close hauled: ~10°, Beam reach: ~45°, Broad reach / Run: ~90°
+        if apparent_wind_angle < 45:
+            # Irons / Close hauled
+            sail_angle = 0.0
+        elif apparent_wind_angle < 90:
+            # Close reach to beam reach
+            sail_angle = boatMath.remap(apparent_wind_angle, 45, 90, 0.0, 50.0)
+        elif apparent_wind_angle < 135:
+            # Beam reach to broad reach
+            sail_angle = boatMath.remap(apparent_wind_angle, 90, 135, 50.0, 80.0)
         else:
-            wind_angle = self.wind_angle
-
-        sail_angle = max(min(wind_angle / 2, 90), 3)
+            # Broad reach to running
+            sail_percent = 100.0
 
         msg = Float32()
-        msg.data = float(sail_angle)
+        msg.data = float(sail_percent)
         self.cmd_sail_pub.publish(msg)
+
+    def heave_to(self):
+        self.cmd_sail_pub.publish(Float32(data=100.0))
+        self.cmd_rudder_pub.publish(Float32(data=0.0))
