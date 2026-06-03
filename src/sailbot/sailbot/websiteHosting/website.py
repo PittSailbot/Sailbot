@@ -55,17 +55,7 @@ PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
 # Allow runtime overrides without forcing a specific deployment mode.
 PORTS = os.environ.get("PORTS", "5000:5000")
 PORT = int(PORTS.split(":")[0])
-TILE_SERVER = os.environ.get("TILE_SERVER")
-
-if not TILE_SERVER:
-    if DOCKER:
-        TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
-    elif PI_DOCKER:
-        # IMPORTANT: Be sure to visit this address and accept the certificate if the map is not being displayed
-        TILE_SERVER = "https://" + MY_IP + ":443/tile/{z}/{x}/{y}.png"
-        # an nginx container converts the images server by the OSM container on port 8080 to https server on port 443
-    else:
-        TILE_SERVER = "http://tile.openstreetmap.org/{z}/{x}/{y}.png"
+TILE_SERVER = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
