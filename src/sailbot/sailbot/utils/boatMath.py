@@ -102,11 +102,10 @@ def remap(x, min1, max1, min2, max2):
     return min2 + (max2 - min2) * ((x - min1) / (max1 - min1))
 
 
-def get_no_go_zone_bounds(wind_angle, compass_angle):
-    wind_angle += compass_angle
+def get_no_go_zone_bounds(wind_angle):
     no_go_angle = float(c.config["NAVIGATION"]["no_go_angle"])
-    no_go_zone_left_bound = (wind_angle - no_go_angle / 2) % 360
-    no_go_zone_right_bound = (wind_angle + no_go_angle / 2) % 360
+    no_go_zone_left_bound = (wind_angle - (no_go_angle / 2)) % 360
+    no_go_zone_right_bound = (wind_angle + (no_go_angle / 2)) % 360
 
     return no_go_zone_left_bound, no_go_zone_right_bound
 

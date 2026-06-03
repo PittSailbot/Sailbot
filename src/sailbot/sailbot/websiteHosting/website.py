@@ -729,7 +729,7 @@ def get_no_go_zone_polygon():
     if DATA.relative_wind == None and DATA.compass.angle:
         return None
     try:
-        left_bound, right_bound = get_no_go_zone_bounds(DATA.relative_wind, DATA.compass.angle)
+        left_bound, right_bound = get_no_go_zone_bounds(DATA.relative_wind)
 
         lx, ly = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, left_bound, 300)
         rx, ry = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, right_bound, 300)

@@ -1,6 +1,7 @@
 import numpy as np
 
 from sailbot.utils import boatMath, eventUtils, utils
+from sailbot import constants as c
 
 
 class WaypointPlanner():
@@ -8,12 +9,12 @@ class WaypointPlanner():
     - Automatically assigns next waypoint (target_waypoint) when the boat reaches previous
     """
 
-    def __init__(self, waypoint_tolerance=2.0):
+    def __init__(self):
         """
         Args:
             waypoint_tolerance: distance in meters where an agent is said to have completed a waypoint
         """
-        self.waypoint_tolerance = waypoint_tolerance
+        self.waypoint_tolerance = c.config["CONSTANTS"]["reached_waypoint_distance"]
         self.waypoints = []
         self.current_waypoint_index = 0
 

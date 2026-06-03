@@ -28,11 +28,7 @@ class NavigationStrategy(Node):
     RUDDER_MAX = float(c.config["RUDDER"]["max_angle"])
     RUDDER_CENTER = (RUDDER_MAX + RUDDER_MIN) / 2
 
-    def __init__(self, waypoint_tolerance=2.0):
-        """
-        Args:
-            waypoint_tolerance: distance in meters where an agent is said to have completed a waypoint
-        """
+    def __init__(self):
         super().__init__("navigation")
         self.logging = self.get_logger()
 
@@ -60,7 +56,7 @@ class NavigationStrategy(Node):
 
         self.nav_timer = self.create_timer(0.2, self.update_navigation)
 
-        self.wp = WaypointPlanner(waypoint_tolerance)
+        self.wp = WaypointPlanner()
         self.status = ""  # Additional text displayed on agent label
         self.prev_status = None
 
@@ -76,13 +72,12 @@ class NavigationStrategy(Node):
         self.last_wind_time = self.get_clock().now()
         angle = float(msg.data)
         self.wind_angle = angle % 360
-        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.boat_heading)
+        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle)
 
     def imu_callback(self, msg):
         self.last_imu_time = self.get_clock().now()
         imu_data = ImuData.fromRosMessage(msg)
         self.boat_heading = (imu_data.yaw) % 360
-        self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.boat_heading)
 
     def gps_callback(self, msg):
         now = self.get_clock().now()

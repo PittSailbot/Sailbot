@@ -161,9 +161,8 @@ class TackingNavigationStrategy(NavigationStrategy):
             self.complete_tack()
             return
 
-        no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle, self.boat_heading)
         if boatMath.degrees_between(self.boat_heading, no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
-            target_angle = no_go_zone_left_bound
+            target_angle = self.no_go_zone_left_bound
         else:
             target_angle = self.no_go_zone_right_bound
 
