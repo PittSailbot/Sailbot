@@ -2,92 +2,106 @@
 import argparse
 import json
 import re
-import urllib.request
-from html.parser import HTMLParser
-
-
-class RtkStatusParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self._capture_id = None
-        self._current_id = None
-        self.values = {}
-
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        element_id = attrs.get("id")
-        if element_id in {"lat_text", "lon_text", "fix_text", "gga_time"}:
-            self._capture_id = element_id
-            self._current_id = element_id
-
-    def handle_data(self, data):
-        if self._capture_id:
-            self.values[self._capture_id] = data.strip()
-
-    def handle_endtag(self, tag):
-        if self._current_id:
-            self._capture_id = None
-            self._current_id = None
+import sys
 
 
 def read_source(source):
-    if source.startswith(("http://", "https://")):
-        with urllib.request.urlopen(source, timeout=2.0) as response:
-            return response.read().decode("utf-8")
+    """读取输入源：'-' 表示 stdin，否则按命令行输出文本文件读取。"""
+    if source == "-":
+        return sys.stdin.read()
 
     with open(source, encoding="utf-8") as file:
         return file.read()
 
 
-def extract_from_status_api(base_url):
-    url = base_url.rstrip("/") + "/api/status"
-    with urllib.request.urlopen(url, timeout=2.0) as response:
-        status = json.loads(response.read().decode("utf-8"))
-
-    return {
-        "lat": float(status["lat"]),
-        "lon": float(status["lon"]),
-        "track_angle": 0.0,
-        "velocity": 0.0,
-        "fix_type": status.get("fix_text"),
-        "last_gga_time": status.get("last_gga_time"),
-    }
+def parse_float_field(text, label):
+    """从命令行输出中按标签提取一个浮点数字段。"""
+    match = re.search(rf"^{re.escape(label)}\s*:\s*([-+]?\d+(?:\.\d+)?)\s*$", text, re.MULTILINE)
+    return float(match.group(1)) if match else None
 
 
-def extract_from_html(source):
-    html = read_source(source)
-    parser = RtkStatusParser()
-    parser.feed(html)
+def parse_int_field(text, label):
+    """从命令行输出中按标签提取一个整数字段。"""
+    match = re.search(rf"^{re.escape(label)}\s*:\s*([-+]?\d+)\s*$", text, re.MULTILINE)
+    return int(match.group(1)) if match else None
 
-    lat = parser.values.get("lat_text")
-    lon = parser.values.get("lon_text")
 
-    if lat is None or lon is None:
-        lat_match = re.search(r'id=["\']lat_text["\'][^>]*>\s*([^<]+)', html)
-        lon_match = re.search(r'id=["\']lon_text["\'][^>]*>\s*([^<]+)', html)
-        if not lat_match or not lon_match:
-            raise ValueError("Could not find lat_text/lon_text in HTML.")
-        lat = lat_match.group(1).strip()
-        lon = lon_match.group(1).strip()
+def parse_text_field(text, label):
+    """从命令行输出中按标签提取一个文本字段。"""
+    match = re.search(rf"^{re.escape(label)}\s*:\s*(.+?)\s*$", text, re.MULTILINE)
+    return match.group(1).strip() if match else None
 
-    return {
-        "lat": float(lat),
-        "lon": float(lon),
-        "track_angle": 0.0,
-        "velocity": 0.0,
-        "fix_type": parser.values.get("fix_text"),
-        "last_gga_time": parser.values.get("gga_time"),
-    }
+
+def extract_from_cli_text(text):
+    """从 Waveshare RTK_Rover/main.py 的终端输出中提取最新一组 Sailbot GPS JSON。"""
+    blocks = [block for block in re.split(r"^-{5,}\s*$", text, flags=re.MULTILINE) if block.strip()]
+    candidates = blocks if blocks else [text]
+
+    for block in reversed(candidates):
+        lat = parse_float_field(block, "Latitude")
+        lon = parse_float_field(block, "Longitude")
+        if lat is None or lon is None:
+            continue
+
+        speed = parse_float_field(block, "Speed (knots)")
+        heading = parse_float_field(block, "Heading (degrees)")
+        hdop = parse_float_field(block, "HDOP")
+        fix_text = parse_text_field(block, "RTK Status")
+
+        return {
+            "lat": lat,
+            "lon": lon,
+            "track_angle": heading if heading is not None else 0.0,
+            "velocity": speed if speed is not None else 0.0,
+            "fix_type": fix_text,
+            "positioning_status": parse_text_field(block, "Positioning Status"),
+            "rtk_data": parse_text_field(block, "RTK Data"),
+            "satellites": parse_int_field(block, "Satellites Number"),
+            "hdop": hdop,
+        }
+
+    raise ValueError("Could not find Latitude/Longitude in command output.")
+
+
+def extract_from_cli_output(source):
+    """读取命令行输出文件或 stdin，并解析成 Sailbot GPS JSON。"""
+    return extract_from_cli_text(read_source(source))
+
+
+def stream_cli_output(input_stream):
+    """持续读取 main.py 输出，每遇到完整坐标块就打印一行 JSON。"""
+    buffer = []
+    in_block = False
+
+    for line in input_stream:
+        if re.match(r"^-{5,}\s*$", line):
+            if in_block and buffer:
+                try:
+                    print(json.dumps(extract_from_cli_text("".join(buffer))), flush=True)
+                except ValueError:
+                    pass
+                buffer = []
+            in_block = True
+            continue
+
+        if in_block:
+            buffer.append(line)
 
 
 def main():
+    """解析 main.py 的终端输出，并输出一行 Sailbot GPS JSON。"""
     parser = argparse.ArgumentParser(description="Extract RTK/GNSS coordinates as Sailbot JSON.")
-    parser.add_argument("source", help="HTML file path, page URL, or RTK tool base URL")
-    parser.add_argument("--api", action="store_true", help="Read live JSON from SOURCE/api/status")
+    parser.add_argument("source", help="Waveshare RTK_Rover/main.py output file path, or '-' for stdin")
+    parser.add_argument("--stream", action="store_true", help="With SOURCE='-', emit JSON for each complete output block")
     args = parser.parse_args()
 
-    data = extract_from_status_api(args.source) if args.api else extract_from_html(args.source)
-    print(json.dumps(data))
+    if args.stream:
+        if args.source != "-":
+            parser.error("--stream expects SOURCE to be '-'")
+        stream_cli_output(sys.stdin)
+        return
+
+    print(json.dumps(extract_from_cli_output(args.source)))
 
 
 if __name__ == "__main__":

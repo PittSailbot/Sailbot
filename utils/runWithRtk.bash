@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Starts the Waveshare LG290P RTK rover web server, then runs Sailbot.
+# Starts the Waveshare LG290P RTK rover command-line program, then runs Sailbot.
 #
 # First run:
 #   - downloads and unzips the Waveshare demo if it is not already installed
 # Later runs:
-#   - reuses the existing install and starts web_rtk.py directly
+#   - reuses the existing install and starts main.py directly
 #
 # Common usage from the ROS workspace/repo root:
 #   bash utils/runWithRtk.bash
@@ -16,7 +16,7 @@ RTK_URL="${RTK_URL:-https://files.waveshare.com/wiki/LG290P-GNSS-RTK-Module/Demo
 RTK_INSTALL_PARENT="${RTK_INSTALL_PARENT:-/opt}"
 RTK_DEMO_DIR="${RTK_DEMO_DIR:-${RTK_INSTALL_PARENT}/LG290P-GNSS-RTK-Module-Demo}"
 RTK_WORKDIR="${RTK_WORKDIR:-${RTK_DEMO_DIR}/Raspberry_Pi/Python/RTK_Rover}"
-RTK_ENTRY="${RTK_ENTRY:-web_rtk.py}"
+RTK_ENTRY="${RTK_ENTRY:-main.py}"
 RTK_USE_SUDO="${RTK_USE_SUDO:-true}"
 
 ROS_DISTRO="${ROS_DISTRO:-humble}"
@@ -27,6 +27,7 @@ SAILBOT_DEFAULT_LAUNCH="${SAILBOT_DEFAULT_LAUNCH:-boat_all.launch.py}"
 
 RTK_PID=""
 
+# 按需用 sudo 执行命令；root 或关闭 RTK_USE_SUDO 时直接执行。
 sudo_cmd() {
     if [[ "${EUID}" -eq 0 ]] || [[ "${RTK_USE_SUDO}" != "true" ]]; then
         "$@"
@@ -35,6 +36,7 @@ sudo_cmd() {
     fi
 }
 
+# 检查某个系统命令是否存在，不存在就中止脚本。
 ensure_command() {
     if ! command -v "$1" >/dev/null 2>&1; then
         echo "Missing required command: $1" >&2
@@ -42,6 +44,7 @@ ensure_command() {
     fi
 }
 
+# 确保 Waveshare RTK demo 已下载并解压到目标目录。
 ensure_rtk_demo() {
     if [[ -f "${RTK_WORKDIR}/${RTK_ENTRY}" ]]; then
         return
@@ -64,8 +67,9 @@ ensure_rtk_demo() {
     fi
 }
 
+# 后台启动 Waveshare RTK rover 命令行程序，并记录进程号方便退出时关闭。
 start_rtk() {
-    echo "Starting Waveshare RTK rover server..."
+    echo "Starting Waveshare RTK rover command-line program..."
     pushd "${RTK_WORKDIR}" >/dev/null
     if [[ "${EUID}" -eq 0 ]] || [[ "${RTK_USE_SUDO}" != "true" ]]; then
         python3 "${RTK_ENTRY}" &
@@ -77,6 +81,7 @@ start_rtk() {
     popd >/dev/null
 }
 
+# 如果本脚本启动过 RTK 服务，退出时把它停掉。
 stop_rtk() {
     if [[ -n "${RTK_PID}" ]] && kill -0 "${RTK_PID}" >/dev/null 2>&1; then
         echo "Stopping Waveshare RTK rover server..."
@@ -88,6 +93,7 @@ stop_rtk() {
     fi
 }
 
+# 加载 ROS/Sailbot 环境，然后运行传入命令或默认 boat_all launch。
 run_sailbot() {
     if [[ ! -f "${ROS_SETUP}" ]]; then
         echo "ROS setup file not found: ${ROS_SETUP}" >&2
@@ -110,6 +116,7 @@ run_sailbot() {
     fi
 }
 
+# 脚本主流程：处理参数、安装/启动 RTK、再启动 Sailbot。
 main() {
     if [[ "${1:-}" == "--" ]]; then
         shift

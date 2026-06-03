@@ -21,6 +21,7 @@ elapsedMillis timer_1HZ;
 TeensyData teensy_data = TeensyData_init_default;
 PiData pi_data = PiData_init_default;
 
+// 普通话：MCU 上电后执行一次，创建硬件平台并初始化传感器/舵机等组件。
 void setup() {
   // Create the complete platform (MCU + PCB + boat + components)
   platform = std::make_unique<Sailbot::SystemFactory>();
@@ -31,6 +32,7 @@ void setup() {
   // platform->scanI2C(); // DEBUG I2C WIRING ONLY, this WILL mess with reading sensors
 }
 #ifdef HAS_SERVOS
+// 普通话：把遥控器输入和 Pi 自动控制命令映射到帆、舵、jib 等舵机动作。
 void mapControls(RCData* controller) {
   /*Executes the keybind/meaning of each controller input.
     Editing this function will 'rebind' what an input does.
@@ -86,6 +88,7 @@ void mapControls(RCData* controller) {
 }
 #endif
 
+// 普通话：MCU 主循环；读取传感器/遥控器，控制舵机，并定时把 protobuf 数据发给 Pi。
 void loop() {
   if (Serial.available()) {
     while (Serial.read() != -1) {
