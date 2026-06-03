@@ -4,6 +4,10 @@
 #include <Adafruit_GPS.h>
 #include <Arduino.h>
 
+#include "elapsedMillis.h"
+
+elapsedMillis last_warn_gps;
+
 #define GPSECHO false
 
 PA1010D_GPS::PA1010D_GPS(HardwareSerial* port) : gps(port) {
@@ -46,7 +50,10 @@ bool PA1010D_GPS::read(GPSData* data) {
   }
 
   if (!gps.fix) {
-    Serial.println("I: no fix");
+    if (last_warn_gps > 10000) {
+      last_warn_gps = 0;
+      Serial.println("W: No GPS fix");
+    }
     return false;
   }
   data->lat = gps.latitudeDegrees;

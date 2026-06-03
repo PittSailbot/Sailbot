@@ -12,6 +12,7 @@
 class IMUInterface {
  public:
   bool initialized = false;
+  bool calibrated = false;
 
   // Offsets to account for IMU mounting orientation relative to boat (clockwise 0-360°)
   float yaw_offset = 0.0;
