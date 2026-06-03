@@ -83,7 +83,7 @@ class MCUBridge(Node):
 
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
-        self.compass_offset = 0
+        self.compass_offset = 165
 
         self.gps_pub = self.create_publisher(String, "/GPS", 1)
         self.speed_pub = self.create_publisher(Float32, "/speed", 1)
@@ -226,7 +226,7 @@ class MCUBridge(Node):
             pi_msg.cmd_rudder = int(cmd_rudder)
 
         try:
-            self.logging.debug(f"Sending PiData to MCU: {pi_msg}")
+            # self.logging.info(f"Sending PiData to MCU: {pi_msg}")
             self.send(pi_msg.SerializeToString())
         except Exception as e:
             self.logging.error(f"Failed to send command protobuf to mcu: {e}")

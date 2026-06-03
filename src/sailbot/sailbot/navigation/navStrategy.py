@@ -23,6 +23,7 @@ class NavigationStrategy(Node):
 
     ACCEPTABLE_ERROR = float(c.config["RUDDER"]["acceptable_error"])
     SMOOTHING_CONSTANT = float(c.config["RUDDER"]["smooth_const"])
+    SENSOR_TIMEOUT = float(c.config["NAVIGATION"]["sensor_timeout"])
     RUDDER_MIN = float(c.config["RUDDER"]["min_angle"])
     RUDDER_MAX = float(c.config["RUDDER"]["max_angle"])
     RUDDER_CENTER = (RUDDER_MAX + RUDDER_MIN) / 2
@@ -57,16 +58,16 @@ class NavigationStrategy(Node):
         self.cmd_jib_pub = self.create_publisher(Float32, "/cmd_jib", 10)
         self.cmd_rudder_pub = self.create_publisher(Float32, "/cmd_rudder", 10)
 
-        self.nav_timer = self.create_timer(0.2, self.tick)
+        self.nav_timer = self.create_timer(0.2, self.update_navigation)
 
         self.wp = WaypointPlanner(waypoint_tolerance)
         self.status = ""  # Additional text displayed on agent label
+        self.prev_status = None
 
     def next_gps_callback(self, msg):
         next_gps = Waypoint.from_msg(msg)
-        if next_gps != self.latest_waypoint:
-            self.logging.info(f"Navigating to {next_gps}")
-            self.latest_waypoint = next_gps
+        self.wp.append_waypoint(next_gps)
+        self.logging.info(f"Navigating to {next_gps}")
 
     def control_state_callback(self, msg):
         self.control_state = ControlState.fromRosMessage(msg)
@@ -104,6 +105,26 @@ class NavigationStrategy(Node):
             return f"""Navigating to {target_name}: ({self.wp.current_waypoint_index}/{len(self.wp.waypoints)} waypoints complete)"""
         else:
             return f"""Idle: Station keeping"""
+
+    def update_navigation(self):
+        """Timer callback that checks sensors before calling the abstract tick method."""
+        now = self.get_clock().now()
+
+        gps_stale = (now - self.last_gps_time).nanoseconds / 1e9 > 90
+        imu_stale = (now - self.last_imu_time).nanoseconds / 1e9 > self.SENSOR_TIMEOUT
+        wind_stale = (now - self.last_wind_time).nanoseconds / 1e9 > self.SENSOR_TIMEOUT
+
+        if self.boat_position is None or self.boat_heading is None or self.wind_angle is None or gps_stale or imu_stale or wind_stale:
+            if self.boat_position is None or gps_stale:
+                self.logging.warning("No fresh GPS for autonomy to function", throttle_duration_sec=10)
+            if self.boat_heading is None or imu_stale:
+                self.logging.warning("No fresh IMU data for autonomy to function", throttle_duration_sec=10)
+            if self.wind_angle is None or wind_stale:
+                self.logging.warning("No fresh windvane for autonomy to function", throttle_duration_sec=10)
+            self.heave_to()
+            return
+            
+        self.tick()
 
     def tick(self):
         """Update Navigation decision-making, setting sail/jib/rudder"""

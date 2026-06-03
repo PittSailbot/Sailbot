@@ -1,6 +1,6 @@
 import numpy as np
 
-from sailbot.utils import boatMath, eventUtils, utils, Waypoint
+from sailbot.utils import boatMath, eventUtils, utils
 
 
 class WaypointPlanner():
@@ -55,7 +55,7 @@ class WaypointPlanner():
         self.current_waypoint_index = 0
         self.target_waypoint = None
 
-    def update_position(self, boat_position: Waypoint):
+    def update_position(self, boat_position: eventUtils.Waypoint):
         if self.target_waypoint is not None:
             if boatMath.distance_between(boat_position, self.target_waypoint) < self.waypoint_tolerance:
                 self.logging.info(f"Reached {target}")
@@ -63,7 +63,7 @@ class WaypointPlanner():
 
     def __str__(self):
         if self.target_waypoint is not None:
-            return f"Navigating to {self.target_waypoint['name']}: ({self.current_waypoint_index}/{len(self.waypoints)} waypoints complete)"
+            return f"Navigating to {self.target_waypoint}: ({self.current_waypoint_index}/{len(self.waypoints)} waypoints complete)"
         elif len(self.waypoints) > 0:
             return "All waypoints completed"
         else:
