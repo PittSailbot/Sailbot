@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-static SPISettings sensorSettings(1000000, MSBFIRST, SPI_MODE1);
+static SPISettings sensorSettings(500000, MSBFIRST, SPI_MODE1);
 
 P3022_WindVane::P3022_WindVane(int miso_pin, int mosi_pin, int cs_pin, int sck_pin)
     : miso_pin(miso_pin), mosi_pin(mosi_pin), cs_pin(cs_pin), sck_pin(sck_pin) {
@@ -76,6 +76,10 @@ bool P3022_WindVane::read(WindVane* windvane) {
     int angleData = rawData & 0x3FFF;
 
     float angleInDegrees = (float)angleData / 16384.0f * 360.0f;
+
+    // Convert headwind reading 180 degrees to 0/360 degrees
+    // This is when the flat notch of the shaft lines up with the single screw
+    angleInDegrees = fmod(angleInDegrees + 180.0f, 360.0f);
 
     windvane->wind_angle = angleInDegrees;
     return true;

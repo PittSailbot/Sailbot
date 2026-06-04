@@ -52,8 +52,8 @@ void mapControls(RCData* controller) {
       platform->sail_servo->writePercent(controller->left_analog_y);
       platform->rudder_servo->writePercent(controller->right_analog_x);
 
-#if HAS_JIB_SERVO
-      platform->jib_servo->writePercent(controller->left_analog_x);
+#ifdef HAS_JIB
+      platform->jib_servo->writePercent(controller->potentiometer);
 #endif
       break;
 
@@ -61,7 +61,7 @@ void mapControls(RCData* controller) {
       if (pi_data.has_cmd_sail) {
         platform->sail_servo->writePercent(pi_data.cmd_sail);
       }
-#if HAS_JIB_SERVO
+#ifdef HAS_JIB
       if (pi_data.has_cmd_jib) {
         platform->jib_servo->writePercent(pi_data.cmd_jib);
       }
@@ -73,7 +73,7 @@ void mapControls(RCData* controller) {
       if (pi_data.has_cmd_sail) {
         platform->sail_servo->writePercent(pi_data.cmd_sail);
       }
-#if HAS_JIB_SERVO
+#ifdef HAS_JIB
       if (pi_data.has_cmd_jib) {
         platform->jib_servo->writePercent(pi_data.cmd_jib);
       }
@@ -87,11 +87,7 @@ void mapControls(RCData* controller) {
 #endif
 
 void loop() {
-  if (Serial.available()) {
-    while (Serial.read() != -1) {
-    };  // temp
-    // readProtobufFromPi(&pi_data); TEMP DISABLE
-  }
+  readProtobufFromPi(&pi_data);
 
 #ifdef HAS_GPS
   platform->gps->update();
@@ -116,8 +112,22 @@ void loop() {
 #endif
 
 #ifdef HAS_SERVOS
-    if (teensy_data.has_rc_data) {
+    if (teensy_data.has_rc_data && teensy_data.rc_data.front_left_switch1 != TRI_SWITCH_DOWN) {
       mapControls(&teensy_data.rc_data);
+    }
+    const bool rc_link_lost =
+        !teensy_data.has_rc_data;  // always true bc timer might not include rc
+    const bool tri_switch_down =
+        teensy_data.has_rc_data && teensy_data.rc_data.front_left_switch1 == TRI_SWITCH_DOWN;
+
+    if (tri_switch_down) {
+      // Serial.println(tri_switch_down ? "I: TRI DOWN" : "I: RC OFF - PI CONTROL");
+      if (pi_data.has_cmd_sail) {
+        platform->sail_servo->writePercent(pi_data.cmd_sail);
+      }
+      if (pi_data.has_cmd_rudder) {
+        platform->rudder_servo->write(pi_data.cmd_rudder);
+      }
     }
 
     teensy_data.has_servos = platform->readServos(&teensy_data.servos);

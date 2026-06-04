@@ -10,11 +10,12 @@ dependencies = [
     "flask",
     "pyopenssl",
     "geopy",
-    "odrive",
     "pyserial",
     "smbus2",
     "protobuf",
     "matplotlib",
+    "catkin-pkg",
+    "rosdistro",
 ]
 
 [dependency-groups]
@@ -39,3 +40,6 @@ force-exclude = '.*src\/mcu\/.*|.*src\/sailbot\/sailbot\/protobuf\/.*'
 [tool.isort]
 profile = "black"
 skip_gitignore = true
+
+[tool.pyright]
+extraPaths = ["src/sailbot"]

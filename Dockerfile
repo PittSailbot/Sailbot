@@ -78,5 +78,7 @@ RUN apt-get clean && \
 
 WORKDIR /workspace
 
+# uv add catkin_pkg --active`
+
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]

@@ -84,25 +84,28 @@ bool BNO055_IMU::read(IMU* imu) {
   bno.getCalibration(&system, &gyro, &accel, &mag);
   if (last_warn > 10000) {
     last_warn = 0;
-    if (gyro != 3) {
-      // If this happens, leave the IMU stationary for a few seconds
-      Serial.println("W: IMU Gyro not fully calibrated, readings will be inaccurate!");
+    if (!this->calibrated) {
+      if (mag == 3 || gyro == 3) {
+        Serial.println("I: IMU calibrated");
+        this->calibrated = true;
+      } else {
+        if (gyro != 3) {
+          // If this happens, leave the IMU stationary for a few seconds
+          Serial.println("W: IMU Gyro not fully calibrated, readings will be inaccurate!");
+        }
+        if (mag != 3) {
+          // If this happens, try moving the imu around in a figure-8 pattern
+          Serial.println("W: IMU Magnetometer not fully calibrated, readings will be inaccurate!");
+        }
+        // Do not read from sensor since it was never calibrated
+        return false;
+      }
+    } else {
+      if (mag < 2 || gyro < 2) {
+        // Warn, but still read from sensor since poor data > no data when out on the water
+        Serial.println("W: IMU lost calibration, readings may be inaccurate");
+      }
     }
-    if (mag != 3) {
-      // If this happens, try moving the imu around in a figure-8 pattern
-      Serial.println("W: IMU Magnetometer not fully calibrated, readings will be inaccurate!");
-    }
-
-    if (mag < 2 || gyro < 2) {
-      Serial.println("W: IMU not fully calibrated, too unreliable to rely on readings");
-      // IMU yaw is unreliable at 0 or 1 calibration state
-      // Could still read from the sensor, but its usually better to just wait for better accuracy
-      return false;
-    }
-  }
-
-  if (mag < 2 || gyro < 2) {
-    return false;
   }
 
   // Read sensor data

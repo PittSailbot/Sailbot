@@ -30,6 +30,7 @@
 // Preprocessor-compatible constants for conditional compilation
 #define IMU_BNO055 1  // Adafruit BNO055 9-DOF
 #define IMU_LSM6DS 2  // LSM6DS + LIS3MDL combo
+#define IMU_BNO085 3  // Adafruit BNO085 9-DOF
 
 // ===== GPSs =====
 #define GPS_ADAFRUIT_PA1616S 1  // Adafruit Ultimate GPS https://www.adafruit.com/product/746
@@ -40,6 +41,7 @@
 #define WINDVANE_P3022 \
   2  // CLAY Hall Effect Absolute Potentiometer
      // https://www.amazon.com/Effect-Potentiometer-Sensor-Measuring-Voltage/dp/B09VXRMC91?th=1
+#define WINDVANE_AS5600 3  // Adafruit AS5600 Magnetic Encoder
 
 // ===== WATER SENSORS =====
 #define WATER_SENSOR_ADAFRUIT_SOIL \

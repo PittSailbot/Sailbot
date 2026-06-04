@@ -268,10 +268,6 @@
                 Distance between you and boat:
             </div>
 
-            
-
-            
-
         </div>
 
         <div id="sailboat-container" class="sailboat-container">
@@ -305,24 +301,30 @@
             </div>
             <br><br>
             <div id="windAngleText">
-                Relative wind angle:
+                Wind:
             </div>
             <br>
             <div id="compassAngleText">
-                Compass (Yaw) angle:
+                Heading:
             </div>
             <br>
             <div id="sailText">
-                Sail angle:
+                Sail:
+            </div>
+            <div id="jibText">
+                Jib:
             </div>
             <div id="rudderText">
-                Rudder angle:
+                Rudder:
             </div>
             <div id="autoSailText">
-                Auto Sail desired angle:
+                Auto Sail:
+            </div>
+            <div id="autoJibText">
+                Auto Jib:
             </div>
             <div id="autoRudderText">
-                Auto Rudder desired angle:
+                Auto Rudder:
             </div>
             <br>
             <div id="speedText">
@@ -973,8 +975,25 @@
                         targetPointer = document.getElementById('targetPointer');
                         targetPointer.style.transform = `translate(-50%, -50%) rotate(${targetDirection}deg)`;
                     }
-                    windAngleText = document.getElementById('windAngleText');
-                    windAngleText.innerHTML = `Relative wind angle: ${windDirection.toFixed(2)}`
+                    const windAngleText = document.getElementById('windAngleText');
+                    const relativeAngle = Math.abs(((windDirection + 180) % 360) - 180); 
+                    
+                    let pointOfSail = "";
+                    if (relativeAngle <= 15) {
+                        pointOfSail = "In Irons (Headwind)";
+                    } else if (relativeAngle > 15 && relativeAngle <= 45) {
+                        pointOfSail = "Close Hauled";
+                    } else if (relativeAngle > 45 && relativeAngle <= 75) {
+                        pointOfSail = "Close Reach";
+                    } else if (relativeAngle > 75 && relativeAngle <= 105) {
+                        pointOfSail = "Beam Reach";
+                    } else if (relativeAngle > 105 && relativeAngle <= 150) {
+                        pointOfSail = "Broad Reach";
+                    } else {
+                        pointOfSail = "Running";
+                    }
+
+                    windAngleText.innerHTML = `Relative wind angle: ${windDirection.toFixed(2)}° (${pointOfSail})`;
 
                     // Update the compass arrow direction
                     compassDirection = json.compass_dir
@@ -997,10 +1016,22 @@
                     sailText = document.getElementById('sailText');
                     sailText.innerHTML = `Sail angle: ${sailAngle.toFixed(2)}`
 
+                    // update Jib rotation
+                    // jibAngle = json.jib_angle
+                    // jibOrientationImage = document.getElementById('jibOrientationImage');
+                    // jibOrientationImageFlipped = document.getElementById('jibOrientationImageFlipped');
+                    // jibText = document.getElementById('jibText');
+                    // jibText.innerHTML = `Sail angle: ${jibAngle.toFixed(2)}`
+
                     // update auto Sail text
                     autoSailAngle = json.auto_sail
                     autoSailText = document.getElementById('autoSailText');
                     autoSailText.innerHTML = `Auto Sail desired angle: ${autoSailAngle.toFixed(2)}`
+
+                    // update auto Jib text
+                    // autoJibAngle = json.auto_jib
+                    // autoJibText = document.getElementById('autoJibText');
+                    // autoJibText.innerHTML = `Auto Jib desired angle: ${autoSailAngle.toFixed(2)}`
 
                     // Update auto Rudder text
                     autoRudderAngle = json.auto_rudder

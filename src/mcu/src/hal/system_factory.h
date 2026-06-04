@@ -24,6 +24,8 @@
 #include "drivers/windvane/relative.h"
 #elif HAL_WINDVANE == WINDVANE_P3022
 #include "drivers/windvane/p3022.h"
+#elif HAL_WINDVANE == WINDVANE_AS5600
+#include "drivers/windvane/as5600.h"
 #endif
 #endif
 
@@ -31,6 +33,8 @@
 #include "drivers/imu/imu.h"
 #if HAL_IMU == IMU_BNO055
 #include "drivers/imu/bno055.h"
+#elif HAL_IMU == IMU_BNO085
+#include "drivers/imu/bno085.h"
 #elif HAL_IMU == IMU_LSM6DS
 #include "drivers/imu/lsm6ds_lis3mdl.h"
 #else
@@ -156,6 +160,10 @@ class SystemFactory {
     imu = std::make_unique<BNO055_IMU>();
     imu->begin() ? Serial.println("I: Started BNO055 IMU")
                  : Serial.println("E: Failed to start BNO055 IMU");
+#elif HAL_IMU == IMU_BNO085
+    imu = std::make_unique<BNO085_IMU>();
+    imu->begin() ? Serial.println("I: Started BNO085 IMU")
+                 : Serial.println("E: Failed to start BNO085 IMU");
 #elif HAL_IMU == IMU_LSM6DS
     imu = std::make_unique<LSM6DS_IMU>();
     imu->begin() ? Serial.println("I: Started LSM6DS IMU")
@@ -214,6 +222,10 @@ class SystemFactory {
                                                 WINDVANE_CS_PIN, WINDVANE_SCK_PIN);
     windvane->begin() ? Serial.println("I: Started P3022 WindVane")
                       : Serial.println("E: Failed to start P3022 WindVane");
+#elif HAL_WINDVANE == WINDVANE_AS5600
+    windvane = std::make_unique<AS5600_WindVane>();
+    windvane->begin() ? Serial.println("I: Started AS5600 WindVane")
+                      : Serial.println("E: Failed to start AS5600 WindVane");
 #endif
 #endif
 
@@ -286,6 +298,7 @@ class SystemFactory {
         Serial.println(addr, HEX);
       }
     }
+    delay(5000);
   }
 
   /**

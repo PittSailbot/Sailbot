@@ -25,7 +25,7 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
-                executable="navigation",
+                executable="tack_navigation",
                 name="node_Navigation",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
@@ -38,34 +38,26 @@ def generate_launch_description():
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
             ),
-            Node(
-                package="sailbot",
-                namespace="boat",
-                executable="gps",
-                name="node_Gps",
-                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
-                parameters=[config],
-            ),
-            Node(
-                package="sailbot",
-                namespace="boat",
-                executable="motorDrivers",
-                name="node_motorDrivers",
-                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
-                parameters=[config],
-            ),
-            Node(
-                package="sailbot",
-                namespace="boat",
-                executable="cameraServos",
-                name="node_cameraServos",
-                arguments=[
-                    "--ros-args",
-                    "--log-level",
-                    LaunchConfiguration("log_level"),
-                ],
-                parameters=[config],
-            ),
+            # Node(
+            #     package="sailbot",
+            #     namespace="boat",
+            #     executable="gps",
+            #     name="node_Gps",
+            #     arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+            #     parameters=[config],
+            # ),
+            # Node(
+            #     package="sailbot",
+            #     namespace="boat",
+            #     executable="cameraServos",
+            #     name="node_cameraServos",
+            #     arguments=[
+            #         "--ros-args",
+            #         "--log-level",
+            #         LaunchConfiguration("log_level"),
+            #     ],
+            #     parameters=[config],
+            # ),
             Node(
                 package="sailbot",
                 namespace="boat",
@@ -78,5 +70,13 @@ def generate_launch_description():
                 ],
                 parameters=[config],
             ),
+        #     Node(
+        #         package="sailbot",
+        #         namespace="boat",
+        #         executable="website",
+        #         name="node_Website",
+        #         arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+        #         parameters=[config],
+        #     ),
         ]
     )
