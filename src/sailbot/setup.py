@@ -60,6 +60,7 @@ setup(
             "heaveTo = sailbot.events.heaveTo:main",
             "navigation = sailbot.navigation:main",
             "actionManager = sailbot.ActionManager:main",
+            "rtk = sailbot.peripherals.rtk:main",
         ],
     },
 )
