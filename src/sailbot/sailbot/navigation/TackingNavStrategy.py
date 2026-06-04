@@ -161,11 +161,6 @@ class TackingNavigationStrategy(NavigationStrategy):
             self.complete_tack()
             return
 
-        if boatMath.degrees_between(self.boat_heading, no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
-            target_angle = self.no_go_zone_left_bound
-        else:
-            target_angle = self.no_go_zone_right_bound
-
         if turning_left:
             self.status += f"\n  Turning PORT from {self.boat_heading} degrees to {target_angle} degrees"
             rudder_angle = self.RUDDER_MAX
@@ -201,8 +196,9 @@ class TackingNavigationStrategy(NavigationStrategy):
             else:
                 rudder_angle = self.RUDDER_MIN
 
-            if not boatMath.is_within_angle(0, self.no_go_zone_left_bound, self.no_go_zone_right_bound) and closest == self.mode:
-                # tack complete
+            is_in_irons = boatMath.is_within_angle(self.boat_heading, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
+    
+            if not is_in_irons and closest == self.mode:
                 self.logging.info(f"{tack_or_jibe} Complete")
                 self.emergency_tack = False
                 self.mode = None

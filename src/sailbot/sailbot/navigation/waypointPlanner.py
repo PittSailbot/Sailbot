@@ -14,7 +14,7 @@ class WaypointPlanner():
         Args:
             waypoint_tolerance: distance in meters where an agent is said to have completed a waypoint
         """
-        self.waypoint_tolerance = c.config["CONSTANTS"]["reached_waypoint_distance"]
+        self.waypoint_tolerance = float(c.config["CONSTANTS"]["reached_waypoint_distance"])
         self.waypoints = []
         self.current_waypoint_index = 0
 
@@ -35,10 +35,13 @@ class WaypointPlanner():
             self.waypoints.append(waypoint)
             self.current_waypoint_index = len(self.waypoints) - 1
 
-    def set_waypoint_sequence(self, waypoints):
+    def set_waypoint_sequence(self, waypoints, current_waypoint_index=0):
         """Set a complete sequence of waypoints to navigate through"""
         self.waypoints = waypoints.copy()
-        self.current_waypoint_index = 0
+        if len(self.waypoints) == 0:
+            self.current_waypoint_index = 0
+        else:
+            self.current_waypoint_index = max(0, min(int(current_waypoint_index), len(self.waypoints) - 1))
 
     def append_waypoint(self, waypoint):
         """Add a single waypoint to the sequence"""
@@ -54,13 +57,14 @@ class WaypointPlanner():
         """Clear all waypoints and reset to initial state"""
         self.waypoints = []
         self.current_waypoint_index = 0
-        self.target_waypoint = None
 
     def update_position(self, boat_position: eventUtils.Waypoint):
         if self.target_waypoint is not None:
             if boatMath.distance_between(boat_position, self.target_waypoint) < self.waypoint_tolerance:
-                self.logging.info(f"Reached {target}")
                 self.next_waypoint()
+                return True
+
+        return False
 
     def __str__(self):
         if self.target_waypoint is not None:
