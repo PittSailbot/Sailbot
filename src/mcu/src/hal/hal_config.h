@@ -12,15 +12,15 @@
  * 3. Only components with HAS_* = 1 will be compiled into the firmware
  */
 
-// #define DEBUG  // Uncomment to enable debug mode
+// #define DEBUG  // Uncomment to enable debug mode, must be disabled for Pi to read protobuf
 
 // ===== PLATFORM SELECTION =====
 // Uncomment ONE of these to select your complete platform configuration
 
 // #define DAN_MARINA_TOM_PCB  // Main boat + Teensy 4.1 + Tom PCB
 // #define DAN_MARINA_LEO_PCB   // Mini boat + Pico + Leo PCB
-// #define DAN_MARINA_OSCAR_PCB    // Main boat + Pico + Oscar PCB
-#define PROTOBOARD  // Prototype board for Mini Boat PCB
+#define DAN_MARINA_OSCAR_PCB    // Main boat + Pico + Oscar PCB
+// #define PROTOBOARD  // Prototype board for Mini Boat PCB
 // #define BREADBOARD
 
 // ===== PLATFORM CONFIGURATIONS =====

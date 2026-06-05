@@ -18,9 +18,12 @@ bool readProtobufFromPi(PiData* pi_data) {
   constexpr size_t kHeaderLen = 4;
   static uint8_t rx_buffer[PI_PB_H_MAX_SIZE + kHeaderLen];
   static size_t rx_len = 0;
+  bool found_message = false;
 
-  while (Serial.available() > 0) {
+  size_t bytes_to_read = 512; // Prevent infinite loop if Pi sends faster than we process
+  while (Serial.available() > 0 && bytes_to_read > 0) {
     uint8_t next = static_cast<uint8_t>(Serial.read());
+    bytes_to_read--;
     if (rx_len < sizeof(rx_buffer)) {
       rx_buffer[rx_len++] = next;
       continue;
@@ -46,7 +49,7 @@ bool readProtobufFromPi(PiData* pi_data) {
         rx_buffer[0] = rx_buffer[rx_len - 1];
         rx_len = 1;
       }
-      return false;
+      return found_message;
     }
 
     if (start > 0) {
@@ -55,7 +58,7 @@ bool readProtobufFromPi(PiData* pi_data) {
     }
 
     if (rx_len < kHeaderLen) {
-      return false;
+      return found_message;
     }
 
     const uint16_t payload_len =
@@ -69,7 +72,7 @@ bool readProtobufFromPi(PiData* pi_data) {
 
     const size_t frame_len = kHeaderLen + payload_len;
     if (rx_len < frame_len) {
-      return false;
+      return found_message;
     }
 
     *pi_data = PiData_init_default;
@@ -84,31 +87,11 @@ bool readProtobufFromPi(PiData* pi_data) {
       continue;
     }
 
-    // if (pi_data->has_cmd_yaw || pi_data->has_cmd_pitch || pi_data->has_cmd_sail ||
-    //     pi_data->has_cmd_jib || pi_data->has_cmd_rudder) {
-    //   Serial.printf("I: PiData received:");
-    //   if (pi_data->has_cmd_yaw) {
-    //     Serial.printf(" yaw=%d", pi_data->cmd_yaw);
-    //   }
-    //   if (pi_data->has_cmd_pitch) {
-    //     Serial.printf(" pitch=%d", pi_data->cmd_pitch);
-    //   }
-    //   if (pi_data->has_cmd_sail) {
-    //     Serial.printf(" sail=%d", pi_data->cmd_sail);
-    //   }
-    //   if (pi_data->has_cmd_jib) {
-    //     Serial.printf(" jib=%d", pi_data->cmd_jib);
-    //   }
-    //   if (pi_data->has_cmd_rudder) {
-    //     Serial.printf(" rudder=%d", pi_data->cmd_rudder);
-    //   }
-    //   Serial.println();
-    // }
-
-    return true;
+    found_message = true;
+    continue; // Continue parsing in case there are more messages queued up
   }
 
-  return false;
+  return found_message;
 }
 
 void writeProtobufToPi(TeensyData* teensy_data) {
@@ -149,19 +132,19 @@ void writeProtobufToPi(TeensyData* teensy_data) {
 }
 
 void printTeensyProtobuf(TeensyData* td) {
-  if (td->has_rc_data) {
-    RCData rcd = td->rc_data;
-    Serial.printf(
-        "RC Data:\n"
-        "  Left Analog:  X=%d  Y=%d\n"
-        "  Right Analog: X=%d  Y=%d\n"
-        "  Switches: FL1=%d FL2=%d FR=%d\n"
-        "  Top Switches: Left=%d Right=%d\n"
-        "  Potentiometer: %d\n",
-        rcd.left_analog_x, rcd.left_analog_y, rcd.right_analog_x, rcd.right_analog_y,
-        rcd.front_left_switch1, rcd.front_left_switch2, rcd.front_right_switch, rcd.top_left_switch,
-        rcd.top_right_switch, rcd.potentiometer);
-  }
+  // if (td->has_rc_data) {
+  //   RCData rcd = td->rc_data;
+  //   Serial.printf(
+  //       "RC Data:\n"
+  //       "  Left Analog:  X=%d  Y=%d\n"
+  //       "  Right Analog: X=%d  Y=%d\n"
+  //       "  Switches: FL1=%d FL2=%d FR=%d\n"
+  //       "  Top Switches: Left=%d Right=%d\n"
+  //       "  Potentiometer: %d\n",
+  //       rcd.left_analog_x, rcd.left_analog_y, rcd.right_analog_x, rcd.right_analog_y,
+  //       rcd.front_left_switch1, rcd.front_left_switch2, rcd.front_right_switch, rcd.top_left_switch,
+  //       rcd.top_right_switch, rcd.potentiometer);
+  // }
 
   if (td->has_windvane) {
     Serial.printf("Wind Vane: %d°\n", td->windvane.wind_angle);
@@ -189,14 +172,14 @@ void printTeensyProtobuf(TeensyData* td) {
         td->imu.roll, td->imu.pitch, td->imu.yaw);
   }
 
-  if (td->has_servos) {
-    Serial.printf(
-        "Servos:\n"
-        "  Sail: %d\n"
-        "  Jib: %d\n"
-        "  Rudder: %d\n",
-        td->servos.sail, td->servos.jib, td->servos.rudder);
-  }
+  // if (td->has_servos) {
+  //   Serial.printf(
+  //       "Servos:\n"
+  //       "  Sail: %d\n"
+  //       "  Jib: %d\n"
+  //       "  Rudder: %d\n",
+  //       td->servos.sail, td->servos.jib, td->servos.rudder);
+  // }
 
   if (td->has_camera_servos) {
     Serial.printf(

@@ -152,7 +152,7 @@ void loop() {
     timer_10HZ = 0;
   }
 
-  if (timer_1HZ > 1000) {
+  if (timer_1HZ > 100) {
 #ifdef HAS_GPS
     teensy_data.has_gps = platform->gps->read(&teensy_data.gps);
 #endif

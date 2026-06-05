@@ -2,8 +2,11 @@
 #include "drivers/windvane/p3022.h"
 
 #include <Arduino.h>
+#include "elapsedMillis.h"
 
 static SPISettings sensorSettings(500000, MSBFIRST, SPI_MODE1);
+
+elapsedMillis last_warn_windvane;
 
 P3022_WindVane::P3022_WindVane(int miso_pin, int mosi_pin, int cs_pin, int sck_pin)
     : miso_pin(miso_pin), mosi_pin(mosi_pin), cs_pin(cs_pin), sck_pin(sck_pin) {
@@ -64,11 +67,17 @@ bool P3022_WindVane::read(WindVane* windvane) {
   // --- Final Validation ---
   if (errorFlag) {
     // The sensor reported an error
-    Serial.println("E: WindVane Sensor Error!");
+    if (last_warn_windvane > 10000) {
+      last_warn_windvane = 0;
+      Serial.println("E: WindVane Sensor Error!");
+    }
     return false;
   } else if (parityError) {
     // The data was corrupted in transit
-    Serial.println("W: WindVane Parity Error!");
+    if (last_warn_windvane > 10000) {
+      last_warn_windvane = 0;
+      Serial.println("W: WindVane Parity Error!");
+    }
     return false;
   } else {
     // Use a mask to extract the data and convert it to an angle
@@ -80,7 +89,6 @@ bool P3022_WindVane::read(WindVane* windvane) {
     // Convert headwind reading 180 degrees to 0/360 degrees
     // This is when the flat notch of the shaft lines up with the single screw
     angleInDegrees = fmod(angleInDegrees + 180.0f, 360.0f);
-
     windvane->wind_angle = angleInDegrees;
     return true;
   }
