@@ -1,0 +1,8 @@
+{
+  "serial_port": "/dev/ttyACM0",
+  "caster_host": "114.111.30.88",
+  "caster_port": "8003",
+  "mountpoint": "RTCM33GRCEJ",
+  "username": "qx5946",
+  "password": "23832134"
+}
