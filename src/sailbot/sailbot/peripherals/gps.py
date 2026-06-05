@@ -1,37 +1,136 @@
-# sudo pip3 install adafruit-circuitpython-gps
-
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
-# SPDX-License-Identifier: MIT
-
+import glob
 import json
 import os
-
-# Simple GPS module demonstration.
-# Will wait for a fix and print a message every second with the current location
-# and other details.
 import time
-from time import sleep
 
-import adafruit_gps
-import board
-import busio
 import rclpy
 import serial
-from geometry_msgs.msg import Quaternion
 from rclpy.node import Node
-from serial.tools import list_ports
-from std_msgs.msg import Float32, Int32, String
-
-from sailbot import constants as c
-from sailbot.telemetry.protobuf import controlsData_pb2, mcu_pb2
-from sailbot.utils import boatMath
-
-# from geographic_msgs.msg import GeoPose, GeoPoint
+from std_msgs.msg import String
 
 
-# https://www.geeksforgeeks.org/how-to-install-protocol-buffers-on-windows/
-# Compile .proto with `protoc teensy.proto --python_out=./`
-# from sailbot.utils.utils import Waypoint, ControlState, ImuData
+GPS_BAUD = int(os.environ.get("RTK_GPS_BAUD", "460800"))
+GPS_PORT = os.environ.get("RTK_GPS_PORT")
+GPS_READ_TIMEOUT = float(os.environ.get("RTK_GPS_READ_TIMEOUT", "0.1"))
+
+FIX_TYPE_TEXT = {
+    0: "No Fix",
+    1: "GPS SPS Mode",
+    2: "DGNSS (SBAS/DGPS)",
+    3: "GPS PPS Fix",
+    4: "Fixed RTK",
+    5: "Float RTK",
+}
+
+
+def convert_to_decimal_degree(value, direction):
+    if not value:
+        return 0.0
+
+    if direction in ("N", "S"):
+        degree_digits = 2
+    elif direction in ("E", "W"):
+        degree_digits = 3
+    else:
+        return 0.0
+
+    if len(value) <= degree_digits:
+        return 0.0
+
+    degrees = float(value[:degree_digits])
+    minutes = float(value[degree_digits:])
+    decimal_degrees = degrees + minutes / 60.0
+
+    if direction in ("S", "W"):
+        decimal_degrees = -decimal_degrees
+
+    return decimal_degrees
+
+
+def split_nmea(sentence):
+    return sentence.strip().split(",")
+
+
+def parse_gga(sentence):
+    parts = split_nmea(sentence)
+    if len(parts) < 15:
+        return None
+
+    try:
+        fix_type = int(parts[6])
+        satellites = int(parts[7])
+        hdop = float(parts[8])
+        latitude = convert_to_decimal_degree(parts[2], parts[3])
+        longitude = convert_to_decimal_degree(parts[4], parts[5])
+    except (ValueError, IndexError):
+        return None
+
+    return {
+        "fix": fix_type > 0,
+        "fix_type": fix_type,
+        "fix_text": FIX_TYPE_TEXT.get(fix_type, f"Unknown ({fix_type})"),
+        "satellites": satellites,
+        "hdop": hdop,
+        "lat": latitude,
+        "lon": longitude,
+        "rtk_data": "RECEIVED" if fix_type in (4, 5) else "NOT RECEIVED",
+    }
+
+
+def parse_rmc(sentence):
+    parts = split_nmea(sentence)
+    if len(parts) < 12:
+        return None
+
+    try:
+        speed = float(parts[7]) if parts[7] else 0.0
+        heading = float(parts[8]) if parts[8] else 0.0
+    except (ValueError, IndexError):
+        speed = 0.0
+        heading = 0.0
+
+    return {
+        "rmc_valid": parts[2] == "A",
+        "speed": speed,
+        "heading": heading,
+    }
+
+
+def scan_gps_ports():
+    patterns = [
+        "/dev/ttyUSB*",
+        "/dev/ttyAMA*",
+        "/dev/ttyACM*",
+        "/dev/serial0",
+        "/dev/serial/by-id/*",
+        "/dev/serial/by-path/*",
+    ]
+
+    ports = []
+    for pattern in patterns:
+        ports.extend(glob.glob(pattern))
+
+    return sorted(set(ports))
+
+
+def find_gps_port(baudrate=GPS_BAUD, timeout=0.5, logger=None):
+    if GPS_PORT:
+        return GPS_PORT
+
+    for port in scan_gps_ports():
+        try:
+            with serial.Serial(port, baudrate=baudrate, timeout=timeout) as candidate:
+                time.sleep(1)
+                data = candidate.read(500).decode(errors="ignore")
+        except (OSError, serial.SerialException):
+            continue
+
+        if "$GNGGA" in data or "$GNRMC" in data or "$GPGGA" in data or "$GPRMC" in data:
+            if logger:
+                logger.info(f"GPS device found on {port}")
+            return port
+
+    return None
 
 
 class GPS(Node):
@@ -39,94 +138,106 @@ class GPS(Node):
         super().__init__("gps")
         self.logging = self.get_logger()
 
-        self.uart = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=10)
+        port = find_gps_port(logger=self.logging)
+        if port is None:
+            raise RuntimeError("Failed to find a GPS serial port emitting NMEA data.")
 
-        self.gps = adafruit_gps.GPS(self.uart, debug=False)  # Use UART/pyserial
-
-        self.gps.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
-
-        self.gps.send_command(b"PMTK220,1000")
+        self.serial_port = serial.Serial(port, baudrate=GPS_BAUD, timeout=GPS_READ_TIMEOUT)
+        self.logging.info(f"Reading GPS NMEA data from {port} at {GPS_BAUD} baud")
 
         self.pub = self.create_publisher(String, "/boat/GPS", 1)
 
-        timer_period = 1.0  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-
+        self.gps_data = {
+            "fix": False,
+            "fix_type": 0,
+            "fix_text": "No Fix",
+            "satellites": 0,
+            "hdop": 0.0,
+            "lat": 0.0,
+            "lon": 0.0,
+            "speed": 0.0,
+            "heading": 0.0,
+            "rtk_data": "NOT RECEIVED",
+        }
+        self.has_gga = False
+        self.has_rmc = False
         self.last_fix = time.time()
 
+        self.timer = self.create_timer(0.05, self.timer_callback)
+
     def timer_callback(self):
-        self.gps.update()
+        lines_processed = 0
+        while lines_processed < 10:
+            raw_line = self.serial_port.readline()
+            if not raw_line:
+                break
 
-        if self.gps.has_fix:
-            msg = String()
-            msg.data = json.dumps({"lat": self.gps.latitude, "lon": self.gps.longitude, "track_angle": self.gps.track_angle_deg, "velocity": self.gps.speed_knots})
-            self.logging.info(str(msg.data))
-            self.pub.publish(msg)
-            self.logging.debug(f'GPS Publishing: "{msg.data}"')
-            self.last_fix = time.time()
-        else:
+            self.process_nmea_line(raw_line.decode(errors="ignore").strip())
+            lines_processed += 1
+
+    def process_nmea_line(self, line):
+        if line.startswith(("$GNGGA", "$GPGGA")):
+            gga_data = parse_gga(line)
+            if gga_data is None:
+                return
+
+            self.gps_data.update(gga_data)
+            self.has_gga = True
+
+        elif line.startswith(("$GNRMC", "$GPRMC")):
+            rmc_data = parse_rmc(line)
+            if rmc_data is None:
+                return
+
+            self.gps_data.update(rmc_data)
+            self.has_rmc = True
+
+        if self.has_gga and self.has_rmc:
+            self.publish_gps_data()
+            self.has_gga = False
+            self.has_rmc = False
+
+    def publish_gps_data(self):
+        if not self.gps_data["fix"]:
             self.logging.warning(f"Waiting for fix ({round(time.time() - self.last_fix)}s)", throttle_duration_sec=5)
+            return
 
-    # # Main loop runs forever printing the location, etc. every second.
-    # last_print = time.monotonic()
-    # while True:
-    #     # Make sure to call gps.update() every loop iteration and at least twice
-    #     # as fast as data comes from the GPS unit (usually every second).
-    #     # This returns a bool that's true if it parsed new data (you can ignore it
-    #     # though if you don't care and instead look at the has_fix property).
-    #     gps.update()
-    #     # Every second print out current location details if there's a fix.
-    #     current = time.monotonic()
-    #     if current - last_print >= 1.0:
-    #         last_print = current
-    #         if not gps.has_fix:
-    #             # Try again if we don't have a fix yet.
-    #             print("Waiting for fix...")
-    #             continue
-    #         # We have a fix! (gps.has_fix is true)
-    #         # Print out details about the fix like location, date, etc.
-    #         print("=" * 40)  # Print a separator line.
-    #         print(
-    #             "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
-    #                 gps.timestamp_utc.tm_mon,  # Grab parts of the time from the
-    #                 gps.timestamp_utc.tm_mday,  # struct_time object that holds
-    #                 gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-    #                 gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-    #                 gps.timestamp_utc.tm_min,  # month!
-    #                 gps.timestamp_utc.tm_sec,
-    #             )
-    #         )
-    #         print("Latitude: {0:.6f} degrees".format(gps.latitude))
-    #         print("Longitude: {0:.6f} degrees".format(gps.longitude))
-    #         print(
-    #             "Precise Latitude: {} degs, {:2.4f} mins".format(
-    #                 gps.latitude_degrees, gps.latitude_minutes
-    #             )
-    #         )
-    #         print(
-    #             "Precise Longitude: {} degs, {:2.4f} mins".format(
-    #                 gps.longitude_degrees, gps.longitude_minutes
-    #             )
-    #         )
-    #         print("Fix quality: {}".format(gps.fix_quality))
-    #         # Some attributes beyond latitude, longitude and timestamp are optional
-    #         # and might not be present.  Check if they're None before trying to use!
-    #         if gps.satellites is not None:
-    #             print("# satellites: {}".format(gps.satellites))
-    #         if gps.altitude_m is not None:
-    #             print("Altitude: {} meters".format(gps.altitude_m))
-    #         if gps.speed_knots is not None:
-    #             print("Speed: {} knots".format(gps.speed_knots))
-    #         if gps.track_angle_deg is not None:
-    #             print("Track angle: {} degrees".format(gps.track_angle_deg))
-    #         if gps.horizontal_dilution is not None:
-    #             print("Horizontal dilution: {}".format(gps.horizontal_dilution))
-    #         if gps.height_geoid is not None:
-    #             print("Height geoid: {} meters".format(gps.height_geoid))'
+        msg = String()
+        msg.data = json.dumps(
+            {
+                "lat": self.gps_data["lat"],
+                "lon": self.gps_data["lon"],
+                "track_angle": self.gps_data["heading"],
+                "velocity": self.gps_data["speed"],
+                "fix_type": self.gps_data["fix_text"],
+                "rtk_data": self.gps_data["rtk_data"],
+                "satellites": self.gps_data["satellites"],
+                "hdop": self.gps_data["hdop"],
+            }
+        )
+
+        self.pub.publish(msg)
+        self.logging.info(str(msg.data))
+        self.logging.debug(f'GPS Publishing: "{msg.data}"')
+        self.last_fix = time.time()
+
+    def destroy_node(self):
+        if hasattr(self, "serial_port") and self.serial_port.is_open:
+            self.serial_port.close()
+        super().destroy_node()
 
 
 def main(args=None):
-    os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
+    if "ROS_LOG_DIR_BASE" in os.environ:
+        os.environ["ROS_LOG_DIR"] = os.environ["ROS_LOG_DIR_BASE"] + "/gps"
+
     rclpy.init(args=args)
-    gps = GPS()
-    rclpy.spin(gps)
+    gps = None
+
+    try:
+        gps = GPS()
+        rclpy.spin(gps)
+    finally:
+        if gps is not None:
+            gps.destroy_node()
+        rclpy.shutdown()

@@ -27,7 +27,6 @@ data_files.append(("lib/sailbot/websiteHosting/static/leaflet/", glob(package_na
 
 data_files.append(("share/" + package_name + "/launch", glob("launch/*.launch.py")))
 data_files.append(("share/" + package_name + "/config", glob("config/*.yaml")))
-data_files.append(("share/" + package_name + "/scripts", glob("scripts/*.bash")))
 
 setup(
     name=package_name,
