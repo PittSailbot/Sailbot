@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import threading
 import time
 
 import rclpy
@@ -12,6 +13,8 @@ from std_msgs.msg import String
 GPS_BAUD = int(os.environ.get("RTK_GPS_BAUD", "460800"))
 GPS_PORT = os.environ.get("RTK_GPS_PORT")
 GPS_READ_TIMEOUT = float(os.environ.get("RTK_GPS_READ_TIMEOUT", "0.1"))
+GGA_PREFIXES = ("$GNGGA", "$GPGGA")
+RMC_PREFIXES = ("$GNRMC", "$GPRMC")
 
 FIX_TYPE_TEXT = {
     0: "No Fix",
@@ -82,15 +85,20 @@ def parse_rmc(sentence):
     if len(parts) < 12:
         return None
 
-    try:
-        speed = float(parts[7]) if parts[7] else 0.0
-        heading = float(parts[8]) if parts[8] else 0.0
-    except (ValueError, IndexError):
+    rmc_valid = parts[2] == "A"
+    if rmc_valid:
+        try:
+            speed = float(parts[7]) if parts[7] else 0.0
+            heading = float(parts[8]) if parts[8] else 0.0
+        except (ValueError, IndexError):
+            speed = 0.0
+            heading = 0.0
+    else:
         speed = 0.0
         heading = 0.0
 
     return {
-        "rmc_valid": parts[2] == "A",
+        "rmc_valid": rmc_valid,
         "speed": speed,
         "heading": heading,
     }
@@ -125,7 +133,7 @@ def find_gps_port(baudrate=GPS_BAUD, timeout=0.5, logger=None):
         except (OSError, serial.SerialException):
             continue
 
-        if "$GNGGA" in data or "$GNRMC" in data or "$GPGGA" in data or "$GPRMC" in data:
+        if any(prefix in data for prefix in (*GGA_PREFIXES, *RMC_PREFIXES)):
             if logger:
                 logger.info(f"GPS device found on {port}")
             return port
@@ -161,58 +169,83 @@ class GPS(Node):
         }
         self.has_gga = False
         self.has_rmc = False
+        self.nmea_buffer = ""
+        self.gps_lock = threading.Lock()
+        self.stop_event = threading.Event()
         self.last_fix = time.time()
 
-        self.timer = self.create_timer(0.05, self.timer_callback)
+        self.reader_thread = threading.Thread(target=self.gps_thread, daemon=True)
+        self.reader_thread.start()
 
-    def timer_callback(self):
-        lines_processed = 0
-        while lines_processed < 10:
-            raw_line = self.serial_port.readline()
-            if not raw_line:
-                break
+    def gps_thread(self):
+        while not self.stop_event.is_set():
+            try:
+                character = self.serial_port.read().decode(errors="ignore")
+                if not character:
+                    continue
 
-            self.process_nmea_line(raw_line.decode(errors="ignore").strip())
-            lines_processed += 1
+                if character == "\n":
+                    line = self.nmea_buffer.strip()
+                    self.nmea_buffer = ""
+                    self.process_nmea_line(line)
+                elif character != "\r":
+                    self.nmea_buffer += character
+
+            except (OSError, serial.SerialException) as error:
+                if not self.stop_event.is_set():
+                    self.logging.error(f"GPS read error: {error}")
+                    time.sleep(0.1)
 
     def process_nmea_line(self, line):
-        if line.startswith(("$GNGGA", "$GPGGA")):
+        if not line:
+            return
+
+        gps_data = None
+        if line.startswith(GGA_PREFIXES):
             gga_data = parse_gga(line)
             if gga_data is None:
                 return
 
-            self.gps_data.update(gga_data)
-            self.has_gga = True
+            with self.gps_lock:
+                self.gps_data.update(gga_data)
+                self.has_gga = True
+                if self.has_gga and self.has_rmc:
+                    gps_data = dict(self.gps_data)
+                    self.has_gga = False
+                    self.has_rmc = False
 
-        elif line.startswith(("$GNRMC", "$GPRMC")):
+        elif line.startswith(RMC_PREFIXES):
             rmc_data = parse_rmc(line)
             if rmc_data is None:
                 return
 
-            self.gps_data.update(rmc_data)
-            self.has_rmc = True
+            with self.gps_lock:
+                self.gps_data.update(rmc_data)
+                self.has_rmc = True
+                if self.has_gga and self.has_rmc:
+                    gps_data = dict(self.gps_data)
+                    self.has_gga = False
+                    self.has_rmc = False
 
-        if self.has_gga and self.has_rmc:
-            self.publish_gps_data()
-            self.has_gga = False
-            self.has_rmc = False
+        if gps_data is not None:
+            self.publish_gps_data(gps_data)
 
-    def publish_gps_data(self):
-        if not self.gps_data["fix"]:
+    def publish_gps_data(self, gps_data):
+        if not gps_data["fix"]:
             self.logging.warning(f"Waiting for fix ({round(time.time() - self.last_fix)}s)", throttle_duration_sec=5)
             return
 
         msg = String()
         msg.data = json.dumps(
             {
-                "lat": self.gps_data["lat"],
-                "lon": self.gps_data["lon"],
-                "track_angle": self.gps_data["heading"],
-                "velocity": self.gps_data["speed"],
-                "fix_type": self.gps_data["fix_text"],
-                "rtk_data": self.gps_data["rtk_data"],
-                "satellites": self.gps_data["satellites"],
-                "hdop": self.gps_data["hdop"],
+                "lat": gps_data["lat"],
+                "lon": gps_data["lon"],
+                "track_angle": gps_data["heading"],
+                "velocity": gps_data["speed"],
+                "fix_type": gps_data["fix_text"],
+                "rtk_data": gps_data["rtk_data"],
+                "satellites": gps_data["satellites"],
+                "hdop": gps_data["hdop"],
             }
         )
 
@@ -222,6 +255,10 @@ class GPS(Node):
         self.last_fix = time.time()
 
     def destroy_node(self):
+        if hasattr(self, "stop_event"):
+            self.stop_event.set()
+        if hasattr(self, "reader_thread") and self.reader_thread.is_alive():
+            self.reader_thread.join(timeout=1.0)
         if hasattr(self, "serial_port") and self.serial_port.is_open:
             self.serial_port.close()
         super().destroy_node()
