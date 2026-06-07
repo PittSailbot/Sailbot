@@ -38,6 +38,7 @@ setup(
         "console_scripts": [
             "mcu_bridge = sailbot.peripherals.mcu_proto_bridge:main",
             "gps = sailbot.peripherals.gps:main",
+            "rtk = sailbot.peripherals.rtk:main",
             "cameraServos = sailbot.peripherals.cameraServos:main",
             "main = sailbot.main:main",
             "website = sailbot.websiteHosting.website:ros_main",
