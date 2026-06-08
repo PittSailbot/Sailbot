@@ -214,6 +214,7 @@ class Website(Node):
 
         self.boat_controlState = None
         self.boat_target = Waypoint(None, None)
+        self.waypoints = []
         self.boat_event_coords = []
         self.warning_count = 0
         self.error_count = 0
@@ -230,6 +231,7 @@ class Website(Node):
         self.compass_offset_pub = self.create_publisher(Float32, "/offset_compass", 10)
         self.setEventPub = self.create_publisher(String, "/setEvent", 10)
         self.setEventTargetPub = self.create_publisher(String, "/set_event_target", 10)
+        self.next_gps_pub = self.create_publisher(String, "/next_gps", 10)
 
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
@@ -558,7 +560,15 @@ def add_waypoint():
         longitude = request.form.get("longitude")
         name = request.form.get("name")
 
-        DATA.waypoints.append({"lat": latitude, "lon": longitude, "name": name})
+        try:
+            latitude_value = float(latitude)
+            longitude_value = float(longitude)
+        except (TypeError, ValueError):
+            return jsonify({"status": "failure", "message": "Invalid waypoint coordinates"}), 400
+
+        waypoint = {"lat": latitude, "lon": longitude, "name": name}
+        DATA.waypoints.append(waypoint)
+        DATA.next_gps_pub.publish(Waypoint(latitude_value, longitude_value).to_msg())
 
         return jsonify({"status": "success", "message": "Waypoint added successfully"})
 
