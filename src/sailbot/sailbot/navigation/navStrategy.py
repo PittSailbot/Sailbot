@@ -147,12 +147,13 @@ class NavigationStrategy(Node):
             sail_angle = boatMath.remap(apparent_wind_angle, 90, 135, 50.0, 80.0)
         else:
             # Broad reach to running
-            sail_percent = 100.0
+            sail_angle = 100.0
 
         msg = Float32()
-        msg.data = float(sail_percent)
+        msg.data = float(sail_angle)
         self.cmd_sail_pub.publish(msg)
 
     def heave_to(self):
         self.cmd_sail_pub.publish(Float32(data=100.0))
+        self.cmd_jib_pub.publish(Float32(data=0.0))
         self.cmd_rudder_pub.publish(Float32(data=0.0))
