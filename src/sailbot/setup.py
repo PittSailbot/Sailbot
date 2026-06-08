@@ -50,7 +50,7 @@ setup(
             "searchEvent = sailbot.events.DummyEventSearch:main",
             "heaveTo = sailbot.events.heaveTo:main",
             "tack_navigation = sailbot.navigation.TackingNavStrategy:main",
-            "jybe_navigation = sailbot.navigation.JybingNavStrategy:main",
+            "jybe_navigation = sailbot.navigation.jybingNavStrategy:main",
             "actionManager = sailbot.ActionManager:main",
         ],
     },
