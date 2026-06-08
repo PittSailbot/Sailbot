@@ -10,6 +10,7 @@ from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.utils import boatMath
+from sailbot.utils.utils import Waypoint
 
 from sailbot.navigation.navStrategy import NavigationStrategy
 
@@ -32,12 +33,21 @@ class JibePhase(Enum):
 class JibingNavigation(NavigationStrategy):
     """Autonomously navigates using downwind zig-zag + controlled jibing"""
 
+    # CONSTANTS
+    # crossing angles to consider the boat to have crossed the wind
+    LOW_CROSSING_ANGLE = 160
+    HIGH_CROSSING_ANGLE = 200
+    
+    # deadband to ignore potential noisy wind data
+    DEADBAND_LOW = 170
+    DEADBAND_HIGH = 190
+
     def __init__(self):
         super().__init__()
 
         # Jibe attributes
         self.jibe_direction = JibeDirection.JIBING_STARBOARD
-        self.jibing = False
+        self.is_jibing = False
         self.phase = JibePhase.IDLE
         self.prev_wind_angle = None
 
@@ -48,31 +58,22 @@ class JibingNavigation(NavigationStrategy):
 
         self.pre_jibe_sail = 0.7   # sheet in before jibe
         self.post_jibe_sail = 1.0  # let sails out after
-        
-        # crossing angles to consider the boat to have crossed the wind
-        self.LOW_CROSSING_ANGLE = 160
-        self.HIGH_CROSSING_ANGLE = 200
-        
-        # deadband to ignore potential noisy wind data
-        self.DEADBAND_LOW = 170
-        self.DEADBAND_HIGH = 190
 
     # =========================================================
 
     def tick(self):
-        """Update Navigation decision-making, setting sail/jib/rudder"""
-
         # always keep sails optimized
         self.auto_adjust_sail()
 
-        self.go_to_gps(self.wp.target_waypoint)
+        if self.wp.target_waypoint is not None:
+            self.go_to_gps(self.wp.target_waypoint)
 
     # =========================================================
 
-    def go_to_gps(self, target):
+    def go_to_gps(self, target: Waypoint):
         """
         Moves the boat to the target GPS using:
-        - Broad reach zig-zag
+        - Broad reach heading
         - Controlled jibing when switching sides
         """
 
@@ -90,17 +91,18 @@ class JibingNavigation(NavigationStrategy):
         # compute broad reach heading based on jibe direction
         desired_heading = self.reach_heading(downwind, self.jibe_direction)
 
-        # decide when to jibe
+        # get 
         angle_to_target = boatMath.degrees_between(desired_heading, target_angle)
 
-        if angle_to_target > 60 and not self.jibing:
+        # decide when to jibe
+        if angle_to_target > 60 and not self.is_jibing:
             self.logging.info("Triggering jibe (crossing wind with stern)")
-            self.jibing = True
+            self.is_jibing = True
             self.phase = JibePhase.PREPARE
             return
 
         # if currently jibing, keep jibing
-        if self.jibing:
+        if self.is_jibing:
             self.complete_jibe()
             return
 
@@ -109,7 +111,7 @@ class JibingNavigation(NavigationStrategy):
 
     # =========================================================
 
-    def turn_to_angle(self, target_angle):
+    def turn_to_angle(self, target_angle: int | float):
         """
         Sets rudder to turn toward target heading
         """
@@ -122,12 +124,11 @@ class JibingNavigation(NavigationStrategy):
             self.cmd_rudder_pub.publish(Float32(data=self.RUDDER_CENTER))
             return
 
-        turning_left = (self.boat_heading - target_angle) % 360 < 180
-
-        if turning_left:
-            rudder_angle = abs(self.boat_heading - target_angle)
-        else:
-            rudder_angle = -abs(self.boat_heading - target_angle)
+        rudder_angle = abs(self.boat_heading - target_angle)
+        
+        # not turning left, so turn right
+        if not (self.boat_heading - target_angle) % 360 < 180:
+            rudder_angle *= -1
 
         # smooths out turning
         rudder_angle *= self.turn_slow_factor
@@ -139,7 +140,8 @@ class JibingNavigation(NavigationStrategy):
 
     # =========================================================
     
-    def reach_heading(self, downwind, direction):
+    def reach_heading(self, downwind: int | float, direction: JibeDirection) -> int | float:
+        """ Find the broad reach heading given wind and jibe direction """
         return (
             (downwind - self.reach_angle) % 360
             if direction == JibeDirection.JIBING_STARBOARD
@@ -230,7 +232,7 @@ class JibingNavigation(NavigationStrategy):
 
             self.logging.info("Jibe complete")
 
-            self.jibing = False
+            self.is_jibing = False
             self.phase = JibePhase.IDLE
             self.prev_wind_angle = None
             

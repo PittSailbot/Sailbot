@@ -10,7 +10,8 @@ from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.navigation.navStrategy import NavigationStrategy
-from sailbot.utils import boatMath, utils
+from sailbot.utils import boatMath
+from sailbot.utils.utils import Waypoint
 
 
 class Mode(Enum):
@@ -47,12 +48,13 @@ class TackingNavigationStrategy(NavigationStrategy):
     def tick(self):
         """Update Navigation decision-making, setting sail/jib/rudder"""
         self.status = f"{self.wp}"
-        self.go_to_gps(self.wp.target_waypoint)
+        if self.wp.target_waypoint is not None:
+            self.go_to_gps(self.wp.target_waypoint)
         if (str(self.status) != str(self.prev_status)):
             self.logging.info(self.status)
             self.prev_status = self.status
 
-    def go_to_gps(self, target):
+    def go_to_gps(self, target: Waypoint):
         """
         Moves the boat to the target GPS
         Args:
@@ -121,7 +123,7 @@ class TackingNavigationStrategy(NavigationStrategy):
         else:
             self.turn_to_angle(target_angle)
 
-    def turn_to_angle(self, target_angle):
+    def turn_to_angle(self, target_angle: int | float):
         """
         Sets the rudder once to turn the board towards the specified compass angle
             - Does NOT recenter the rudder once it faces the specified angle; only checked when function is called

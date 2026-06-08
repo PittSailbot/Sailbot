@@ -60,26 +60,26 @@ class NavigationStrategy(Node):
         self.status = ""  # Additional text displayed on agent label
         self.prev_status = None
 
-    def next_gps_callback(self, msg):
+    def next_gps_callback(self, msg: String):
         next_gps = Waypoint.from_msg(msg)
         self.wp.append_waypoint(next_gps)
         self.logging.info(f"Navigating to {next_gps}")
 
-    def control_state_callback(self, msg):
+    def control_state_callback(self, msg: String):
         self.control_state = ControlState.fromRosMessage(msg)
 
-    def windvane_callback(self, msg):
+    def windvane_callback(self, msg: String):
         self.last_wind_time = self.get_clock().now()
         angle = float(msg.data)
         self.wind_angle = angle % 360
         self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle)
 
-    def imu_callback(self, msg):
+    def imu_callback(self, msg: String):
         self.last_imu_time = self.get_clock().now()
         imu_data = ImuData.fromRosMessage(msg)
         self.boat_heading = (imu_data.yaw) % 360
 
-    def gps_callback(self, msg):
+    def gps_callback(self, msg: String):
         now = self.get_clock().now()
         new_pos = Waypoint.from_msg(msg)
 
@@ -87,7 +87,7 @@ class NavigationStrategy(Node):
         self.boat_position = new_pos
         self.wp.update_position(self.boat_position)
 
-    def speed_callback(self, msg):
+    def speed_callback(self, msg: String):
         self.boat_speed = float(msg.data)
 
     def __str__(self):
