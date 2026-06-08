@@ -46,11 +46,6 @@ class TackingNavigationStrategy(NavigationStrategy):
 
     def tick(self):
         """Update Navigation decision-making, setting sail/jib/rudder"""
-        if self.wp.target_waypoint is None:
-            self.heave_to()
-            self.logging.info("Awaiting next gps", throttle_duration_sec=60)
-            return
-            
         self.status = f"{self.wp}"
         self.go_to_gps(self.wp.target_waypoint)
         if (str(self.status) != str(self.prev_status)):

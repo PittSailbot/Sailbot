@@ -103,6 +103,11 @@ class NavigationStrategy(Node):
 
     def update_navigation(self):
         """Timer callback that checks sensors before calling the abstract tick method."""
+        if self.wp.target_waypoint is None:
+            self.heave_to()
+            self.logging.info("Awaiting next gps", throttle_duration_sec=60)
+            return
+        
         now = self.get_clock().now()
 
         gps_stale = (now - self.last_gps_time).nanoseconds / 1e9 > 90

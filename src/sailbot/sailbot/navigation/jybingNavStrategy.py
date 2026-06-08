@@ -57,32 +57,15 @@ class JibingNavigation(NavigationStrategy):
         self.DEADBAND_LOW = 170
         self.DEADBAND_HIGH = 190
 
-        self.latest_waypoint = None
-
     # =========================================================
 
     def tick(self):
         """Update Navigation decision-making, setting sail/jib/rudder"""
 
-        # No waypoint → do nothing
-        if self.latest_waypoint is None:
-            return
-
-        target = self.latest_waypoint
-
-        # Check if reached waypoint
-        if boatMath.distance_between(self.boat_position, target) < float(c.config["CONSTANTS"]["reached_waypoint_distance"]):
-            self.logging.info(f"Reached {target}. Heaving.")
-
-            self.cmd_sail_pub.publish(Float32(data=0.0))
-            self.cmd_jib_pub.publish(Float32(data=0.0))
-            self.cmd_rudder_pub.publish(Float32(data=0.0))
-            return
-
         # always keep sails optimized
         self.auto_adjust_sail()
 
-        self.go_to_gps(target)
+        self.go_to_gps(self.wp.target_waypoint)
 
     # =========================================================
 
