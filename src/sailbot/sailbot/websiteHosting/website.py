@@ -47,11 +47,6 @@ MY_IP = s.getsockname()[0]  # or set to static '192.168.1.x'
 app = Flask(__name__)
 app.secret_key = "sailbot"
 
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if str(DOCKER).lower() == "true" else False
-PI_DOCKER = os.environ.get("IS_PI_DOCKER", False)
-PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
-
 # Allow runtime overrides without forcing a specific deployment mode.
 PORTS = os.environ.get("PORTS", "5000:5000")
 PORT = int(PORTS.split(":")[0])
@@ -216,13 +211,6 @@ class Website(Node):
 
         self.logDB = LogDatabase(self)
         self.displayedBreadcrumbs = []  # self.logDB.get_breadcrumbs_from_logs()
-
-        self.waypoints = [
-            {"name": "Waypoint 1", "lat": "42.849135", "lon": "-70.966314"},
-            {"name": "Waypoint 2", "lat": "42.849135", "lon": "-70.996314"},
-        ]
-
-        self.circles = [{"lat": "42.849135", "lon": "-70.976314", "radius": 50}]
 
         self.boat_controlState = None
         self.boat_target = Waypoint(None, None)
@@ -747,8 +735,3 @@ def get_heading_coords():
     hx, hy = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, DATA.compass.angle, 150)
 
     return [[x, y], [hx, hy]]
-
-
-if __name__ == "__main__":
-    # main()
-    pass
