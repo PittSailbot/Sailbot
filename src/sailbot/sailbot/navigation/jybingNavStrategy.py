@@ -157,10 +157,11 @@ class JibingNavigation(NavigationStrategy):
     # =========================================================
     
     def reach_heading(self, downwind, direction):
-        if direction == JibeDirection.JIBING_STARBOARD:
-            return (downwind - self.reach_angle) % 360
-        else:
-            return (downwind + self.reach_angle) % 360
+        return (
+            (downwind - self.reach_angle) % 360
+            if direction == JibeDirection.JIBING_STARBOARD
+            else (downwind + self.reach_angle) % 360
+        )
 
     # =========================================================
 
