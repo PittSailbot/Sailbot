@@ -48,6 +48,7 @@ setup(
             "networkLogger = sailbot.utils.NetworkLogger:main",
             "dummyEvent = sailbot.events.DummyEvent:main",
             "searchEvent = sailbot.events.DummyEventSearch:main",
+            "stationKeepingMVP = sailbot.events.stationKeepingMVP:main",
             "heaveTo = sailbot.events.heaveTo:main",
             "tack_navigation = sailbot.navigation.TackingNavStrategy:main",
             "jybe_navigation = sailbot.navigation.jybingNavStrategy:main",

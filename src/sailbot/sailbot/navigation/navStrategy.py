@@ -62,6 +62,8 @@ class NavigationStrategy(Node):
 
     def next_gps_callback(self, msg: String):
         next_gps = Waypoint.from_msg(msg)
+        if (next_gps in self.wp.waypoints):
+            return
         self.wp.append_waypoint(next_gps)
         self.logging.info(f"Navigating to {next_gps}")
 

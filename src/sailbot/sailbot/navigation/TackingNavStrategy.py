@@ -160,10 +160,10 @@ class TackingNavigationStrategy(NavigationStrategy):
 
         if turning_left:
             self.status += f"\n  Turning PORT from {self.boat_heading} degrees to {target_angle} degrees"
-            rudder_angle = self.RUDDER_MAX
+            rudder_angle = self.RUDDER_MIN
         else:
             self.status += f"\n  Turning STARBOARD from {self.boat_heading} degrees to {target_angle} degrees"
-            rudder_angle = self.RUDDER_MIN
+            rudder_angle = self.RUDDER_MAX
 
         # Constrain rudder angle [MIN, MAX]
         rudder_angle = max(min(rudder_angle, self.RUDDER_MAX), self.RUDDER_MIN)
