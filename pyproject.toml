@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib",
     "catkin-pkg",
     "rosdistro",
-    "dotenv"
+    "python-dotenv"
 ]
 
 [dependency-groups]

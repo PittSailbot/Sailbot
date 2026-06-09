@@ -28,7 +28,7 @@ setup(
     },
     data_files=data_files,
     include_package_data=False,
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "python-dotenv"],
     zip_safe=True,
     maintainer="Pitt Sailbot",
     maintainer_email="pi@todo.todo",
