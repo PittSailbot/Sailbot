@@ -112,6 +112,10 @@ void writeProtobufToPi(TeensyData* teensy_data) {
         static_cast<uint8_t>(payload_len & 0xFF),
         static_cast<uint8_t>((payload_len >> 8) & 0xFF),
     };
+    const size_t frame_len = sizeof(header) + payload_len;
+    if (Serial.availableForWrite() < frame_len) {
+      return;
+    }
     Serial.write(header, sizeof(header));
     Serial.write(mcu_buffer, payload_len);
     // Serial.printf(
