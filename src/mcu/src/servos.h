@@ -64,6 +64,10 @@ class ServoInterface {
    */
   int clampServoSpeed(int requestedAngle) {
     int delta_angle = abs(requestedAngle - this->angle);
+    if (delta_angle == 0) {
+      return requestedAngle;
+    }
+
     this->speed_credit += this->max_deg_s * (this->dt / 1000.0f);
 
     int max_delta = static_cast<int>(this->speed_credit);
