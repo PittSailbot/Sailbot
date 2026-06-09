@@ -83,7 +83,7 @@ class MCUBridge(Node):
 
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
-        self.compass_offset = 165
+        self.compass_offset = 72
 
         self.gps_pub = self.create_publisher(String, "/GPS", 1)
         self.speed_pub = self.create_publisher(Float32, "/speed", 1)
@@ -185,7 +185,9 @@ class MCUBridge(Node):
         # self.logging.warning("No RC data", throttle_duration_sec=60)
 
         if teensy_data.HasField("windvane"):
-            self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
+            offset = 10
+            wind_angle = (teensy_data.windvane.wind_angle - offset) % 360
+            self.wind_angle_pub.publish(String(data=str(wind_angle)))
 
         if teensy_data.HasField("gps"):
             self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
