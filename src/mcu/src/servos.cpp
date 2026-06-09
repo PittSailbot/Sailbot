@@ -9,28 +9,33 @@
 
 // ===== GPIO Servo Driver ======
 GPIOServoInterface::GPIOServoInterface(int pin, uint16_t min_pwm, uint16_t max_pwm,
-                                       uint16_t max_angle) {
+                                       uint16_t max_angle, uint16_t max_deg_s) {
   this->min_pwm = min_pwm;
   this->max_pwm = max_pwm;
   this->max_angle = max_angle;
+  this->max_deg_s = max_deg_s;
   this->pin_number = pin;
   this->angle = 0;
   servo.attach(pin);
 }
 
 GPIOServoInterface::GPIOServoInterface(int pin, ServoSpecData spec)
-    : GPIOServoInterface(pin, spec.min_pwm, spec.max_pwm, spec.max_angle) {
+    : GPIOServoInterface(pin, spec.min_pwm, spec.max_pwm, spec.max_angle, spec.max_deg_s) {
 }
 
 void GPIOServoInterface::write(int angle) {
-  if (angle == this->last_angle) {
-    return;  // already at position, no need to rewrite
-  }
+  // if (angle == this->last_angle) {
+  //   return;  // already at position, no need to rewrite
+  // }
   this->last_angle = angle;
   angle = constrain(angle, min_angle, max_angle);
 
+  angle = clampServoSpeed(angle);
+
   int pwm = map(angle, min_angle, max_angle, min_pwm, max_pwm);
   servo.writeMicroseconds(pwm);
+
+  this->dt = 0;
 
   this->angle = angle;
 }
@@ -39,19 +44,24 @@ void GPIOServoInterface::write(int angle) {
 extern Adafruit_PWMServoDriver driver;
 
 I2CServoInterface::I2CServoInterface(int i2c_channel, uint16_t min_pwm, uint16_t max_pwm,
-                                     uint16_t max_angle) {
+                                     uint16_t max_angle, uint16_t max_deg_s) {
   this->channel = i2c_channel;
   this->min_pwm = min_pwm;
   this->max_pwm = max_pwm;
   this->max_angle = max_angle;
+  this->max_deg_s = max_deg_s;
   this->angle = 0;
 }
 
 void I2CServoInterface::write(int angle) {
   angle = constrain(angle, min_angle, max_angle);
 
+  angle = clampServoSpeed(angle);
+
   int pwm = map(angle, min_angle, max_angle, min_pwm, max_pwm);
   driver.writeMicroseconds(channel, pwm);
+
+  this->dt = 0;
 
   this->angle = angle;
 }

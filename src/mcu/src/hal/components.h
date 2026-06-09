@@ -60,19 +60,20 @@ struct ServoSpecData {
   uint16_t min_pwm;
   uint16_t max_pwm;
   uint16_t max_angle;
+  uint16_t max_deg_s; // Excess torque can damage mounts, limits speed of servo
   const char* name;
 };
 
 namespace ServoSpecs {
 // Bilda servos (sails) https://www.servocity.com/2000-series-5-turn-dual-mode-servo-25-2-torque/
-constexpr ServoSpecData BILDA = {500, 2500, 1800, "BILDA"};
+constexpr ServoSpecData BILDA = {500, 2500, 1800, 600, "BILDA"};
 // HiTech servos  (rudder) https://www.servocity.com/d845wp-servo/?sku=3684500
-constexpr ServoSpecData HITECH = {870, 2320, 146, "HiTech"};
+constexpr ServoSpecData HITECH = {870, 2320, 146, 30, "HiTech"};
 // Mini boat servo winch (sails)
 // https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/sail-winch-servo-set-df65
-constexpr ServoSpecData JOY880545 = {1000, 2000, 612, "JoySway Winch"};
+constexpr ServoSpecData JOY880545 = {1000, 2000, 612, 612, "JoySway Winch"};
 // Mini boat servo (rudder)
 // https://radiosailing.net/collections/dragonforce-65-v6-replacement-parts/products/new-digital-metal-gear-rudder-servo_2025
-constexpr ServoSpecData JOY881504 = {1000, 2000, 90, "JoySway Servo"};
-constexpr ServoSpecData DEFAULT = {1000, 2000, 180, "Default"};
+constexpr ServoSpecData JOY881504 = {1000, 2000, 90, 90, "JoySway Servo"};
+constexpr ServoSpecData DEFAULT = {1000, 2000, 180, 90, "Default"};
 }  // namespace ServoSpecs
