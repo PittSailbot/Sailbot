@@ -9,6 +9,7 @@
 /log
 /ros_logs
 log_database.db
+log_database.db-journal
 /.vscode
 .ipynb_checkpoints
 .idea/
