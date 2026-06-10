@@ -47,7 +47,7 @@ class MCUBridge(Node):
     """
 
     def __init__(self):
-        super().__init__("transceiver")
+        super().__init__("MCU_Bridge")
         self.logging = self.get_logger()
 
         self._frame_magic = bytes([0xA5, 0x5A])
@@ -86,7 +86,12 @@ class MCUBridge(Node):
 
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
-        self.compass_offset = 222
+        self.compass_offset = 180
+        # 270 = BNO055 y-backward towards bow
+        # 180 = BNO055 x-forward towards bow
+        # 90 = BNO055 y-forward towards bow
+        # 0 = BNO055 x-backward towards bow
+
 
         self.gps_pub = self.create_publisher(String, "/GPS", 1)
         self.speed_pub = self.create_publisher(Float32, "/speed", 1)
