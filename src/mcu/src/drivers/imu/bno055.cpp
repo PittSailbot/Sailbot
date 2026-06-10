@@ -82,30 +82,24 @@ bool BNO055_IMU::read(IMU* imu) {
   // Check sensor calibration state
   uint8_t system, gyro, accel, mag = 0;
   bno.getCalibration(&system, &gyro, &accel, &mag);
-  if (last_warn > 10000) {
-    last_warn = 0;
-    if (!this->calibrated) {
-      if (mag == 3 || gyro == 3) {
+  if (!this->calibrated) {
+    if (mag == 3 && gyro == 3) {
         Serial.println("I: IMU calibrated");
         this->calibrated = true;
-      } else {
-        if (gyro != 3) {
-          // If this happens, leave the IMU stationary for a few seconds
-          Serial.println("W: IMU Gyro not fully calibrated, readings will be inaccurate!");
-        }
-        if (mag != 3) {
-          // If this happens, try moving the imu around in a figure-8 pattern
-          Serial.println("W: IMU Magnetometer not fully calibrated, readings will be inaccurate!");
-        }
-        // Do not read from sensor since it was never calibrated
-        return false;
       }
-    } else {
-      if (mag < 2 || gyro < 2) {
-        // Warn, but still read from sensor since poor data > no data when out on the water
-        Serial.println("W: IMU lost calibration, readings may be inaccurate");
-      }
+  }
+
+  if (gyro < 3) {
+    if (last_warn > 60000) {
+      Serial.printf("W: IMU Gyro not calibrated (%d/3), readings may be inaccurate!\n");
     }
+    this->calibrated = false;
+  }
+  if (mag < 3) {
+    if (last_warn > 60000) {
+      Serial.printf("W: IMU Magnetometer not calibrated (%d/3), readings may be inaccurate!\n");
+    }
+    this->calibrated = false;
   }
 
   // Read sensor data

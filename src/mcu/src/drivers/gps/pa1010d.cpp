@@ -50,7 +50,7 @@ bool PA1010D_GPS::read(GPSData* data) {
   }
 
   if (!gps.fix) {
-    if (last_warn_gps > 10000) {
+    if (last_warn_gps > 60000) {
       last_warn_gps = 0;
       Serial.println("W: No GPS fix");
     }
