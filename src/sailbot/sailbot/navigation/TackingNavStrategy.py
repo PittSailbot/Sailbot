@@ -19,7 +19,6 @@ class Mode(Enum):
     TACKING_PORT = 2
 
 
-
 # TODO: Implement Waypoint from serialized ROS message
 class TackingNavigationStrategy(NavigationStrategy):
     """Autonomously navigates the boat to a desired GPS waypoint
@@ -33,7 +32,6 @@ class TackingNavigationStrategy(NavigationStrategy):
         - /cmd_rudder (String)
         - /cmd_sail (String)
     """
-
 
     def __init__(self):
         super().__init__()
@@ -50,7 +48,7 @@ class TackingNavigationStrategy(NavigationStrategy):
         self.status = f"{self.wp}"
         if self.wp.target_waypoint is not None:
             self.go_to_gps(self.wp.target_waypoint)
-        if (str(self.status) != str(self.prev_status)):
+        if str(self.status) != str(self.prev_status):
             self.logging.info(self.status)
             self.prev_status = self.status
 
@@ -63,7 +61,7 @@ class TackingNavigationStrategy(NavigationStrategy):
         target_angle = boatMath.angle_to_point(self.boat_position.lat, self.boat_position.lon, target.lat, target.lon)
 
         start_wp = None
-        if hasattr(self.wp, 'current_waypoint_index') and self.wp.current_waypoint_index > 0:
+        if hasattr(self.wp, "current_waypoint_index") and self.wp.current_waypoint_index > 0:
             start_wp = self.wp.waypoints[self.wp.current_waypoint_index - 1]
 
         # Cross track error compensation
@@ -73,7 +71,7 @@ class TackingNavigationStrategy(NavigationStrategy):
             xte_gain = 5.0
             max_xte_correction = 45
             correction = max(-max_xte_correction, min(max_xte_correction, xte * xte_gain))
-            
+
             # Apply XTE correction to target_angle (positive XTE -> steer left -> decrease angle)
             target_angle = (target_angle - correction) % 360
 
@@ -93,8 +91,8 @@ class TackingNavigationStrategy(NavigationStrategy):
         if self.mode is None and boatMath.is_within_angle(target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
             # Target is in no-go zone, implement cross-track corridor hysteresis (laylines)
             cross_track_corridor = 20.0
-            
-            if not hasattr(self, 'current_upwind_tack') or self.current_upwind_tack is None:
+
+            if not hasattr(self, "current_upwind_tack") or self.current_upwind_tack is None:
                 if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
                     self.current_upwind_tack = Mode.TACKING_PORT
                 else:
@@ -194,7 +192,7 @@ class TackingNavigationStrategy(NavigationStrategy):
                 rudder_angle = self.RUDDER_MIN
 
             is_in_irons = boatMath.is_within_angle(self.boat_heading, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
-    
+
             if not is_in_irons and closest == self.mode:
                 self.logging.info(f"{tack_or_jibe} Complete")
                 self.emergency_tack = False
