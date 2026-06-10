@@ -67,6 +67,8 @@ struct ServoSpecData {
 namespace ServoSpecs {
 // Bilda servos (sails) https://www.servocity.com/2000-series-5-turn-dual-mode-servo-25-2-torque/
 constexpr ServoSpecData BILDA = {500, 2500, 1800, 600, "BILDA"};
+constexpr ServoSpecData BILDA_SAIL = {500, 2500, 1800, 600, "BILDA_SAIL"};
+constexpr ServoSpecData BILDA_JIB = {1225, 1775, 1800, 600, "BILDA_JIB"};
 // HiTech servos  (rudder) https://www.servocity.com/d845wp-servo/?sku=3684500
 constexpr ServoSpecData HITECH = {870, 2320, 146, 30, "HiTech"};
 // Mini boat servo winch (sails)
