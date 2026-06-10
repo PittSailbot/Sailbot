@@ -46,14 +46,15 @@ class JibingNavigation(NavigationStrategy):
         super().__init__()
 
         # Jibe attributes
-        self.jibe_direction = JibeDirection.JIBING_STARBOARD
+        self.jibe_direction = None
         self.is_jibing = False
         self.phase = JibePhase.IDLE
         self.jibe_target_heading = None
         self.prev_wind_angle = None
 
         # sailing parameters
-        self.reach_angle = 140  # degrees off wind (broad reach)
+        # valid reach angles (degrees off wind)
+        self.reach_angles = range(90, 151, 10)
         self.turn_slow_factor = 0.6
         self.rudder_mult = 0.33
 
@@ -69,24 +70,6 @@ class JibingNavigation(NavigationStrategy):
 
         if self.wp.target_waypoint is not None:
             self.go_to_gps(self.wp.target_waypoint)
-
-    # =========================================================
-
-    def target_requires_jibe(self, target_angle: float, downwind: float) -> bool:
-        """
-        Returns True if the waypoint lies on the opposite
-        side of the downwind axis from the current gybe.
-        """
-
-        relative = (target_angle - downwind + 360) % 360
-
-        target_side = (
-            JibeDirection.JIBING_PORT
-            if relative < 180
-            else JibeDirection.JIBING_STARBOARD
-        )
-
-        return target_side != self.jibe_direction
     
     # =========================================================
 
@@ -107,18 +90,23 @@ class JibingNavigation(NavigationStrategy):
 
         # compute downwind direction
         downwind = (self.wind_angle + self.boat_heading + 180) % 360
+        
+        # check initial jibe direction
+        if self.jibe_direction is None:
+            _, self.jibe_direction, _ = self.best_reach_heading(
+                downwind,
+                target_angle
+            )
 
-        # compute broad reach heading based on jibe direction
-        desired_heading = self.reach_heading(downwind, self.jibe_direction)
+        # compute best reach heading based on jibe direction
+        desired_heading, desired_direction, desired_reach_angle = self.best_reach_heading(downwind, target_angle)
 
         # decide when to jibe
-        if self.target_requires_jibe(target_angle, downwind) and not self.is_jibing:
+        if desired_direction != self.jibe_direction and not self.is_jibing:
             self.jibe_target_heading = self.reach_heading(
                 downwind,
-                # opposite direction from current jibe
-                JibeDirection.JIBING_PORT
-                if self.jibe_direction == JibeDirection.JIBING_STARBOARD
-                else JibeDirection.JIBING_STARBOARD
+                desired_direction,
+                desired_reach_angle
             )
             self.logging.info("Triggering jibe (crossing wind with stern)")
             self.is_jibing = True
@@ -172,12 +160,53 @@ class JibingNavigation(NavigationStrategy):
 
     # =========================================================
     
-    def reach_heading(self, downwind: int | float, direction: JibeDirection) -> int | float:
-        """ Find the broad reach heading given wind and jibe direction """
+    def best_reach_heading(self, downwind: int | float, target_angle: int | float) -> tuple[int | float, JibeDirection, int | float]:
+        best_heading = 180
+        best_direction = JibeDirection.JIBING_STARBOARD
+        best_reach_angle = 140
+        best_error = float("inf")
+        for reach_angle in self.reach_angles:
+            candidates = [
+                (
+                    self.reach_heading(
+                        downwind,
+                        JibeDirection.JIBING_PORT,
+                        reach_angle
+                    ),
+                    JibeDirection.JIBING_PORT
+                ),
+                (
+                    self.reach_heading(
+                        downwind,
+                        JibeDirection.JIBING_STARBOARD,
+                        reach_angle
+                    ),
+                    JibeDirection.JIBING_STARBOARD
+                )
+            ]
+
+            for heading, direction in candidates:
+
+                error = boatMath.degrees_between(
+                    heading,
+                    target_angle
+                )
+
+                if error < best_error:
+                    best_error = error
+                    best_heading = heading
+                    best_direction = direction
+                    best_reach_angle = reach_angle
+        return best_heading, best_direction, best_reach_angle
+    
+    # =========================================================
+
+    def reach_heading(self, downwind: int | float, direction: JibeDirection, reach_angle: int | float) -> int | float:
+        """ Find the reach heading given wind and jibe direction """
         return (
-            (downwind - self.reach_angle) % 360
+            (downwind - reach_angle) % 360
             if direction == JibeDirection.JIBING_STARBOARD
-            else (downwind + self.reach_angle) % 360
+            else (downwind + reach_angle) % 360
         )
 
     # =========================================================
@@ -274,12 +303,6 @@ class JibingNavigation(NavigationStrategy):
             self.phase = JibePhase.IDLE
             self.prev_wind_angle = None
             self.jibe_target_heading = None
-            
-            # compute downwind and new reach heading based on direction
-            downwind = (self.wind_angle + self.boat_heading + 180) % 360
-            desired_heading = self.reach_heading(downwind, self.jibe_direction)
-
-            self.turn_to_angle(desired_heading)
 
             return
 
