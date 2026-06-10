@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import rclpy
 import serial
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import Bool, String
 
 load_dotenv()
 
@@ -130,6 +130,7 @@ class RTK(Node):
         self.logging.info(f"Reading/Writing GPS NMEA data from {port} at {GPS_BAUD} baud")
 
         self.pub = self.create_publisher(String, "/GPS", 1)
+        self.active_pub = self.create_publisher(Bool, "/gps/rtk_active", 1)
 
         self.gps_data = {
             "fix": False,
@@ -281,6 +282,7 @@ class RTK(Node):
 
     def publish_gps_data(self, gps_data):
         if not gps_data["fix"]:
+            self.active_pub.publish(Bool(data=False))
             self.logging.warning(f"Waiting for fix ({round(time.time() - self.last_fix)}s)", throttle_duration_sec=5)
             return
 
@@ -299,6 +301,7 @@ class RTK(Node):
         )
 
         self.pub.publish(msg)
+        self.active_pub.publish(Bool(data=True))
         self.logging.info(str(msg.data))
         self.last_fix = time.time()
 
