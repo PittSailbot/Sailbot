@@ -200,10 +200,10 @@ class TackingNavigationStrategy(NavigationStrategy):
 
         else:
             if self.mode == Mode.TACKING_STARBOARD:
-                rudder_angle = float(c.config["RUDDER"]["min_angle"])
+                rudder_angle = self.RUDDER_MIN
                 self.status += f"\n  Continuing {tack_or_jibe} Starboard"
             else:
-                rudder_angle = float(c.config["RUDDER"]["max_angle"])
+                rudder_angle = self.RUDDER_MAX
                 self.status += f"\n  Continuing {tack_or_jibe} Port"
 
             if (self.mode == Mode.TACKING_STARBOARD and (self.wind_angle) < 180) or self.mode == Mode.TACKING_PORT and (self.wind_angle > 180):
