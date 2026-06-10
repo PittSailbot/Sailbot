@@ -67,14 +67,14 @@ bool P3022_WindVane::read(WindVane* windvane) {
   // --- Final Validation ---
   if (errorFlag) {
     // The sensor reported an error
-    if (last_warn_windvane > 10000) {
+    if (last_warn_windvane > 60000) {
       last_warn_windvane = 0;
       Serial.println("E: WindVane Sensor Error!");
     }
     return false;
   } else if (parityError) {
     // The data was corrupted in transit
-    if (last_warn_windvane > 10000) {
+    if (last_warn_windvane > 60000) {
       last_warn_windvane = 0;
       Serial.println("W: WindVane Parity Error!");
     }
