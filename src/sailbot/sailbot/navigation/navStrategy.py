@@ -1,11 +1,13 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.navigation.waypointPlanner import WaypointPlanner
 from sailbot.utils import boatMath, utils
 from sailbot.utils.utils import ControlState, ImuData, Waypoint
+from sailbot_interfaces.msg import WaypointQueueState
 
 
 class NavigationStrategy(Node):
@@ -43,7 +45,19 @@ class NavigationStrategy(Node):
         self.no_go_zone_left_bound = 0  # Left-side close-haul to wind
         self.no_go_zone_right_bound = 0  # Right-side close-haul to wind
 
-        self.next_gps_sub = self.create_subscription(String, "/next_gps", self.next_gps_callback, 2)
+        state_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
+        self.queue_state_sub = self.create_subscription(
+            WaypointQueueState,
+            "/waypoint_queue_state",
+            self.queue_state_callback,
+            state_qos,
+        )
         self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 2)
         self.speed_sub = self.create_subscription(String, "/speed", self.speed_callback, 2)
         self.imu_sub = self.create_subscription(String, "/imu", self.imu_callback, 2)
@@ -60,12 +74,9 @@ class NavigationStrategy(Node):
         self.status = ""  # Additional text displayed on agent label
         self.prev_status = None
 
-    def next_gps_callback(self, msg: String):
-        next_gps = Waypoint.from_msg(msg)
-        if (next_gps in self.wp.waypoints):
-            return
-        self.wp.append_waypoint(next_gps)
-        self.logging.info(f"Navigating to {next_gps}")
+    def queue_state_callback(self, msg: WaypointQueueState):
+        waypoints = [Waypoint(wp.lat, wp.lon) for wp in msg.waypoints]
+        self.wp.set_waypoint_sequence(waypoints, current_waypoint_index=msg.current_index)
 
     def control_state_callback(self, msg: String):
         self.control_state = ControlState.fromRosMessage(msg)
@@ -87,7 +98,6 @@ class NavigationStrategy(Node):
 
         self.last_gps_time = now
         self.boat_position = new_pos
-        self.wp.update_position(self.boat_position)
 
     def speed_callback(self, msg: String):
         self.boat_speed = float(msg.data)

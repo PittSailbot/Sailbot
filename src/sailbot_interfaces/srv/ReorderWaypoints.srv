@@ -1,0 +1,5 @@
+uint32[] order
+---
+bool success
+string message
+sailbot_interfaces/WaypointQueueState state

@@ -25,6 +25,14 @@ def generate_launch_description():
             Node(
                 package="sailbot",
                 namespace="boat",
+                executable="waypointManager",
+                name="node_WaypointManager",
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
                 executable="tack_navigation",
                 name="node_Navigation",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],

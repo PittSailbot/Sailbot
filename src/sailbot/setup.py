@@ -53,6 +53,7 @@ setup(
             "tack_navigation = sailbot.navigation.TackingNavStrategy:main",
             "jybe_navigation = sailbot.navigation.jybingNavStrategy:main",
             "actionManager = sailbot.ActionManager:main",
+            "waypointManager = sailbot.waypoint_manager:main",
         ],
     },
 )

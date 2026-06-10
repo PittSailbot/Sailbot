@@ -188,6 +188,68 @@
             transform: translate(-50%, 0%) rotate(0deg) scale(0.2);
             opacity: 0.5;
         }
+
+        .waypoint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .waypoint-item {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.18);
+            cursor: grab;
+        }
+
+        .waypoint-item.dragging {
+            opacity: 0.55;
+        }
+
+        .waypoint-item.active {
+            border-color: #66d9ff;
+            box-shadow: 0 0 0 1px rgba(102, 217, 255, 0.35) inset;
+        }
+
+        .waypoint-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .waypoint-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .waypoint-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .waypoint-handle {
+            font-size: 18px;
+            line-height: 1;
+            user-select: none;
+            opacity: 0.8;
+        }
+
+        .waypoint-edit-form {
+            display: none;
+            margin-top: 8px;
+            gap: 8px;
+        }
+
+        .waypoint-edit-form input {
+            width: 100%;
+            margin-bottom: 6px;
+            box-sizing: border-box;
+        }
     </style>
 
     <body style="height:100%;margin:0;padding:0;">
@@ -227,6 +289,12 @@
                 <br>Name:
                 <br><span id="selectedLatitude"></span>
                 <br><span id="selectedLongitude"></span>
+            </div>
+
+            <br><br>
+            <div>
+                <strong>Waypoint Queue</strong>
+                <div id="waypointList" class="waypoint-list"></div>
             </div>
 
             <br><br>
@@ -736,6 +804,191 @@
             }
 
             let existingWaypoints = [];
+            let waypointDataCache = [];
+            let waypointDragSourceIndex = null;
+
+            function escapeHtml(value) {
+                return String(value ?? "").replace(/[&<>"]+/g, function(character) {
+                    const entityMap = {
+                        "&": "&amp;",
+                        "<": "&lt;",
+                        ">": "&gt;",
+                        '"': "&quot;",
+                    };
+                    return entityMap[character] || character;
+                });
+            }
+
+            function normalizeWaypointRows(rows) {
+                return (rows || []).map((waypointData, index) => ({
+                    ...waypointData,
+                    index: waypointData.index ?? index,
+                }));
+            }
+
+            function renderWaypointList(activeIndex = null) {
+                const waypointList = document.getElementById("waypointList");
+                if (!waypointList) {
+                    return;
+                }
+
+                waypointList.innerHTML = "";
+
+                waypointDataCache.forEach((waypointData, index) => {
+                    const item = document.createElement("div");
+                    item.className = "waypoint-item" + (activeIndex === index ? " active" : "");
+                    item.draggable = true;
+                    item.dataset.index = String(index);
+
+                    item.innerHTML = `
+                        <div class="waypoint-item-header">
+                            <div>
+                                <div><strong>${escapeHtml(waypointData.name || `Waypoint ${index + 1}`)}</strong></div>
+                                <div>${Number(waypointData.lat).toFixed(6)}, ${Number(waypointData.lon).toFixed(6)}</div>
+                            </div>
+                            <div class="waypoint-handle" title="Drag to reorder">⋮⋮</div>
+                        </div>
+                        <div class="waypoint-actions">
+                            <button type="button" data-action="edit">Edit</button>
+                            <button type="button" data-action="delete">Delete</button>
+                            <button type="button" data-action="select">Select</button>
+                        </div>
+                        <div class="waypoint-edit-form" id="edit-form-${index}">
+                            <input type="text" id="edit-name-${index}" value="${escapeHtml(waypointData.name || "")}" placeholder="Waypoint name">
+                            <input type="text" id="edit-lat-${index}" value="${waypointData.lat}" placeholder="Latitude">
+                            <input type="text" id="edit-lon-${index}" value="${waypointData.lon}" placeholder="Longitude">
+                            <div class="waypoint-actions">
+                                <button type="button" data-action="save">Save</button>
+                                <button type="button" data-action="cancel">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+
+                    item.addEventListener("dragstart", (event) => {
+                        waypointDragSourceIndex = index;
+                        item.classList.add("dragging");
+                        event.dataTransfer.effectAllowed = "move";
+                    });
+
+                    item.addEventListener("dragend", () => {
+                        item.classList.remove("dragging");
+                        waypointDragSourceIndex = null;
+                    });
+
+                    item.addEventListener("dragover", (event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                    });
+
+                    item.addEventListener("drop", async (event) => {
+                        event.preventDefault();
+                        const targetIndex = index;
+                        if (waypointDragSourceIndex === null || waypointDragSourceIndex === targetIndex) {
+                            return;
+                        }
+
+                        const nextOrder = waypointDataCache.map((_, idx) => idx);
+                        const [moved] = nextOrder.splice(waypointDragSourceIndex, 1);
+                        nextOrder.splice(targetIndex, 0, moved);
+                        await reorderWaypoints(nextOrder);
+                    });
+
+                    item.querySelector('[data-action="select"]').addEventListener("click", () => {
+                        updateSidebarWithWaypointDetails(waypointData);
+                    });
+
+                    item.querySelector('[data-action="edit"]').addEventListener("click", () => {
+                        const form = document.getElementById(`edit-form-${index}`);
+                        form.style.display = form.style.display === "flex" ? "none" : "flex";
+                        form.style.flexDirection = "column";
+                    });
+
+                    item.querySelector('[data-action="delete"]').addEventListener("click", async () => {
+                        await deleteWaypoint(index);
+                    });
+
+                    item.querySelector('[data-action="save"]').addEventListener("click", async () => {
+                        const updatedName = document.getElementById(`edit-name-${index}`).value;
+                        const updatedLat = document.getElementById(`edit-lat-${index}`).value;
+                        const updatedLon = document.getElementById(`edit-lon-${index}`).value;
+                        await updateWaypoint(index, updatedLat, updatedLon, updatedName);
+                    });
+
+                    item.querySelector('[data-action="cancel"]').addEventListener("click", () => {
+                        const form = document.getElementById(`edit-form-${index}`);
+                        form.style.display = "none";
+                    });
+
+                    waypointList.appendChild(item);
+                });
+            }
+
+            async function reloadWaypoints(activeIndex = null) {
+                const response = await fetch('/waypoints');
+                if (!response.ok) {
+                    throw Error(response.statusText);
+                }
+
+                const json = await response.json();
+                waypointDataCache = normalizeWaypointRows(json.waypoints);
+                renderWaypointList(activeIndex);
+                return waypointDataCache;
+            }
+
+            async function reorderWaypoints(order) {
+                const formData = new FormData();
+                formData.append("order", JSON.stringify(order));
+
+                const response = await fetch('/reorderWaypoints', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                await reloadWaypoints();
+                await fetchAndAddWaypoints();
+            }
+
+            async function deleteWaypoint(index) {
+                const formData = new FormData();
+                formData.append("index", index);
+
+                const response = await fetch('/deleteWaypoint', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                await reloadWaypoints();
+                await fetchAndAddWaypoints();
+            }
+
+            async function updateWaypoint(index, latitude, longitude, name) {
+                const formData = new FormData();
+                formData.append("index", index);
+                formData.append("latitude", latitude);
+                formData.append("longitude", longitude);
+                formData.append("name", name);
+
+                const response = await fetch('/updateWaypoint', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                await reloadWaypoints(index);
+                await fetchAndAddWaypoints();
+            }
+
             const fetchAndAddWaypoints = async () => {
                 // Remove existing waypoints from the map
                 existingWaypoints.forEach(waypoint => {
@@ -752,17 +1005,42 @@
                 }
 
                 var json = await response.json();
-                for (const waypointData of json.waypoints) {
-                    const newMarker = L.marker([waypointData.lat, waypointData.lon]).addTo(map);
-                    newMarker.bindPopup(`${waypointData.name}<br>Lat: ${waypointData.lat}, Long: ${waypointData.lon}`);
+                waypointDataCache = normalizeWaypointRows(json.waypoints);
+                waypointDataCache.forEach((waypointData, index) => {
+                    const newMarker = L.marker([waypointData.lat, waypointData.lon], { draggable: true }).addTo(map);
+                    newMarker.bindPopup(`
+                        <strong>${escapeHtml(waypointData.name || `Waypoint ${index + 1}`)}</strong><br>
+                        Lat: ${waypointData.lat}, Long: ${waypointData.lon}<br>
+                        <button type="button" onclick="window.__editWaypointFromPopup(${index})">Edit</button>
+                        <button type="button" onclick="window.__deleteWaypointFromPopup(${index})">Delete</button>
+                    `);
 
                     newMarker.on('click', function () {
                         // Update the sidebar with details of the selected waypoint
                         updateSidebarWithWaypointDetails(waypointData);
                     });
 
+                    newMarker.on('dragend', async function (event) {
+                        const latLng = event.target.getLatLng();
+                        await updateWaypoint(index, latLng.lat, latLng.lng, waypointData.name || "");
+                    });
+
                     existingWaypoints.push(newMarker);
+                });
+
+                renderWaypointList();
+            }
+
+            window.__editWaypointFromPopup = async function(index) {
+                const item = document.getElementById(`edit-form-${index}`);
+                if (item) {
+                    item.style.display = "flex";
+                    item.style.flexDirection = "column";
                 }
+            }
+
+            window.__deleteWaypointFromPopup = async function(index) {
+                await deleteWaypoint(index);
             }
 
             function updateSidebarWithWaypointDetails(waypointData) {
@@ -1061,7 +1339,7 @@
             }
 
             setTileSource()
-            fetchAndAddWaypoints();
+            reloadWaypoints().then(() => fetchAndAddWaypoints());
             fetchAndAddCircles();
             fetchData()
             setInterval(getBrowserLocation, 5000);

@@ -25,3 +25,4 @@ cert.pem
 key.pem
 .devcontainer/devcontainer-lock.json
 .env
+data/waypoint_queue_state.json
