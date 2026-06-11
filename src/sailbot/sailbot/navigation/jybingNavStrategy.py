@@ -41,6 +41,22 @@ class JibingNavigation(NavigationStrategy):
     # deadband to ignore potential noisy wind data
     DEADBAND_LOW = 170
     DEADBAND_HIGH = 190
+    
+    # hysteresis for deciding when to jibe
+    MIN_JIBE_IMPROVEMENT = 15
+    JIBE_MIN_TICKS = 5
+    
+    # threshold for stern crossing downwind for jibe
+    STERN_DOWNWIND_THRESHOLD = 20
+    
+    # main sail servo controls
+    PRE_JIBE_SAIL = 70 # sheet in before jibe
+    POST_JIBE_SAIL = 100 # let sails out after
+    
+    # jib sail servo controls
+    PORT_JIB = 0
+    CENTER_JIB = 50
+    STARBOARD_JIB = 100
 
     def __init__(self):
         super().__init__()
@@ -51,15 +67,13 @@ class JibingNavigation(NavigationStrategy):
         self.phase = JibePhase.IDLE
         self.jibe_target_heading = None
         self.prev_wind_angle = None
+        self.jibe_ticks = 0
 
         # sailing parameters
         # valid reach angles (degrees off wind)
         self.reach_angles = range(90, 151, 10)
         self.turn_slow_factor = 0.6
         self.rudder_mult = 0.33
-
-        self.pre_jibe_sail = 0.7   # sheet in before jibe
-        self.post_jibe_sail = 1.0  # let sails out after
 
     # =========================================================
 
@@ -89,29 +103,41 @@ class JibingNavigation(NavigationStrategy):
         )
 
         # compute downwind direction
-        downwind = (self.wind_angle + self.boat_heading + 180) % 360
+        downwind = (self.boat_heading + 180) % 360
         
-        # check initial jibe direction
-        if self.jibe_direction is None:
-            _, self.jibe_direction, _ = self.best_reach_heading(
-                downwind,
-                target_angle
-            )
-
-        # compute best reach heading based on jibe direction
+        # compute best reach heading based on wind and target
         desired_heading, desired_direction, desired_reach_angle = self.best_reach_heading(downwind, target_angle)
+        
+        # correct intial jibe direction
+        if self.jibe_direction is None:
+            self.jibe_direction = desired_direction
 
         # decide when to jibe
+        # compute potential improvement if taking a jibe
+        current_heading = self.reach_heading(downwind, self.jibe_direction, desired_reach_angle)
+        current_error = boatMath.degrees_between(current_heading, target_angle)
+        new_error = boatMath.degrees_between(desired_heading, target_angle)
+
+        improvement = current_error - new_error
+        
         if desired_direction != self.jibe_direction and not self.is_jibing:
-            self.jibe_target_heading = self.reach_heading(
-                downwind,
-                desired_direction,
-                desired_reach_angle
-            )
-            self.logging.info("Triggering jibe (crossing wind with stern)")
-            self.is_jibing = True
-            self.phase = JibePhase.PREPARE
-            return
+            # hysteresis logic for jibing
+            if improvement > self.MIN_JIBE_IMPROVEMENT:
+                self.jibe_ticks += 1
+            else:
+                self.jibe_ticks = 0
+            
+            if self.jibe_ticks >= self.JIBE_MIN_TICKS:
+                self.jibe_target_heading = self.reach_heading(
+                    downwind,
+                    desired_direction,
+                    desired_reach_angle
+                )
+                self.logging.info("Triggering jibe (crossing wind with stern)")
+                self.is_jibing = True
+                self.phase = JibePhase.PREPARE
+                self.jibe_ticks = 0
+                return
 
         # if currently jibing, keep jibing
         if self.is_jibing:
@@ -130,31 +156,24 @@ class JibingNavigation(NavigationStrategy):
         
         if target_angle is None:
             return
+        
+        # calculate signed error between heading and target_angle
+        heading_error = (target_angle - self.boat_heading + 540) % 360 - 180
 
-        if boatMath.is_within_angle(
-            target_angle,
-            (self.boat_heading - self.ACCEPTABLE_ERROR) % 360,
-            (self.boat_heading + self.ACCEPTABLE_ERROR) % 360
-        ):
+        # only turn if error is higher than acceptable error
+        if abs(heading_error) < self.ACCEPTABLE_ERROR:
             self.cmd_rudder_pub.publish(Float32(data=self.RUDDER_CENTER))
             return
-
-        rudder_angle = boatMath.degrees_between(
-            self.boat_heading,
-            target_angle
-        )
         
         # smooth proportional turn
-        rudder_offset = rudder_angle * self.turn_slow_factor * self.rudder_mult
+        rudder_offset = heading_error * self.turn_slow_factor * self.rudder_mult
 
-        # apply sign to offset from the middle
-        if not (self.boat_heading - target_angle) % 360 < 180:
-            rudder_offset *= -1
-
+        # ensure command is within the servo limits
         rudder_command = self.RUDDER_CENTER + rudder_offset
-
-        rudder_command = min(rudder_command, self.RUDDER_MAX)
-        rudder_command = max(rudder_command, self.RUDDER_MIN)
+        rudder_command = max(
+            min(rudder_command, self.RUDDER_MAX),
+            self.RUDDER_MIN
+        )
 
         self.cmd_rudder_pub.publish(Float32(data=rudder_command))
 
@@ -219,8 +238,12 @@ class JibingNavigation(NavigationStrategy):
 
         # prepare to jibe
         if self.phase == JibePhase.PREPARE:
-            self.cmd_sail_pub.publish(Float32(data=self.pre_jibe_sail))
-            self.cmd_jib_pub.publish(Float32(data=self.pre_jibe_sail))
+            self.cmd_sail_pub.publish(Float32(data=self.PRE_JIBE_SAIL))
+            self.cmd_jib_pub.publish(Float32(
+                data = self.STARBOARD_JIB
+                if self.jibe_direction == JibeDirection.JIBING_STARBOARD
+                else self.PORT_JIB
+            ))
             self.phase = JibePhase.TURN
             self.logging.info("Jibe: PREPARE → TURN")
             return
@@ -229,7 +252,7 @@ class JibingNavigation(NavigationStrategy):
         if self.phase == JibePhase.TURN:
 
             # compute downwind direction
-            downwind = (self.wind_angle + self.boat_heading + 180) % 360
+            downwind = (self.boat_heading + 180) % 360
 
             # turn to jibe target heading from start of jibe
             self.turn_to_angle(self.jibe_target_heading)
@@ -246,33 +269,38 @@ class JibingNavigation(NavigationStrategy):
         # cross the wind and detect wind flip
         if self.phase == JibePhase.CROSS:
             # move jib in
-            self.cmd_jib_pub.publish(Float32(data=0.0))
+            self.cmd_jib_pub.publish(Float32(data=self.CENTER_JIB))
 
             # continue heading from before to complete the crossing
             self.turn_to_angle(self.jibe_target_heading)
+            
+            # find downwind
+            downwind = (self.boat_heading + 180) % 360
 
-            crossed = False # check if crossed dead downwind
+            wind_crossed = False # check if crossed dead downwind
+            stern_crossed = False # check if stern crossed within threshold of downwind
             
             # detect wind flip (stern passes through wind)
             if self.prev_wind_angle is not None:
                 # ignore noisy region using deadband
                 if not self.DEADBAND_LOW < self.wind_angle < self.DEADBAND_HIGH:
                     # detect crossing in either direction if past a certain range
-                    crossed = (
-                        (
-                            self.prev_wind_angle < self.LOW_CROSSING_ANGLE
-                            and self.wind_angle > self.HIGH_CROSSING_ANGLE
-                        )
-                        or
-                        (
-                            self.prev_wind_angle > self.HIGH_CROSSING_ANGLE
-                            and self.wind_angle < self.LOW_CROSSING_ANGLE
-                        )
-                    )
+                    # compute signed change in wind angle (wrap-safe)
+                    delta = (self.wind_angle - self.prev_wind_angle + 540) % 360 - 180
+
+                    # detect flip using a crossing 180° boundary OR a large jump (wind vane lags then snaps to wind causing large delta)
+                    flipped_sign = (self.prev_wind_angle - 180) * (self.wind_angle - 180) < 0
+                    large_jump = abs(delta) > 90
+
+                    wind_crossed = flipped_sign or large_jump
 
             self.prev_wind_angle = self.wind_angle
+            
+            # detect stern crossing
+            heading_diff = boatMath.degrees_between(self.boat_heading, downwind)
+            stern_crossed = heading_diff < self.STERN_DOWNWIND_THRESHOLD
 
-            if crossed:
+            if wind_crossed and stern_crossed:
                 self.phase = JibePhase.RECOVER
                 self.logging.info("Jibe: CROSS → RECOVER")
 
@@ -281,7 +309,7 @@ class JibingNavigation(NavigationStrategy):
         # recover and stabilize after jibing
         if self.phase == JibePhase.RECOVER:
 
-            self.cmd_sail_pub.publish(Float32(data=self.post_jibe_sail))
+            self.cmd_sail_pub.publish(Float32(data=self.POST_JIBE_SAIL))
             self.cmd_rudder_pub.publish(Float32(data=self.RUDDER_CENTER))
             
             self.jibe_direction = (
@@ -290,12 +318,11 @@ class JibingNavigation(NavigationStrategy):
                 else JibeDirection.JIBING_STARBOARD
             )
 
-            jib_trim = (
-                self.post_jibe_sail
+            self.cmd_jib_pub.publish(Float32(
+                data = self.STARBOARD_JIB
                 if self.jibe_direction == JibeDirection.JIBING_STARBOARD
-                else -self.post_jibe_sail
-            )
-            self.cmd_jib_pub.publish(Float32(data=jib_trim))
+                else self.PORT_JIB
+            ))
 
             self.logging.info("Jibe complete")
 
@@ -303,6 +330,7 @@ class JibingNavigation(NavigationStrategy):
             self.phase = JibePhase.IDLE
             self.prev_wind_angle = None
             self.jibe_target_heading = None
+            self.jibe_ticks = 0
 
             return
 
