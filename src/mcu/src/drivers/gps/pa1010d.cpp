@@ -46,8 +46,8 @@ void PA1010D_GPS::update() {
 bool PA1010D_GPS::read(GPSData* data) {
   if (!this->initialized && last_warn_gps > 60000) {
     last_warn_gps = 0;
-    Serial.println("W: Trying to read from uninitialized GPS");
-    return false;
+    Serial.println("W: Trying to read from uninitialized GPS. Trying to reinit.");
+    this->begin();
   }
 
   if (!gps.fix) {

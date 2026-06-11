@@ -76,7 +76,11 @@ bool BNO055_IMU::begin() {
 bool BNO055_IMU::read(IMU* imu) {
   if (!this->initialized && last_warn > 60000) {
     last_warn = 0;
-    Serial.println("W: Trying to read from uninitialized IMU");
+    Serial.println("W: Trying to read from uninitialized IMU. Trying to reinit.");
+    this->begin();
+  }
+
+  if (!this->initialized) {
     return false;
   }
 
