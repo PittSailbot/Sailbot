@@ -58,6 +58,8 @@ class TackingNavigationStrategy(NavigationStrategy):
         Args:
             target (Waypoint): the GPS point to go to
         """
+        self.auto_adjust_sail()
+
         target_angle = boatMath.angle_to_point(self.boat_position.lat, self.boat_position.lon, target.lat, target.lon)
 
         start_wp = None
