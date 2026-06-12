@@ -90,12 +90,14 @@ class TackingNavigationStrategy(NavigationStrategy):
         #     else:
         #         self.mode = Mode.TACKING_STARBOARD
 
-        if self.mode is None and boatMath.is_within_angle(target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
+        relative_target_angle = (target_angle - self.boat_heading) % 360
+
+        if self.mode is None and boatMath.is_within_angle(relative_target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
             # Target is in no-go zone, implement cross-track corridor hysteresis (laylines)
             cross_track_corridor = 20.0
 
             if not hasattr(self, "current_upwind_tack") or self.current_upwind_tack is None:
-                if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+                if boatMath.degrees_between(relative_target_angle, self.no_go_zone_left_bound) < boatMath.degrees_between(relative_target_angle, self.no_go_zone_right_bound):
                     self.current_upwind_tack = Mode.TACKING_PORT
                 else:
                     self.current_upwind_tack = Mode.TACKING_STARBOARD
@@ -139,13 +141,13 @@ class TackingNavigationStrategy(NavigationStrategy):
             self.cmd_rudder_pub.publish(msg)
             return
 
-        no_go_zone_center = self.wind_angle + self.boat_heading
+        no_go_zone_center = self.wind_angle
         turning_left = (self.boat_heading - target_angle) % 360 < 180
-        is_no_go_zone_left = (self.wind_angle - 180) > 0
-        no_go_distance = boatMath.degrees_between(self.boat_heading, no_go_zone_center)
+        is_no_go_zone_left = self.wind_angle > 180
+        no_go_distance = boatMath.degrees_between(0, no_go_zone_center)
         if not self.allow_tacking:
             no_go_distance += self.jibe_angle_increase
-        distance_to_target = boatMath.degrees_between(self.boat_heading, target_angle)
+        distance_to_target = boatMath.degrees_between(0, relative_target_angle)
 
         need_to_tack = not turning_left and not is_no_go_zone_left and distance_to_target > no_go_distance
         need_to_tack = need_to_tack or (turning_left and is_no_go_zone_left and distance_to_target > no_go_distance)
@@ -175,7 +177,7 @@ class TackingNavigationStrategy(NavigationStrategy):
     def complete_tack(self):
         tack_or_jibe = "Tack" if self.allow_tacking else "Jibe"
 
-        if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+        if boatMath.degrees_between(0, self.no_go_zone_left_bound) < boatMath.degrees_between(0, self.no_go_zone_right_bound):
             closest = Mode.TACKING_STARBOARD
         else:
             closest = Mode.TACKING_PORT
@@ -193,7 +195,7 @@ class TackingNavigationStrategy(NavigationStrategy):
             else:
                 rudder_angle = self.RUDDER_MIN
 
-            is_in_irons = boatMath.is_within_angle(self.boat_heading, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
+            is_in_irons = boatMath.is_within_angle(0, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
 
             if not is_in_irons and closest == self.mode:
                 self.logging.info(f"{tack_or_jibe} Complete")
