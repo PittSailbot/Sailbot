@@ -208,7 +208,7 @@ class TackingNavigationStrategy(NavigationStrategy):
                 rudder_angle = self.RUDDER_MAX
                 self.status += f"\n  Continuing {tack_or_jibe} Port"
 
-            if (self.mode == Mode.TACKING_STARBOARD and (self.wind_angle) < 180) or self.mode == Mode.TACKING_PORT and (self.wind_angle > 180):
+            if (self.mode == Mode.TACKING_STARBOARD and (self.wind_angle) < self.no_go_zone_right_bound) or self.mode == Mode.TACKING_PORT and (self.wind_angle > self.no_go_zone_left_bound):
                 # tack complete
                 self.logging.info(f"{tack_or_jibe} Complete")
                 self.emergency_tack = False
