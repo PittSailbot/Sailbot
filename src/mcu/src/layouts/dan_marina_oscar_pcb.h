@@ -22,7 +22,7 @@
 // ============================================================================
 
 // Servo pins
-#define SAIL_SERVO_PIN 4    // MS 5-7.5V GP4
+#define SAIL_SERVO_PIN 28    // MS 5-7.5V GP4
 #define RUDDER_SERVO_PIN 5  // RS 5-7.5V GP5
 #define JIB_SERVO_PIN 6     // JS 5-7.5V GP6
 
