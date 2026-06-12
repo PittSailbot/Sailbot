@@ -53,7 +53,7 @@ def generate_launch_description():
                 name="node_RTK",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
-            )
+            ),
             # Node(
             #     package="sailbot",
             #     namespace="boat",
