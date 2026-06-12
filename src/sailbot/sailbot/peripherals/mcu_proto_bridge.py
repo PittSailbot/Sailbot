@@ -86,7 +86,7 @@ class MCUBridge(Node):
 
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
-        self.compass_offset = 90
+        self.compass_offset = 270
         # 270 = BNO055 y-backward towards bow
         # 180 = BNO055 x-forward towards bow
         # 90 = BNO055 y-forward towards bow
@@ -159,7 +159,7 @@ class MCUBridge(Node):
                 else:
                     continue
             try:
-                self.logging.debug("Found USB device HWID:" + str(found_hwids[i]))
+                self.logging.info("Found USB device HWID:" + str(found_hwids[i]))
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the microcontroller arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["MCU_BRIDGE"]["baudrate"]), timeout=5, exclusive=False)
