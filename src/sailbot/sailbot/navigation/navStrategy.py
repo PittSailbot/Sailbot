@@ -1,11 +1,13 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.navigation.waypointPlanner import WaypointPlanner
 from sailbot.utils import boatMath, utils
 from sailbot.utils.utils import ControlState, ImuData, Waypoint
+from sailbot_interfaces.msg import WaypointQueueState
 
 
 class NavigationStrategy(Node):
@@ -43,7 +45,19 @@ class NavigationStrategy(Node):
         self.no_go_zone_left_bound = 0  # Left-side close-haul to wind
         self.no_go_zone_right_bound = 0  # Right-side close-haul to wind
 
-        self.next_gps_sub = self.create_subscription(String, "/next_gps", self.next_gps_callback, 2)
+        state_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
+        self.queue_state_sub = self.create_subscription(
+            WaypointQueueState,
+            "/waypoint_queue_state",
+            self.queue_state_callback,
+            state_qos,
+        )
         self.gps_sub = self.create_subscription(String, "/GPS", self.gps_callback, 2)
         self.speed_sub = self.create_subscription(String, "/speed", self.speed_callback, 2)
         self.imu_sub = self.create_subscription(String, "/imu", self.imu_callback, 2)
@@ -60,34 +74,32 @@ class NavigationStrategy(Node):
         self.status = ""  # Additional text displayed on agent label
         self.prev_status = None
 
-    def next_gps_callback(self, msg):
-        next_gps = Waypoint.from_msg(msg)
-        self.wp.append_waypoint(next_gps)
-        self.logging.info(f"Navigating to {next_gps}")
+    def queue_state_callback(self, msg: WaypointQueueState):
+        waypoints = [Waypoint(wp.lat, wp.lon) for wp in msg.waypoints]
+        self.wp.set_waypoint_sequence(waypoints, current_waypoint_index=msg.current_index)
 
-    def control_state_callback(self, msg):
+    def control_state_callback(self, msg: String):
         self.control_state = ControlState.fromRosMessage(msg)
 
-    def windvane_callback(self, msg):
+    def windvane_callback(self, msg: String):
         self.last_wind_time = self.get_clock().now()
         angle = float(msg.data)
         self.wind_angle = angle % 360
         self.no_go_zone_left_bound, self.no_go_zone_right_bound = boatMath.get_no_go_zone_bounds(self.wind_angle)
 
-    def imu_callback(self, msg):
+    def imu_callback(self, msg: String):
         self.last_imu_time = self.get_clock().now()
         imu_data = ImuData.fromRosMessage(msg)
         self.boat_heading = (imu_data.yaw) % 360
 
-    def gps_callback(self, msg):
+    def gps_callback(self, msg: String):
         now = self.get_clock().now()
         new_pos = Waypoint.from_msg(msg)
 
         self.last_gps_time = now
         self.boat_position = new_pos
-        self.wp.update_position(self.boat_position)
 
-    def speed_callback(self, msg):
+    def speed_callback(self, msg: String):
         self.boat_speed = float(msg.data)
 
     def __str__(self):
@@ -103,6 +115,11 @@ class NavigationStrategy(Node):
 
     def update_navigation(self):
         """Timer callback that checks sensors before calling the abstract tick method."""
+        if self.wp.target_waypoint is None:
+            self.heave_to()
+            self.logging.info("Awaiting next gps", throttle_duration_sec=60)
+            return
+        
         now = self.get_clock().now()
 
         gps_stale = (now - self.last_gps_time).nanoseconds / 1e9 > 90
@@ -142,12 +159,13 @@ class NavigationStrategy(Node):
             sail_angle = boatMath.remap(apparent_wind_angle, 90, 135, 50.0, 80.0)
         else:
             # Broad reach to running
-            sail_percent = 100.0
+            sail_angle = 100.0
 
         msg = Float32()
-        msg.data = float(sail_percent)
+        msg.data = float(sail_angle)
         self.cmd_sail_pub.publish(msg)
 
     def heave_to(self):
         self.cmd_sail_pub.publish(Float32(data=100.0))
+        self.cmd_jib_pub.publish(Float32(data=0.0))
         self.cmd_rudder_pub.publish(Float32(data=0.0))

@@ -1,0 +1,5 @@
+uint32 current_index
+---
+bool success
+string message
+sailbot_interfaces/WaypointQueueState state

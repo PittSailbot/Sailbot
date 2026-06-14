@@ -21,7 +21,15 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("DEBUG"))),
+            DeclareLaunchArgument("log_level", default_value=TextSubstitution(text=str("INFO"))),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="waypointManager",
+                name="node_WaypointManager",
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
             Node(
                 package="sailbot",
                 namespace="boat",
@@ -35,6 +43,14 @@ def generate_launch_description():
                 namespace="boat",
                 executable="mcu_bridge",
                 name="node_MCUBridge",
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="rtk",
+                name="node_RTK",
                 arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
                 parameters=[config],
             ),
@@ -70,13 +86,13 @@ def generate_launch_description():
                 ],
                 parameters=[config],
             ),
-        #     Node(
-        #         package="sailbot",
-        #         namespace="boat",
-        #         executable="website",
-        #         name="node_Website",
-        #         arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
-        #         parameters=[config],
-        #     ),
+            Node(
+                package="sailbot",
+                namespace="boat",
+                executable="website",
+                name="node_Website",
+                arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+                parameters=[config],
+            ),
         ]
     )

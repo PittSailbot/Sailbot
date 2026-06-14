@@ -21,7 +21,11 @@ from flask import Flask, jsonify, redirect, render_template, request
 from geopy.distance import geodesic
 from rcl_interfaces.msg import Log
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Float32, String
+from sailbot_interfaces.msg import Waypoint as ManagedWaypointMsg
+from sailbot_interfaces.msg import WaypointQueueState
+from sailbot_interfaces.srv import AddWaypoint, ClearWaypointQueue, DeleteWaypoint, ReorderWaypoints, SetWaypointQueue, UpdateWaypoint
 
 import sailbot.constants as c
 from sailbot.utils.boatMath import (
@@ -46,11 +50,6 @@ MY_IP = s.getsockname()[0]  # or set to static '192.168.1.x'
 
 app = Flask(__name__)
 app.secret_key = "sailbot"
-
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if str(DOCKER).lower() == "true" else False
-PI_DOCKER = os.environ.get("IS_PI_DOCKER", False)
-PI_DOCKER = True if str(PI_DOCKER).lower() == "true" else False
 
 # Allow runtime overrides without forcing a specific deployment mode.
 PORTS = os.environ.get("PORTS", "5000:5000")
@@ -217,15 +216,9 @@ class Website(Node):
         self.logDB = LogDatabase(self)
         self.displayedBreadcrumbs = []  # self.logDB.get_breadcrumbs_from_logs()
 
-        self.waypoints = [
-            {"name": "Waypoint 1", "lat": "42.849135", "lon": "-70.966314"},
-            {"name": "Waypoint 2", "lat": "42.849135", "lon": "-70.996314"},
-        ]
-
-        self.circles = [{"lat": "42.849135", "lon": "-70.976314", "radius": 50}]
-
         self.boat_controlState = None
         self.boat_target = Waypoint(None, None)
+        self.waypoints = []
         self.boat_event_coords = []
         self.warning_count = 0
         self.error_count = 0
@@ -243,14 +236,29 @@ class Website(Node):
         self.setEventPub = self.create_publisher(String, "/setEvent", 10)
         self.setEventTargetPub = self.create_publisher(String, "/set_event_target", 10)
 
+        self.add_waypoint_client = self.create_client(AddWaypoint, "/waypoint_manager/add_waypoint")
+        self.update_waypoint_client = self.create_client(UpdateWaypoint, "/waypoint_manager/update_waypoint")
+        self.delete_waypoint_client = self.create_client(DeleteWaypoint, "/waypoint_manager/delete_waypoint")
+        self.reorder_waypoints_client = self.create_client(ReorderWaypoints, "/waypoint_manager/reorder_waypoints")
+        self.set_waypoint_queue_client = self.create_client(SetWaypointQueue, "/waypoint_manager/set_waypoint_queue")
+        self.clear_waypoint_queue_client = self.create_client(ClearWaypointQueue, "/waypoint_manager/clear")
+
+        self._wait_for_waypoint_manager_services()
+
+        state_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
         # subscriptions should be started as the last step of init
         self.gps_subscription = self.create_subscription(String, "/GPS", self.ROS_GPSCallback, 10)
         self.imu_subscription = self.create_subscription(String, "/imu", self.ROS_imuCallback, 10)
         self.windvane_subscription = self.create_subscription(String, "/wind_angle", self.ROS_windvaneCallback, 10)
         self.logMessages = self.create_subscription(Log, "/rosout", self.ROS_LogCallback, 10)  # all log messages are published to this topic
-        self.boat_state_subscription = self.create_subscription(String, "/next_gps", self.ROS_nextGpsCallback, 10)
+        self.queue_state_sub = self.create_subscription(WaypointQueueState, "/waypoint_queue_state", self.ROS_waypointQueueStateCallback, state_qos)
         self.control_state_sub = self.create_subscription(String, "/control_state", self.ROS_controlStateCallback, 2)
-        self.queued_waypoints_subscription = self.create_subscription(String, "/queued_waypoints", self.ROS_queuedWaypointsCallback, 10)
         self.sail_sub = self.create_subscription(Float32, "/sail", self.ROS_sailCmd_callback, 10)
         self.jib_sub = self.create_subscription(Float32, "/jib", self.ROS_jibCmd_callback, 10)
         self.rudder_sub = self.create_subscription(Float32, "/rudder", self.ROS_rudderCmd_callback, 10)
@@ -323,23 +331,47 @@ class Website(Node):
     def ROS_LogCallback(self, log):
         self.addLogMessage(log)
 
-    def ROS_nextGpsCallback(self, msg):
-        next_gps = Waypoint.from_msg(msg)
-        # string = string.data
-        # boatState = json.loads(string)
+    def _wait_for_waypoint_manager_services(self):
+        clients = [
+            self.add_waypoint_client,
+            self.update_waypoint_client,
+            self.delete_waypoint_client,
+            self.reorder_waypoints_client,
+            self.set_waypoint_queue_client,
+            self.clear_waypoint_queue_client,
+        ]
+        for client in clients:
+            if not client.wait_for_service(timeout_sec=3.0):
+                self.logging.warning(f"Waypoint manager service not available yet: {client.srv_name}")
 
-        self.boat_target = next_gps
+    def _call_service_sync(self, client, request_obj, timeout_sec=3.0):
+        future = client.call_async(request_obj)
+        done = threading.Event()
+        future.add_done_callback(lambda _: done.set())
+        if not done.wait(timeout=timeout_sec):
+            return None
+        return future.result()
+
+    @staticmethod
+    def _state_to_waypoint_rows(state):
+        rows = []
+        for idx, waypoint in enumerate(state.waypoints):
+            name = waypoint.name if waypoint.name else f"Waypoint {idx + 1}"
+            rows.append({"lat": waypoint.lat, "lon": waypoint.lon, "name": name, "index": idx})
+        return rows
+
+    def ROS_waypointQueueStateCallback(self, msg: WaypointQueueState):
+        if len(msg.waypoints) == 0 or msg.current_index >= len(msg.waypoints):
+            self.boat_target = Waypoint(None, None)
+        else:
+            target = msg.waypoints[msg.current_index]
+            self.boat_target = Waypoint(target.lat, target.lon)
+
+        self.waypoints = self._state_to_waypoint_rows(msg)
+        self.boat_event_coords = [{"lat": wp.lat, "lon": wp.lon} for wp in msg.waypoints]
 
     def ROS_controlStateCallback(self, msg):
         self.boat_controlState = ControlState.fromRosMessage(msg)
-
-    def ROS_queuedWaypointsCallback(self, string):
-        string = string.data
-        coords = json.loads(string)
-
-        self.boat_event_coords = []
-        for waypoint in coords["Waypoints"]:
-            self.boat_event_coords.append(Waypoint.fromJson(waypoint))
 
     def ROS_sailCmd_callback(self, msg):
         self.sail_angle = float(msg.data)
@@ -570,9 +602,113 @@ def add_waypoint():
         longitude = request.form.get("longitude")
         name = request.form.get("name")
 
-        DATA.waypoints.append({"lat": latitude, "lon": longitude, "name": name})
+        try:
+            latitude_value = float(latitude)
+            longitude_value = float(longitude)
+        except (TypeError, ValueError):
+            return jsonify({"status": "failure", "message": "Invalid waypoint coordinates"}), 400
 
+        request_obj = AddWaypoint.Request()
+        request_obj.index = -1
+        request_obj.waypoint = ManagedWaypointMsg(lat=latitude_value, lon=longitude_value, name=name or "")
+
+        response = DATA._call_service_sync(DATA.add_waypoint_client, request_obj)
+        if response is None:
+            return jsonify({"status": "failure", "message": "Waypoint manager timeout"}), 504
+        if not response.success:
+            return jsonify({"status": "failure", "message": response.message}), 400
+
+        DATA.waypoints = DATA._state_to_waypoint_rows(response.state)
         return jsonify({"status": "success", "message": "Waypoint added successfully"})
+
+
+@app.route("/updateWaypoint", methods=["POST"])
+def update_waypoint():
+    index = request.form.get("index")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
+    name = request.form.get("name") or ""
+
+    try:
+        idx = int(index)
+        latitude_value = float(latitude)
+        longitude_value = float(longitude)
+    except (TypeError, ValueError):
+        return jsonify({"status": "failure", "message": "Invalid waypoint update payload"}), 400
+
+    request_obj = UpdateWaypoint.Request()
+    request_obj.index = idx
+    request_obj.waypoint = ManagedWaypointMsg(lat=latitude_value, lon=longitude_value, name=name)
+    response = DATA._call_service_sync(DATA.update_waypoint_client, request_obj)
+    if response is None:
+        return jsonify({"status": "failure", "message": "Waypoint manager timeout"}), 504
+    if not response.success:
+        return jsonify({"status": "failure", "message": response.message}), 400
+
+    DATA.waypoints = DATA._state_to_waypoint_rows(response.state)
+    return jsonify({"status": "success", "message": "Waypoint updated"})
+
+
+@app.route("/deleteWaypoint", methods=["POST"])
+def delete_waypoint():
+    index = request.form.get("index")
+    try:
+        idx = int(index)
+    except (TypeError, ValueError):
+        return jsonify({"status": "failure", "message": "Invalid index"}), 400
+
+    request_obj = DeleteWaypoint.Request()
+    request_obj.index = idx
+    response = DATA._call_service_sync(DATA.delete_waypoint_client, request_obj)
+    if response is None:
+        return jsonify({"status": "failure", "message": "Waypoint manager timeout"}), 504
+    if not response.success:
+        return jsonify({"status": "failure", "message": response.message}), 400
+
+    DATA.waypoints = DATA._state_to_waypoint_rows(response.state)
+    return jsonify({"status": "success", "message": "Waypoint deleted"})
+
+
+@app.route("/reorderWaypoints", methods=["POST"])
+def reorder_waypoints():
+    order_payload = request.form.get("order")
+    if order_payload is None and request.is_json:
+        body = request.get_json(silent=True) or {}
+        order_payload = body.get("order")
+
+    try:
+        if isinstance(order_payload, str):
+            order = json.loads(order_payload)
+        else:
+            order = list(order_payload)
+        order = [int(i) for i in order]
+    except Exception:
+        return jsonify({"status": "failure", "message": "Invalid reorder payload"}), 400
+
+    request_obj = ReorderWaypoints.Request()
+    request_obj.order = order
+    response = DATA._call_service_sync(DATA.reorder_waypoints_client, request_obj)
+    if response is None:
+        return jsonify({"status": "failure", "message": "Waypoint manager timeout"}), 504
+    if not response.success:
+        return jsonify({"status": "failure", "message": response.message}), 400
+
+    DATA.waypoints = DATA._state_to_waypoint_rows(response.state)
+    return jsonify({"status": "success", "message": "Waypoints reordered"})
+
+
+@app.route("/clearWaypoints", methods=["POST"])
+def clear_waypoints():
+    request_obj = ClearWaypointQueue.Request()
+    response = DATA._call_service_sync(DATA.clear_waypoint_queue_client, request_obj)
+    if response is None:
+        return jsonify({"status": "failure", "message": "Waypoint manager timeout"}), 504
+    if not response.success:
+        return jsonify({"status": "failure", "message": response.message}), 400
+
+    DATA.waypoints = []
+    DATA.boat_event_coords = []
+    return jsonify({"status": "success", "message": "Waypoints cleared"})
 
 
 @app.route("/setEventTarget", methods=["POST"])
@@ -697,7 +833,10 @@ def ros_main():
     os.environ["ROS_LOG_DIR"] = ros_log_dir
     rclpy.init()
     DATA = Website()
-    DATA.logging.info(f"Website available at https://localhost:{PORT} and https://{MY_IP}:{PORT}")
+    DATA.logging.info(f"""Website available at these locations:
+        - Pi5 Local: https://localhost:{PORT}
+        - LAN: https://{MY_IP}:{PORT}
+        - TailNet: https://pi5-sailbot:{PORT}""") # TODO: hardcoded for 1 Pi5, write algo to determine tailnet machine name or magicDNS ip for differet machines
 
     # Generate the certificate using the following: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
     app.run(debug=False, host="0.0.0.0", port=PORT, ssl_context=("cert.pem", "key.pem"), threaded=True)  # debug true causes the process to fork which causes problems
@@ -747,8 +886,3 @@ def get_heading_coords():
     hx, hy = calculateCoordinates(DATA.gps.latitude, DATA.gps.longitude, DATA.compass.angle, 150)
 
     return [[x, y], [hx, hy]]
-
-
-if __name__ == "__main__":
-    # main()
-    pass

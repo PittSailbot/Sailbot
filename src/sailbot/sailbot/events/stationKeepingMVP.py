@@ -1,20 +1,19 @@
-import importlib
 import math
 import os
 import time
 
+import rclpy
 from std_msgs.msg import String
 
-from sailbot.peripherals.GPS import GPS
-from sailbot.peripherals.windvane import WindVane
 from sailbot.utils.eventUtils import Event
 from sailbot.utils.utils import Waypoint
 
-DOCKER = os.environ.get("IS_DOCKER", False)
-DOCKER = True if DOCKER == "True" else False
-folder = "sailbot.peripherals." if not DOCKER else "sailbot.virtualPeripherals."
-
-windVane = importlib.import_module(folder + "windvane").WindVane
+DEFAULT_EVENT_INFO = {
+    "waypoint1": Waypoint(42.469667, -76.503983),
+    "waypoint2": Waypoint(42.4696, -76.504417),
+    "waypoint3": Waypoint(42.469267, -76.504383),
+    "waypoint4": Waypoint(42.469283, -76.504),
+}
 
 """
 # Challenge	Goal:
@@ -57,7 +56,7 @@ class StationKeeping(Event):
             event_info["waypoint3"],
             event_info["waypoint4"],
         ]
-        self.bounds = Bounds(event_info)
+        self.bounds = Bounds(self.buoys)
         self.start_time = time.time()
         self.leave_time = self.start_time + 4.25 * 60
         self.event_started = False
@@ -76,6 +75,7 @@ class StationKeeping(Event):
 
     def windvane_callback(self, msg):
         angle = float(msg.data)
+        self.wind_angle = angle
         self.relative_wind = angle
 
     def next_gps(self):
@@ -90,10 +90,11 @@ class StationKeeping(Event):
 
         # Move to bounds of event
         if not self.event_started:
-            if Waypoint(self.position.latitude, self.position.longitude) in self.bounds:
+            if self.position is not None and self.position in self.bounds:
                 self.logging.info("Boat has entered the station keeping bounds!")
                 self.event_started = True
                 self.start_time = time.time()
+                self.leave_time = self.start_time + 4.25 * 60
             else:
                 self.logging.debug("Moving to event bounds")
                 return self.bounds.center
@@ -104,9 +105,12 @@ class StationKeeping(Event):
 
         # Turn to downwind and gtfo
         self.logging.debug("Leaving event bounds")
-        downwind_angle = math.radians(abs(self.wind_angle + 180) % 360)
+        downwind_angle = math.radians((self.wind_angle + 180) % 360)
 
-        escape_point = self.gps.GPS
+        if self.position is None:
+            return self.bounds.center
+
+        escape_point = Waypoint(self.position.lat, self.position.lon)
         escape_point.add_meters(30 * math.cos(downwind_angle), 30 * math.sin(downwind_angle))
         return escape_point
 
@@ -134,3 +138,33 @@ class Bounds:
         sum_lon = self.top_left.lon + self.top_right.lon + self.bottom_left.lon + self.bottom_right.lon
 
         return Waypoint(sum_lat / 4, sum_lon / 4)
+
+
+def load_event_info_from_parameters(node):
+    return DEFAULT_EVENT_INFO
+
+
+def main(args=None):
+    base_log_dir = os.environ.get("ROS_LOG_DIR_BASE")
+    if base_log_dir:
+        os.environ["ROS_LOG_DIR"] = f"{base_log_dir}/main"
+
+    rclpy.init(args=args)
+    try:
+        event_info = load_event_info_from_parameters(None)
+        event = StationKeeping(event_info)
+
+        try:
+            rclpy.spin(event)
+        except KeyboardInterrupt:
+            print("Exiting gracefully.")
+        finally:
+            event.destroy_node()
+    except KeyboardInterrupt:
+        print("Exiting gracefully.")
+    finally:
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

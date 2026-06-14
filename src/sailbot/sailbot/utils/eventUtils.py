@@ -53,7 +53,7 @@ class Event(Node):
                 self.logging.warning(f"Found unused key in {self.__class__.__name__}: {key}")
 
         self.node_shutdown_sub = self.create_subscription(String, "/event_shutdown", self.event_stop_callback, 10)
-        self.pub = self.create_publisher(String, "/next_gps", 10)
+        self.pub = self.create_publisher(String, "/next_gps_command", 10)
         timer_period = 1.0  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 

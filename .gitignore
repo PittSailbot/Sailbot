@@ -9,6 +9,7 @@
 /log
 /ros_logs
 log_database.db
+log_database.db-journal
 /.vscode
 .ipynb_checkpoints
 .idea/
@@ -24,3 +25,4 @@ cert.pem
 key.pem
 .devcontainer/devcontainer-lock.json
 .env
+data/waypoint_queue_state.json

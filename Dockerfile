@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
     iproute2 \
     python3-libgpiod \
+    python3-dotenv \
     && rm -rf /var/lib/apt/lists/*
 
 # Bootstrap rosdep (skip if already initialized)

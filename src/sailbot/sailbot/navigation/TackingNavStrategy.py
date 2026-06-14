@@ -10,13 +10,13 @@ from std_msgs.msg import Float32, String
 
 from sailbot import constants as c
 from sailbot.navigation.navStrategy import NavigationStrategy
-from sailbot.utils import boatMath, utils
+from sailbot.utils import boatMath
+from sailbot.utils.utils import Waypoint
 
 
 class Mode(Enum):
     TACKING_STARBOARD = 1
     TACKING_PORT = 2
-
 
 
 # TODO: Implement Waypoint from serialized ROS message
@@ -33,7 +33,6 @@ class TackingNavigationStrategy(NavigationStrategy):
         - /cmd_sail (String)
     """
 
-
     def __init__(self):
         super().__init__()
         self.aborted_tacks = 0
@@ -46,27 +45,25 @@ class TackingNavigationStrategy(NavigationStrategy):
 
     def tick(self):
         """Update Navigation decision-making, setting sail/jib/rudder"""
-        if self.wp.target_waypoint is None:
-            self.heave_to()
-            self.logging.info("Awaiting next gps", throttle_duration_sec=60)
-            return
-            
         self.status = f"{self.wp}"
-        self.go_to_gps(self.wp.target_waypoint)
-        if (str(self.status) != str(self.prev_status)):
+        if self.wp.target_waypoint is not None:
+            self.go_to_gps(self.wp.target_waypoint)
+        if str(self.status) != str(self.prev_status):
             self.logging.info(self.status)
             self.prev_status = self.status
 
-    def go_to_gps(self, target):
+    def go_to_gps(self, target: Waypoint):
         """
         Moves the boat to the target GPS
         Args:
             target (Waypoint): the GPS point to go to
         """
+        self.auto_adjust_sail()
+
         target_angle = boatMath.angle_to_point(self.boat_position.lat, self.boat_position.lon, target.lat, target.lon)
 
         start_wp = None
-        if hasattr(self.wp, 'current_waypoint_index') and self.wp.current_waypoint_index > 0:
+        if hasattr(self.wp, "current_waypoint_index") and self.wp.current_waypoint_index > 0:
             start_wp = self.wp.waypoints[self.wp.current_waypoint_index - 1]
 
         # Cross track error compensation
@@ -76,7 +73,7 @@ class TackingNavigationStrategy(NavigationStrategy):
             xte_gain = 5.0
             max_xte_correction = 45
             correction = max(-max_xte_correction, min(max_xte_correction, xte * xte_gain))
-            
+
             # Apply XTE correction to target_angle (positive XTE -> steer left -> decrease angle)
             target_angle = (target_angle - correction) % 360
 
@@ -93,12 +90,14 @@ class TackingNavigationStrategy(NavigationStrategy):
         #     else:
         #         self.mode = Mode.TACKING_STARBOARD
 
-        if self.mode is None and boatMath.is_within_angle(target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
+        relative_target_angle = (target_angle - self.boat_heading) % 360
+
+        if self.mode is None and boatMath.is_within_angle(relative_target_angle, self.no_go_zone_left_bound, self.no_go_zone_right_bound):
             # Target is in no-go zone, implement cross-track corridor hysteresis (laylines)
             cross_track_corridor = 20.0
-            
-            if not hasattr(self, 'current_upwind_tack') or self.current_upwind_tack is None:
-                if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+
+            if not hasattr(self, "current_upwind_tack") or self.current_upwind_tack is None:
+                if boatMath.degrees_between(relative_target_angle, self.no_go_zone_left_bound) < boatMath.degrees_between(relative_target_angle, self.no_go_zone_right_bound):
                     self.current_upwind_tack = Mode.TACKING_PORT
                 else:
                     self.current_upwind_tack = Mode.TACKING_STARBOARD
@@ -126,7 +125,7 @@ class TackingNavigationStrategy(NavigationStrategy):
         else:
             self.turn_to_angle(target_angle)
 
-    def turn_to_angle(self, target_angle):
+    def turn_to_angle(self, target_angle: int | float):
         """
         Sets the rudder once to turn the board towards the specified compass angle
             - Does NOT recenter the rudder once it faces the specified angle; only checked when function is called
@@ -142,13 +141,13 @@ class TackingNavigationStrategy(NavigationStrategy):
             self.cmd_rudder_pub.publish(msg)
             return
 
-        no_go_zone_center = self.wind_angle + self.boat_heading
+        no_go_zone_center = self.wind_angle
         turning_left = (self.boat_heading - target_angle) % 360 < 180
-        is_no_go_zone_left = (self.wind_angle - 180) > 0
-        no_go_distance = boatMath.degrees_between(self.boat_heading, no_go_zone_center)
+        is_no_go_zone_left = self.wind_angle > 180
+        no_go_distance = boatMath.degrees_between(0, no_go_zone_center)
         if not self.allow_tacking:
             no_go_distance += self.jibe_angle_increase
-        distance_to_target = boatMath.degrees_between(self.boat_heading, target_angle)
+        distance_to_target = boatMath.degrees_between(0, relative_target_angle)
 
         need_to_tack = not turning_left and not is_no_go_zone_left and distance_to_target > no_go_distance
         need_to_tack = need_to_tack or (turning_left and is_no_go_zone_left and distance_to_target > no_go_distance)
@@ -163,10 +162,10 @@ class TackingNavigationStrategy(NavigationStrategy):
 
         if turning_left:
             self.status += f"\n  Turning PORT from {self.boat_heading} degrees to {target_angle} degrees"
-            rudder_angle = self.RUDDER_MAX
+            rudder_angle = self.RUDDER_MIN
         else:
             self.status += f"\n  Turning STARBOARD from {self.boat_heading} degrees to {target_angle} degrees"
-            rudder_angle = self.RUDDER_MIN
+            rudder_angle = self.RUDDER_MAX
 
         # Constrain rudder angle [MIN, MAX]
         rudder_angle = max(min(rudder_angle, self.RUDDER_MAX), self.RUDDER_MIN)
@@ -178,7 +177,7 @@ class TackingNavigationStrategy(NavigationStrategy):
     def complete_tack(self):
         tack_or_jibe = "Tack" if self.allow_tacking else "Jibe"
 
-        if boatMath.degrees_between(self.boat_heading, self.no_go_zone_left_bound) < boatMath.degrees_between(self.boat_heading, self.no_go_zone_right_bound):
+        if boatMath.degrees_between(0, self.no_go_zone_left_bound) < boatMath.degrees_between(0, self.no_go_zone_right_bound):
             closest = Mode.TACKING_STARBOARD
         else:
             closest = Mode.TACKING_PORT
@@ -196,8 +195,8 @@ class TackingNavigationStrategy(NavigationStrategy):
             else:
                 rudder_angle = self.RUDDER_MIN
 
-            is_in_irons = boatMath.is_within_angle(self.boat_heading, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
-    
+            is_in_irons = boatMath.is_within_angle(0, self.no_go_zone_left_bound, self.no_go_zone_right_bound)
+
             if not is_in_irons and closest == self.mode:
                 self.logging.info(f"{tack_or_jibe} Complete")
                 self.emergency_tack = False
@@ -205,13 +204,13 @@ class TackingNavigationStrategy(NavigationStrategy):
 
         else:
             if self.mode == Mode.TACKING_STARBOARD:
-                rudder_angle = float(c.config["RUDDER"]["min_angle"])
+                rudder_angle = self.RUDDER_MIN
                 self.status += f"\n  Continuing {tack_or_jibe} Starboard"
             else:
-                rudder_angle = float(c.config["RUDDER"]["max_angle"])
+                rudder_angle = self.RUDDER_MAX
                 self.status += f"\n  Continuing {tack_or_jibe} Port"
 
-            if (self.mode == Mode.TACKING_STARBOARD and (self.wind_angle) < 180) or self.mode == Mode.TACKING_PORT and (self.wind_angle > 180):
+            if (self.mode == Mode.TACKING_STARBOARD and (self.wind_angle) < self.no_go_zone_right_bound) or self.mode == Mode.TACKING_PORT and (self.wind_angle > self.no_go_zone_left_bound):
                 # tack complete
                 self.logging.info(f"{tack_or_jibe} Complete")
                 self.emergency_tack = False

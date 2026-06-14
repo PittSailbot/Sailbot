@@ -1,7 +1,7 @@
 boat: # declare the namespace
   node_DummyEvent: # declare the name of the node to apply the parameters to
     ros__parameters: # boilerplate requirement 
-      Waypoint1: [40.443828, -79.958115] # parameter name: value
-      Waypoint2: [40.443766, -79.958249] # benedum patio far right
-      Waypoint3: [40.443844, -79.958362] # inner right
-      Waypoint4: [40.443932, -79.95823] # inner left
+      Waypoint1: [42.469667, -76.503983] # parameter name: value
+      Waypoint2: [42.469600, -76.504417] # benedum patio far right
+      Waypoint3: [42.469267, -76.504383] # inner right
+      Waypoint4: [42.469283, -76.504000] # inner left

@@ -15,7 +15,7 @@ from geometry_msgs.msg import Quaternion
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from rclpy.node import Node
 from serial.tools import list_ports
-from std_msgs.msg import Float32, Int32, String
+from std_msgs.msg import Bool, Float32, Int32, String
 
 from sailbot import constants as c
 from sailbot.protobuf import mcu_pb2, pi_pb2
@@ -47,13 +47,15 @@ class MCUBridge(Node):
     """
 
     def __init__(self):
-        super().__init__("transceiver")
+        super().__init__("MCU_Bridge")
         self.logging = self.get_logger()
 
         self._frame_magic = bytes([0xA5, 0x5A])
         self._frame_header_len = 4
         self._max_payload_len = 4096
         self._rx_buffer = bytearray()
+        self._rtk_active = False
+        self._last_rtk_activity = 0.0
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
@@ -80,13 +82,20 @@ class MCUBridge(Node):
         self.rudder_offset_pub = self.create_publisher(Float32, "/offset_rudder", 1)
 
         self.wind_angle_pub = self.create_publisher(String, "/wind_angle", 1)
+        self.wind_offset = -10
 
         self.imu_pub = self.create_publisher(String, "/imu", 1)
         self.compass_offset_sub = self.create_subscription(Float32, "/offset_compass", self.compass_offset_callback, 1)
-        self.compass_offset = 165
+        self.compass_offset = 270
+        # 270 = BNO055 y-backward towards bow
+        # 180 = BNO055 x-forward towards bow
+        # 90 = BNO055 y-forward towards bow
+        # 0 = BNO055 x-backward towards bow
+
 
         self.gps_pub = self.create_publisher(String, "/GPS", 1)
         self.speed_pub = self.create_publisher(Float32, "/speed", 1)
+        self.rtk_active_sub = self.create_subscription(Bool, "/gps/rtk_active", self.rtk_active_callback, 1)
 
         self.usbReset_pub = self.create_publisher(String, "/usbReset", 1)
 
@@ -99,6 +108,10 @@ class MCUBridge(Node):
 
     def compass_offset_callback(self, msg):
         self.compass_offset = float(msg.data)
+
+    def rtk_active_callback(self, msg):
+        self._rtk_active = bool(msg.data)
+        self._last_rtk_activity = time.time()
 
     def event_control_state_callback(self, msg):
         self.event_control_state = msg.data
@@ -146,7 +159,7 @@ class MCUBridge(Node):
                 else:
                     continue
             try:
-                self.logging.debug("Found USB device HWID:" + str(found_hwids[i]))
+                self.logging.info("Found USB device HWID:" + str(found_hwids[i]))
                 # High timeout (5s+) is necessary to prevent falsely flagging a port as invalid due to initialization time
                 # May cause runtime latency if not threaded and the microcontroller arduino code isn't writing anything to serial
                 self.ser = serial.Serial(port, int(c.config["MCU_BRIDGE"]["baudrate"]), timeout=5, exclusive=False)
@@ -185,13 +198,17 @@ class MCUBridge(Node):
         # self.logging.warning("No RC data", throttle_duration_sec=60)
 
         if teensy_data.HasField("windvane"):
-            self.wind_angle_pub.publish(String(data=str(teensy_data.windvane.wind_angle)))
+            wind_angle = (teensy_data.windvane.wind_angle + self.wind_offset) % 360
+            self.wind_angle_pub.publish(String(data=str(wind_angle)))
 
         if teensy_data.HasField("gps"):
-            self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
-            msg = Float32()
-            msg.data = teensy_data.gps.speed
-            self.speed_pub.publish(msg)
+            rtk_recent = self._rtk_active and (time.time() - self._last_rtk_activity) < 3.0
+            # suppress microcontroller GPS when we are receiving more accurate RTK data
+            if not rtk_recent:
+                self.gps_pub.publish(Waypoint(teensy_data.gps.lat, teensy_data.gps.lon).to_msg())
+                msg = Float32()
+                msg.data = teensy_data.gps.speed
+                self.speed_pub.publish(msg)
 
         if teensy_data.HasField("imu"):
             imu = teensy_data.imu
