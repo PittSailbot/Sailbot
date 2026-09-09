@@ -55,5 +55,5 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-	"postStartCommand": "if [ ! -f .uv-venv/pyvenv.cfg ]; then uv venv --system-site-packages .uv-venv; fi && UV_PROJECT_ENVIRONMENT=.uv-venv uv sync --group dev && pre-commit install" // if uv-venv doesn't exist, build it and expose existing ROS Python modules to it, then sync .uv-venv and initialize pre-commit hooks
+	"postStartCommand": "if [ ! -f /workspace/.uv-venv/pyvenv.cfg ]; then uv venv --system-site-packages /workspace/.uv-venv; fi && UV_PROJECT_ENVIRONMENT=/workspace/.uv-venv uv sync --group dev && /workspace/.uv-venv/bin/pre-commit install" // if uv-venv doesn't exist, build it and expose existing ROS Python modules to it, then sync .uv-venv and initialize pre-commit hooks
 }
