@@ -23,6 +23,10 @@
  * IN THE SOFTWARE.
  */
 
+// 这是一个用于SBUS通信的C++头文件，定义了SbusRx和SbusTx类，
+// 用于接收和发送SBUS数据。它包含了对不同硬件平台（如ESP32、RP2040、Teensy等）
+// 的支持，并提供了数据解析和传输功能。
+
 #ifndef SRC_SBUS_H_
 #define SRC_SBUS_H_
 

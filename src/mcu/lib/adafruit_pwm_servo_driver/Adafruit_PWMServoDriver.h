@@ -20,6 +20,9 @@
  *
  *  BSD license, all text above must be included in any redistribution
  */
+
+ // 这是 一个用于 Adafruit 16 通道 PWM 和舵机驱动器的库。
+
 #ifndef _ADAFRUIT_PWMServoDriver_H
 #define _ADAFRUIT_PWMServoDriver_H
 

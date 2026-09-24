@@ -23,6 +23,11 @@
  * IN THE SOFTWARE.
  */
 
+ // 这是一个用于SBUS通信的C++源文件，实现了SbusRx和SbusTx类的功能，
+ // 用于接收和发送SBUS数据。它包含了对不同硬件平台（如ESP32、RP2040、Teensy等）的支持，
+ // 并提供了数据解析和传输功能。该文件包含了对SBUS协议的实现，包括数据包的组装、解析和发送，
+ // 以及对不同硬件平台的串口配置和初始化。
+
 #include "sbus.h"  // NOLINT
 #if defined(ARDUINO)
 #include <Arduino.h>

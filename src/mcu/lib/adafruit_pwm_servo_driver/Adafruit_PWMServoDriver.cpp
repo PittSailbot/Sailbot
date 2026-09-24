@@ -35,6 +35,9 @@
  *  @brief  Instantiates a new PCA9685 PWM driver chip with the I2C address on a
  * TwoWire interface
  */
+
+// 这是 一个用于 Adafruit 16 通道 PWM 和舵机驱动器的库。
+
 Adafruit_PWMServoDriver::Adafruit_PWMServoDriver() : _i2caddr(PCA9685_I2C_ADDRESS), _i2c(&Wire) {
 }
 
